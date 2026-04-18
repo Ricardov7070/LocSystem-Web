@@ -118,7 +118,7 @@ services:
 # Container de Aplicação React
   react:
     build:
-      context: ../frontend  
+      context: ../Person-Frontend-LocSystem  
       dockerfile: docker/Dockerfile
     container_name: react-container
     restart: always
