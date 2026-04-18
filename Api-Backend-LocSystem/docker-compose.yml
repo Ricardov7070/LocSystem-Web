@@ -127,7 +127,7 @@ services:
     ports:
       - "5174:5173"
     volumes:
-      - ../frontend:/app
+      - ../Person-Frontend-LocSystem:/app
       - /app/node_modules
     stdin_open: true
     tty: true
