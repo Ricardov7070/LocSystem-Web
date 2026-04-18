@@ -1,0 +1,24 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class RetroactiveIncidenty extends Model
+{
+    use HasFactory, SoftDeletes;
+
+    protected $table = 'retroactive_incidenties';
+
+    protected $fillable = [
+        'v_incident_id',
+        'v_vehicle_id',
+        'e_owner_type',
+        'v_owner_id',
+        'v_source',
+        'b_is_read',
+        'd_read_at',
+    ];
+}

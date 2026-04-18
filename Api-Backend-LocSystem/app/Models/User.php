@@ -2,44 +2,48 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, SoftDeletes;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
+    protected $table = 'users';
+
     protected $fillable = [
-        'name',
-        'email',
-        'password',
+        'v_name',
+        'v_email',
+        'b_email_verified',
+        'v_image',
+        'v_document',
+        'v_phone',
+        'e_role',
+        'b_banned',
+        't_ban_reason',
+        'd_ban_expires',
+        'd_ban_when',
+        't_approval_reason',
+        'e_approval_status',
+        'd_approved_at',
+        'v_approved_by',
+        'i_auditor_id',
+        'i_device_id',
+        'd_device_last_seen',
+        'v_device_name',
+        'd_device_registered_at',
+        'b_is_courtesy',
+        'i_operator_id',
+        'i_pricing_plan_id',
+        'i_user_limit'
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
-
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
-        'email_verified_at' => 'datetime',
-        'password' => 'hashed',
+        'b_email_verified' => 'boolean',
+        'b_banned' => 'boolean',
+        'b_is_courtesy' => 'boolean',
     ];
 }
