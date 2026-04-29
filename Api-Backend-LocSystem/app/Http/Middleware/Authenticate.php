@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Illuminate\Auth\Middleware\Authenticate as Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Auth\AuthenticationException;
 
 class Authenticate extends Middleware
 {
@@ -12,6 +13,13 @@ class Authenticate extends Middleware
      */
     protected function redirectTo(Request $request): ?string
     {
-        return $request->expectsJson() ? null : route('login');
+        // Se a requisição espera JSON (comum em APIs), ou se você quer 
+        // forçar o erro para evitar o redirecionamento:
+        if (! $request->expectsJson()) {
+            // Lançamos a exceção manualmente para que o Handler a capture
+            throw new AuthenticationException('Autenticação Necessária');
+        }
+
+        return null; 
     }
 }

@@ -4,9 +4,15 @@ namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Throwable;
+use Illuminate\Auth\AuthenticationException;
 
 class Handler extends ExceptionHandler
 {
+    protected function unauthenticated($request, AuthenticationException $exception) {
+        return response()->json([
+            'message' => 'Autenticação Necessária'
+        ], 401);
+    }
     /**
      * The list of the inputs that are never flashed to the session on validation exceptions.
      *

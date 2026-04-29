@@ -9,7 +9,6 @@ return new class extends Migration {
     {
         Schema::create('accounts', function (Blueprint $table) {
             $table->id('i_id');
-            $table->integer('i_account_id');
             $table->integer('i_provider_id');
             $table->string('v_access_token')->nullable();
             $table->string('v_refresh_token')->nullable();

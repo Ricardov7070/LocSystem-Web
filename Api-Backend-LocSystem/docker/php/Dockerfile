@@ -49,6 +49,9 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 # Copiando arquivos do projeto para o container
 COPY . .
 
+# Ajuste de permissão ANTES do volume ser montado (útil para build de prod)
+RUN chown -R www-data:www-data /var/www/laravel/storage /var/www/laravel/bootstrap/cache
+
 # Expondo a porta do PHP-FPM
 EXPOSE 5000
 

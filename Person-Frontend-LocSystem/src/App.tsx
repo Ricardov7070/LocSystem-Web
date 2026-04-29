@@ -1,122 +1,70 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import React, { lazy } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import Login from "./components/Login/Login";
+import Register from "./components/Register/Register";
+import ForgotPassword from "./components/ForgotPassword/ForgotPassword";
+import { AppLayout } from "./components/layout/app-layout";
 
-function App() {
 
-  const [count, setCount] = useState(0)
+const DashboardPage = lazy(() => import("./pages/dashboard"));
+const ProfilePage = lazy(() => import("./pages/profile"));
+const VehiclesPage = lazy(() => import("./pages/vehicles"));
+const OperatorsPage = lazy(() => import("./pages/operators"));
+const OperatorDetailPage = lazy(() => import("./pages/operators/detail"));
+const AdvisoryUsersPage = lazy(() => import("./pages/advisory-users"));
+const AdvisoryUserDetailPage = lazy(() => import("./pages/advisory-users/detail"));
+const MyDeputiesPage = lazy(() => import("./pages/my-deputies"));
+const IncidencesPage = lazy(() => import("./pages/incidences"));
+const IncidencesRetroactivePage = lazy(() => import("./pages/incidences/retroactive"));
+const LegalAdvisoriesPage = lazy(() => import("./pages/legal-advisories"));
+const LegalAdvisoryDetailPage = lazy(() => import("./pages/legal-advisories/detail"));
+const CountiesPage = lazy(() => import("./pages/counties"));
+const WalletsPage = lazy(() => import("./pages/wallets"));
+const PricingPage = lazy(() => import("./pages/pricing"));
+const VehicleAnnouncementsPage = lazy(() => import("./pages/vehicle-announcements"));
+const SearchByCountyPage = lazy(() => import("./pages/search-by-county"));
+const SessionsPage = lazy(() => import("./pages/sessions"));
+const BanidosPage = lazy(() => import("./pages/banidos"));
+const LogsPage = lazy(() => import("./pages/logs"));
 
+
+const App: React.FC = () => {
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <Router>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
-      <div className="ticks"></div>
+        <Route element={<AppLayout />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/vehicles" element={<VehiclesPage />} />
+          <Route path="/users/operators" element={<OperatorsPage />} />
+          <Route path="/users/operators" element={<OperatorDetailPage />} />
+          <Route path="/users/advisory-users" element={<AdvisoryUsersPage />} />
+          <Route path="/users/advisory-users" element={<AdvisoryUserDetailPage />} />
+          <Route path="/users/my-deputies" element={<MyDeputiesPage />} />
+          <Route path="/incidences" element={<IncidencesPage />} />
+          <Route path="/incidences-retroactive" element={<IncidencesRetroactivePage />} />
+          <Route path="/legal-advisories" element={<LegalAdvisoriesPage />} />
+          <Route path="/legal-advisories" element={<LegalAdvisoryDetailPage />} />
+          <Route path="/counties" element={<CountiesPage />} />
+          <Route path="/wallets" element={<WalletsPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/vehicle-announcements" element={<VehicleAnnouncementsPage />} />
+          <Route path="/search-by-county" element={<SearchByCountyPage />} />
+          <Route path="/sessions" element={<SessionsPage />} />
+          <Route path="/banidos" element={<BanidosPage />} />
+          <Route path="/logs" element={<LogsPage />} />
+        </Route>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+        <Route path="*" element={<Navigate to="/login" />} />
+      </Routes>
+    </Router>
+  );
+};
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
-}
+export default App;
 
-export default App
+

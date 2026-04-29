@@ -1,23 +1,27 @@
-# Usa a imagem oficial mais recente do Node.js (slim)
+# Usa a imagem oficial do Node.js
 FROM node:20
 
-# Ativa o corepack e instala o Yarn mais recente
-RUN corepack enable && corepack prepare yarn@stable --activate
-
-# Define o diretório de trabalho dentro do container
+# Define o diretório de trabalho
 WORKDIR /app
 
-# Copia só o package.json (remove o yarn.lock)
-COPY package.json ./
+# 1. Ajuste de Permissões: Garante que o diretório pertença ao usuário 'node'
+# O usuário 'node' tem UID 1000, que geralmente coincide com o seu usuário do Linux
+RUN chown -R node:node /app
 
-# Instala dependências
-RUN yarn install
+# 2. Muda para o usuário 'node' ANTES de instalar as dependências
+USER node
 
-# Copia o restante do código
-COPY . .
+# Copia o package.json com as permissões corretas
+COPY --chown=node:node package.json package-lock.json* ./
 
-# Expõe a porta padrão do Vite
+# Instala as dependências usando npm (consistente com o ambiente local)
+RUN npm install --legacy-peer-deps
+
+# Copia o restante do código garantindo que o dono continue sendo o usuário node
+COPY --chown=node:node . .
+
+# Expõe a porta do Vite
 EXPOSE 5174
 
-# Inicia o servidor de desenvolvimento com Vite
-CMD ["yarn", "dev", "--host"]
+# Inicia o servidor
+CMD ["npm", "run", "dev", "--", "--host"]
