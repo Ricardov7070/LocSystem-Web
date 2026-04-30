@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\User\UserAuthenticationController;
 use App\Http\Controllers\User\UserRegistrationController;
+use App\Http\Controllers\Vehicle\VehicleController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -17,8 +18,14 @@ Route::post('/auth/checkAuthenticationPerformed', [UserAuthenticationController:
 Route::middleware('auth:sanctum')->group(function () {
     
     // Rotas "Usuários"
-    Route::put('/updateUser', [UserRegistrationController::class, 'updateRecord']);
+    Route::put('/updateUser/{id}', [UserRegistrationController::class, 'updateRecord']);
     Route::post('/logoutUser', [UserAuthenticationController::class, 'logoutUser']);
-    Route::delete('/deleteUser', [UserRegistrationController::class, 'deleteRecord']);
+    Route::delete('/deleteUser/{id}', [UserRegistrationController::class, 'deleteRecord']);
+
+    // Rotas "Veículos"
+    Route::post('/vehicles', [VehicleController::class, 'vehicles']);
+    Route::post('/registerVehicle', [VehicleController::class, 'registerVehicle']);
+    Route::put('/updateVehicle/{id}', [VehicleController::class, 'updateRecord']);
+    Route::delete('/deleteVehicle/{id}', [VehicleController::class, 'deleteRecord']);
 
 });

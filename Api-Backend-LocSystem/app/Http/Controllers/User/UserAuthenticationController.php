@@ -21,6 +21,7 @@ class UserAuthenticationController extends Controller {
     protected $serviceValidation;
     protected $serviceEmail;
 
+    // Método Construtor
     public function __construct(UserServiceAuthentication $userServiceAuthentication, UserServiceValidation $userServiceValidation, EmailService $emailService) {
         $this->serviceAuthentication = $userServiceAuthentication;
         $this->serviceValidation = $userServiceValidation;

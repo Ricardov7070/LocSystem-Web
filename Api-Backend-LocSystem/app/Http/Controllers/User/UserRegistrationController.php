@@ -20,6 +20,7 @@ class UserRegistrationController extends Controller {
     protected $serviceValidation;
     protected $serviceAuthentication;
 
+    // Método Construtor
     public function __construct(UserServiceRegistration $userServiceRegistration, UserServiceValidation $userServiceValidation, UserServiceAuthentication $userServiceAuthentication) {
         $this->serviceRegistration = $userServiceRegistration;
         $this->serviceValidation = $userServiceValidation;
@@ -85,7 +86,7 @@ class UserRegistrationController extends Controller {
 
 /**
  * @OA\Put(
- *     path="/api/updateUser/{id_user}",
+ *     path="/api/updateRecord/",
  *     summary="Realiza a atualização de dados cadastrais do usuário registrado.",
  *     tags={"Gerenciamento de Usuário"},
  *     @OA\Response(
@@ -149,7 +150,7 @@ class UserRegistrationController extends Controller {
 
 /**
  * @OA\Delete(
- *     path="/api/deleteUser/{id_user}",
+ *     path="/api/deleteRecord/",
  *     summary="Realiza a exclusão do usuário selecionado do banco de dados",
  *     tags={"Gerenciamento de Usuário"},
  *     @OA\Response(

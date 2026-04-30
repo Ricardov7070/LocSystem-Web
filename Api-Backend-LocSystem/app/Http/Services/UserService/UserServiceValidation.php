@@ -43,7 +43,7 @@ class UserServiceValidation {
     }
 
 
-    // Método de validação existencial de dados do usuário
+    // Método de validação existencial de dados do usuário pelo o email
     public function validateUserForReset($request): User {
         $user = $this->modelUser->where('v_email', $request->input('v_email'))
                                 ->where('e_approval_status', 'APPROVED')
@@ -59,7 +59,7 @@ class UserServiceValidation {
     }
 
 
-    // Método de validação existencial do usuário selecionado para update
+    // Método de validação existencial pelo o ID do usuário selecionado para update
     public function searchUser ($id_user): void {      
         $user = $this->modelUser::where('i_id', $id_user)
             ->where('e_approval_status', 'APPROVED')

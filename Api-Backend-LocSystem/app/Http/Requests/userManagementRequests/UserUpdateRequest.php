@@ -22,7 +22,7 @@ class UserUpdateRequest extends FormRequest
             'v_email' => 'required|string|email',
             'v_name' => 'required|string|min:3|max:255',
             'v_password' => 'required|string|min:8|max:16',
-            'v_phone' => 'required|string|max:11',
+            'v_phone' => 'required|string|max:11|regex:/^[0-9]+$/',
         ];
 
     }
@@ -43,6 +43,7 @@ class UserUpdateRequest extends FormRequest
             'v_password.max' => 'O campo de senha não pode exceder 16 caracteres.',
             'v_phone.required' => 'O campo de telefone é obrigatório.',
             'v_phone.max' => 'O campo de telefone não pode exceder 11 caracteres.',
+            'v_phone.regex' => 'O campo de telefone deve conter apenas números.',
         ];
 
     }

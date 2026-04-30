@@ -36,8 +36,8 @@ services:
       php artisan config:clear &&
       php artisan cache:clear &&
 
-      echo '⚡Running migrations...' &&
-      php artisan migrate --force &&
+      echo '⚡Running migrations and seeders...' &&
+      php artisan migrate --seed --force &&
 
       echo '🔐 Publishing Laravel Sanctum...' &&
       php artisan vendor:publish --provider='Laravel\\Sanctum\\SanctumServiceProvider' &&
