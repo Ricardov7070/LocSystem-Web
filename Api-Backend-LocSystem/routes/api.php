@@ -24,6 +24,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Rotas "Veículos"
     Route::post('/vehicles', [VehicleController::class, 'vehicles']);
+    Route::get('/singleVehicle/{id}', [VehicleController::class, 'singleVehicle']);
     Route::post('/registerVehicle', [VehicleController::class, 'registerVehicle']);
     Route::put('/updateVehicle/{id}', [VehicleController::class, 'updateRecord']);
     Route::delete('/deleteVehicle/{id}', [VehicleController::class, 'deleteRecord']);

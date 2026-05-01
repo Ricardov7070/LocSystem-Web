@@ -6,32 +6,32 @@ use App\Http\Controllers\Controller;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Illuminate\Http\JsonResponse;
-use App\Http\Requests\vehicleManagementRequests\VehicleRegistrationRequest;
-use App\Http\Services\VehicleService\VehicleRegistrationService;
-use App\Http\Services\VehicleService\VehicleValidationService;
+use App\Http\Requests\WalletManagementRequests\WalletRegistrationRequest;
+use App\Http\Services\WalletService\WalletRegistrationService;
+use App\Http\Services\WalletService\WalletValidationService;
 use Illuminate\Http\Request; 
 
 
-class VehicleController extends Controller {
+class WalletController extends Controller {
 
     protected $serviceRegistration;
     protected $serviceValidation;
 
     // Método Construtor
-    public function __construct(VehicleRegistrationService $vehicleRegistrationService, VehicleValidationService $vehicleValidationService) {
-        $this->serviceRegistration = $vehicleRegistrationService;
-        $this->serviceValidation = $vehicleValidationService;
+    public function __construct(WalletRegistrationService $walletRegistrationService, WalletValidationService $walletValidationService) {
+        $this->serviceRegistration = $walletRegistrationService;
+        $this->serviceValidation = $walletValidationService;
     }
   
 
 /**
- * @OA\Post(
- *     path="/api/vehicles",
- *     summary="Realiza o retorno de veículos cadastrados.",
- *     tags={"Gerenciamento de Veículos"},
+ * @OA\Get(
+ *     path="/api/wallets",
+ *     summary="Realiza o retorno das carteiras cadastradas.",
+ *     tags={"Gerenciamento de Carteiras"},
  *     @OA\Response(
  *         response=200,
- *         description="Veículos retornados com sucesso!"
+ *         description="Carteiras retornadas com sucesso!"
  *     ),
  *     @OA\Response(
  *         response=500,
@@ -39,14 +39,14 @@ class VehicleController extends Controller {
  *     ),
  * )
  */
-    public function vehicles (Request $request): JsonResponse {
+    public function wallets (Request $request): JsonResponse {
         try {
 
-            $vehicle = $this->serviceRegistration->viewVehicles($request);
+            $wallet = $this->serviceRegistration->viewWallets();
 
             return response()->json([
-                'success' => 'Veículos retornados com sucesso!',
-                'vehicle' => $vehicle,  
+                'success' => 'Carteiras retornadas com sucesso!',
+                'wallet' => $wallet,  
             ], 200);
 
         } catch (\Throwable $th) {
@@ -61,16 +61,16 @@ class VehicleController extends Controller {
 
 /**
  * @OA\Get(
- *     path="/api/singleVehicle/{id}",
- *     summary="Realiza o retorno de um veículo específico.",
- *     tags={"Gerenciamento de Veículos"},
+ *     path="/api/wallet/{id}",
+ *     summary="Realiza o retorno de uma carteira específica.",
+ *     tags={"Gerenciamento de Carteiras"},
  *     @OA\Response(
  *         response=200,
- *         description="Veículo retornado com sucesso!"
+ *         description="Carteira retornada com sucesso!"
  *     ),
  *      @OA\Response(
  *         response=401,
- *         description="Veículo não encontrado!"
+ *         description="Carteira não encontrada!"
  *     ),
  *     @OA\Response(
  *         response=500,
@@ -78,16 +78,16 @@ class VehicleController extends Controller {
  *     ),
  * )
  */
-    public function singleVehicle ($idVehicle): JsonResponse {
+    public function singleWallet ($idWallet): JsonResponse {
         try {
 
-            $this->serviceValidation->searchVehicle($idVehicle);
+            $this->serviceValidation->searchWallet($idWallet);
 
-            $vehicle = $this->serviceRegistration->viewSingleVehicle($idVehicle);
+            $wallet = $this->serviceRegistration->viewSingleWallet($idWallet);
 
             return response()->json([
-                'success' => 'Veículo retornado com sucesso!',
-                'vehicle' => $vehicle,  
+                'success' => 'Carteira retornada com sucesso!',
+                'wallet' => $wallet,  
             ], 200);
 
         } catch (\Throwable $th) {

@@ -38,12 +38,23 @@ class VehicleRegistrationService {
     }
 
 
+    // Método para visualizar um veículo específico através de seu ID
+    public function viewSingleVehicle ($idVehicle): array {
+        $vehicle = $this->modelVehicle::where('i_id', $idVehicle)
+                                        ->whereNull('deleted_at')
+                                        ->first();
+
+        return $vehicle;
+    }
+
+
     // Método para cadastrar um novo veículo
     public function createVehicles($request, $i_user_id): array  {
         return DB::transaction(function () use ($request, $i_user_id) {
 
             $vehicle = $this->modelVehicle::create([
                 'v_plate'                    => $request->input('v_plate'),
+                'v_plate_mercosul'           => $request->input('v_plate_mercosul'),
                 'v_model'                    => $request->input('v_model'),
                 'v_phone'                    => $request->input('v_phone'),
                 'i_user_id'                  => $i_user_id,
@@ -64,6 +75,7 @@ class VehicleRegistrationService {
 
             $vehicle->update([
                 'v_plate'                    => $request->input('v_plate'),
+                'v_plate_mercosul'           => $request->input('v_plate_mercosul'),
                 'v_model'                    => $request->input('v_model'),
                 'v_phone'                    => $request->input('v_phone'),
                 'i_user_id'                  => $i_user_id,
@@ -83,8 +95,11 @@ class VehicleRegistrationService {
                                         ->first();
 
         if ($vehicle) {
+
             $vehicle->delete();
+
             return $vehicle->toArray();
+            
         }
 
         return [];

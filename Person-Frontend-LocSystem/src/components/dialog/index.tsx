@@ -318,7 +318,7 @@ export function Dialoger() {
                   return (
                     <Form {...form}>
                       <form onSubmit={handleSubmit} className="space-y-3">
-                        {form.formState.errors?.root && (
+                        {form.formState.errors?.root?.message && (
                           <Alert variant="destructive">
                             {form.formState.errors?.root.message}
                           </Alert>
