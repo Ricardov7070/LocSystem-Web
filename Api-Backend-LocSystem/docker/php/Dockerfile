@@ -49,6 +49,10 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 # Copiando arquivos do projeto para o container
 COPY . .
 
+# Instalando dependências do Composer (inclui l5-swagger para documentação da API)
+RUN composer install --no-interaction --prefer-dist --optimize-autoloader && \
+    composer require darkaonline/l5-swagger --no-interaction
+
 # Ajuste de permissão ANTES do volume ser montado (útil para build de prod)
 RUN chown -R www-data:www-data /var/www/laravel/storage /var/www/laravel/bootstrap/cache
 
