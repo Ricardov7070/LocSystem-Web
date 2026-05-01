@@ -50,7 +50,7 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 COPY . .
 
 # Instalando dependências do Composer
-RUN composer install --no-interaction --prefer-dist --optimize-autoloader
+RUN composer update darkaonline/l5-swagger --no-interaction --prefer-dist --optimize-autoloader
 
 # Ajuste de permissão ANTES do volume ser montado (útil para build de prod)
 RUN chown -R www-data:www-data /var/www/laravel/storage /var/www/laravel/bootstrap/cache
