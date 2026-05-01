@@ -165,10 +165,18 @@ class UserRegistrationController extends Controller {
  *         response=401,
  *         description="Usuário não encontrado ou Desativado!"
  *     ),
+ *     @OA\Response(
+ *         response=403,
+ *         description="Não é permitido excluir o usuário Administrador principal!"
+ *     ),
  * )
  */
     public function deleteRecord(Request $request): JsonResponse {
         try {
+
+            if ((int) $request->id === 1) {
+                throw new HttpException(403, 'Não é permitido excluir o usuário Administrador principal!');
+            }
 
             $this->serviceValidation->searchUser($request->id);
 
