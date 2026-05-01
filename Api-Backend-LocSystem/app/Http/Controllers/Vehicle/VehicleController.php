@@ -118,7 +118,7 @@ class VehicleController extends Controller {
 
 /**
  * @OA\Put(
- *     path="/api/updateRecord/",
+ *     path="/api/updateVehicle/{id}",
  *     summary="Realiza a atualização de dados cadastrais do Veículo registrado.",
  *     tags={"Gerenciamento de Veículos"},
  *     @OA\Response(

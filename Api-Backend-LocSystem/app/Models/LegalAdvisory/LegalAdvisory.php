@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\LegalAdvisory;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Wallet\Wallet;
 use App\Models\User\User;
 
 class LegalAdvisory extends Model

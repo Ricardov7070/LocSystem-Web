@@ -1,0 +1,299 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "LocSystem API",
+        "description": "Documentação da API do sistema LocSystem",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/auth/signin": {
+            "post": {
+                "tags": [
+                    "Gerenciamento de Usuário"
+                ],
+                "summary": "Realiza a autenticação do usuário.",
+                "operationId": "36f06e221c7591c00e18cde43a2891f3",
+                "responses": {
+                    "200": {
+                        "description": "Login Realizado. Bem-Vindo!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro, tente novamente!"
+                    },
+                    "401": {
+                        "description": "Credenciais inválidas!"
+                    },
+                    "403": {
+                        "description": "Usuário Banido, entre em contato com o administrador do sistema!, Usuário Pendente de aprovação!, Assinatura do usuário expirada, entre em contato com o administrador do sistema!"
+                    },
+                    "409": {
+                        "description": "Altere sua senha de acesso!"
+                    },
+                    "422": {
+                        "description": "Erro de validação!"
+                    }
+                }
+            }
+        },
+        "/api/logoutUser": {
+            "post": {
+                "tags": [
+                    "Gerenciamento de Usuário"
+                ],
+                "summary": "Realiza o logout do usuário atual autenticado",
+                "operationId": "94f28b6f8d7ae11470040b4ccd9958d9",
+                "responses": {
+                    "200": {
+                        "description": "Logout realizado com sucesso!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado, tente novamente!"
+                    },
+                    "401": {
+                        "description": "Usuário Indefinido!"
+                    }
+                }
+            }
+        },
+        "/api/auth/forgotPassword": {
+            "post": {
+                "tags": [
+                    "Gerenciamento de Usuário"
+                ],
+                "summary": "Realiza o envio de uma senha aleatória via email para o usuário que esqueceu sua chave de acesso.",
+                "operationId": "2b826f04ec8cbfc3bc43fd3cb14e0f79",
+                "responses": {
+                    "200": {
+                        "description": "Email enviado com sucesso! Verifique sua caixa de entrada para acessar sua nova senha!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro, tente novamente!"
+                    },
+                    "401": {
+                        "description": "Usuário não encontrado ou Desativado!"
+                    },
+                    "422": {
+                        "description": "Erro de validação!"
+                    }
+                }
+            }
+        },
+        "/api/updatePassword": {
+            "post": {
+                "tags": [
+                    "Gerenciamento de Usuário"
+                ],
+                "summary": "Realiza a atualização da senha do usuário recuperado",
+                "operationId": "639ab82fdb10367b5cfae9259c0a2c8b",
+                "responses": {
+                    "200": {
+                        "description": "Senha atualizada com sucesso. Realize o login novamente!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado, tente novamente!"
+                    },
+                    "422": {
+                        "description": "Erro de validação!"
+                    }
+                }
+            }
+        },
+        "/api/checkAuthenticationPerformed": {
+            "post": {
+                "tags": [
+                    "Gerenciamento de Usuário"
+                ],
+                "summary": "Verifica se a autenticação foi realizada com sucesso.",
+                "operationId": "5c526b13ddc11c81a9ff5eb1a047e2e5",
+                "responses": {
+                    "200": {
+                        "description": "Senha atualizada com sucesso. Realize o login novamente!"
+                    },
+                    "401": {
+                        "description": "Usuário não encontrado ou sem permissão de acesso!, Token de autenticação inválido ou expirado!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado, tente novamente!"
+                    }
+                }
+            }
+        },
+        "/api/auth/signup": {
+            "post": {
+                "tags": [
+                    "Gerenciamento de Usuário"
+                ],
+                "summary": "Realiza o registro do usuário.",
+                "operationId": "51ad16d89cf4afdbecf3f7a49fdadb3e",
+                "responses": {
+                    "201": {
+                        "description": "Registro realizado com sucesso!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro, tente novamente!"
+                    },
+                    "409": {
+                        "description": "Usuário já cadastrado!, Email já cadastrado com outro usuário!"
+                    },
+                    "422": {
+                        "description": "Erro de validação!"
+                    }
+                }
+            }
+        },
+        "/api/updateUser/{id}": {
+            "put": {
+                "tags": [
+                    "Gerenciamento de Usuário"
+                ],
+                "summary": "Realiza a atualização de dados cadastrais do usuário registrado.",
+                "operationId": "2077b7fdc12aae1de2baa5549fb897ec",
+                "responses": {
+                    "200": {
+                        "description": "Atualização realizada com sucesso. Faça login novamente!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro, tente novamente!"
+                    },
+                    "409": {
+                        "description": "Usuário já cadastrado!, Email já cadastrado com outro usuário!"
+                    },
+                    "401": {
+                        "description": "Usuário não encontrado ou Desativado!"
+                    },
+                    "422": {
+                        "description": "Erro de validação!"
+                    }
+                }
+            }
+        },
+        "/api/deleteRecord/": {
+            "delete": {
+                "tags": [
+                    "Gerenciamento de Usuário"
+                ],
+                "summary": "Realiza a exclusão do usuário selecionado do banco de dados",
+                "operationId": "fdf876234e8de460d6da91082cfa98f6",
+                "responses": {
+                    "200": {
+                        "description": "Excluído com sucesso!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro, tente novamente!"
+                    },
+                    "401": {
+                        "description": "Usuário não encontrado ou Desativado!"
+                    },
+                    "403": {
+                        "description": "Não é permitido excluir o usuário Administrador principal!"
+                    }
+                }
+            }
+        },
+        "/api/vehicles": {
+            "post": {
+                "tags": [
+                    "Gerenciamento de Veículos"
+                ],
+                "summary": "Realiza o retorno de veículos cadastrados.",
+                "operationId": "63b7ee309984a0d900abc56922d831e8",
+                "responses": {
+                    "200": {
+                        "description": "Veículos retornados com sucesso!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado, tente novamente!"
+                    }
+                }
+            }
+        },
+        "/api/registerVehicle": {
+            "post": {
+                "tags": [
+                    "Gerenciamento de Veículos"
+                ],
+                "summary": "Realiza o registro do veículo.",
+                "operationId": "70bf04936c96a59a722d8a880684d1b6",
+                "responses": {
+                    "201": {
+                        "description": "Registro realizado com sucesso!"
+                    },
+                    "409": {
+                        "description": "Veículo já cadastrado!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro, tente novamente!"
+                    },
+                    "422": {
+                        "description": "Erro de validação!"
+                    }
+                }
+            }
+        },
+        "/api/updateVehicle/{id}": {
+            "put": {
+                "tags": [
+                    "Gerenciamento de Veículos"
+                ],
+                "summary": "Realiza a atualização de dados cadastrais do Veículo registrado.",
+                "operationId": "b962ed90f4fea6f334788971dde9837b",
+                "responses": {
+                    "200": {
+                        "description": "Atualização realizada com sucesso!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro, tente novamente!"
+                    },
+                    "401": {
+                        "description": "Veículo não encontrado!"
+                    },
+                    "409": {
+                        "description": "Placa já cadastrada para outro veículo!"
+                    },
+                    "422": {
+                        "description": "Erro de validação!"
+                    }
+                }
+            }
+        },
+        "/api/deleteRecord": {
+            "delete": {
+                "tags": [
+                    "Gerenciamento de Veículos"
+                ],
+                "summary": "Realiza a exclusão do veículo selecionado do banco de dados",
+                "operationId": "cc7c4fab692d32052dc09f8e56ea040f",
+                "responses": {
+                    "200": {
+                        "description": "Excluído com sucesso!"
+                    },
+                    "401": {
+                        "description": "Veículo não encontrado!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro, tente novamente!"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Gerenciamento de Usuário",
+            "description": "Gerenciamento de Usuário"
+        },
+        {
+            "name": "Gerenciamento de Veículos",
+            "description": "Gerenciamento de Veículos"
+        }
+    ]
+}

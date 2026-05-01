@@ -86,7 +86,7 @@ class UserRegistrationController extends Controller {
 
 /**
  * @OA\Put(
- *     path="/api/updateRecord/",
+ *     path="/api/updateUser/{id}",
  *     summary="Realiza a atualização de dados cadastrais do usuário registrado.",
  *     tags={"Gerenciamento de Usuário"},
  *     @OA\Response(
