@@ -255,7 +255,7 @@ export default function OperatorsPage() {
           </p>
         </div>
         <div>
-          <Button onClick={onAdd}>
+          <Button variant="primary" onClick={onAdd}>
             <Plus className="mr-2 size-4" />
             Adicionar Localizador
           </Button>

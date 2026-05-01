@@ -106,6 +106,11 @@ export default function Login() {
 
       showAlert(`✅ ${data.success}`, "success");
 
+      const token = data.token ?? data.access_token ?? data.user?.token;
+      if (token) {
+        localStorage.setItem('locsystem_token', token);
+      }
+
       const stored = localStorage.getItem('locsystem_user');
       const current = stored ? JSON.parse(stored) : {};
       localStorage.setItem('locsystem_user', JSON.stringify({

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
@@ -10,10 +10,21 @@ interface AlertInfo {
 export function useRequireAuth() {
 
   const navigate = useNavigate();
+  const navigateRef = useRef(navigate);
   const [isChecking, setIsChecking] = useState(true);
   const [alertInfo, setAlertInfo] = useState<AlertInfo | null>(null);
 
   useEffect(() => {
+    navigateRef.current = navigate;
+  }, [navigate]);
+
+  useEffect(() => {
+
+    const token = localStorage.getItem('locsystem_token');
+    if (!token) {
+      navigateRef.current('/login', { replace: true });
+      return;
+    }
 
     const stored = localStorage.getItem('locsystem_user');
     const v_email: string = stored ? (JSON.parse(stored) as { email?: string }).email ?? '' : '';
@@ -38,11 +49,12 @@ export function useRequireAuth() {
 
         }
 
-        navigate('/login', { replace: true });
+        navigateRef.current('/login', { replace: true });
 
       });
 
-  }, [navigate]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return { isChecking, alertInfo, clearAlert: () => setAlertInfo(null) };
 

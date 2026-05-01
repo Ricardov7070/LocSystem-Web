@@ -19,7 +19,7 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Rotas "Usuários"
     Route::put('/updateUser/{id}', [UserRegistrationController::class, 'updateRecord']);
-    Route::post('/logoutUser', [UserAuthenticationController::class, 'logoutUser']);
+    Route::get('/logoutUser', [UserAuthenticationController::class, 'logoutUser']);
     Route::delete('/deleteUser/{id}', [UserRegistrationController::class, 'deleteRecord']);
 
     // Rotas "Veículos"

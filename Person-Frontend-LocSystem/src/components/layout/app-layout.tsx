@@ -7,10 +7,12 @@ import { SidebarProvider, SidebarInset } from '../ui/sidebar';
 import { AppSidebar } from './app-sidebar';
 import { Dialoger } from '../dialog';
 import { useRequireAuth } from '../../hooks/useRequireAuth';
+import { useAuth } from '../providers/auth';
 import CustomAlert from '../../hooks/useCustomAlert';
 
 function ProtectedContent() {
   const { isChecking, alertInfo, clearAlert } = useRequireAuth();
+  const { signOutAlert, clearSignOutAlert } = useAuth();
 
   return (
     <>
@@ -20,6 +22,15 @@ function ProtectedContent() {
             message={alertInfo.message}
             type={alertInfo.type}
             onClose={clearAlert}
+          />
+        </div>
+      )}
+      {signOutAlert && (
+        <div className="fixed top-4 right-4 z-[9999]">
+          <CustomAlert
+            message={signOutAlert.message}
+            type={signOutAlert.type}
+            onClose={clearSignOutAlert}
           />
         </div>
       )}

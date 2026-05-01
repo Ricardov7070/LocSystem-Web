@@ -56,14 +56,13 @@ class UserServiceAuthentication {
             throw new HttpException(409, 'Altere sua senha de acesso!');
         }
 
-        $tokenResult = $user->createToken('auth_token');
+        $expiresAt = now()->addMinutes((int) env('TOKEN_TTL_MINUTES', 1440));
+
+        $tokenResult = $user->createToken('auth_token', ['*'], $expiresAt);
         $plainTextToken = $tokenResult->plainTextToken;
         $tokenDatabaseModel = $tokenResult->accessToken;
 
         $tokenHash = hash('sha256', explode('|', $plainTextToken)[1]);
-        $sanctumExpiration = config('sanctum.expiration');
-        $expiresAt = $tokenDatabaseModel->expires_at
-            ?? ($sanctumExpiration ? now()->addMinutes($sanctumExpiration) : null);
 
         $account->update([
             'v_id_token'                => $tokenDatabaseModel->id,

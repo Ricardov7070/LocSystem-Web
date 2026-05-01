@@ -96,7 +96,7 @@ class UserAuthenticationController extends Controller {
 
 
 /**
- * @OA\Post(
+ * @OA\Get(
  *     path="/api/logoutUser",
  *     summary="Realiza o logout do usuário atual autenticado",
  *     tags={"Gerenciamento de Usuário"},

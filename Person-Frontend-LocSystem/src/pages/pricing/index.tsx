@@ -77,7 +77,7 @@ export default function PricingPage() {
           <p className="text-muted-foreground">Gerenciamento de Planos e Preços</p>
         </div>
         <div>
-          <Button onClick={onAdd}>
+          <Button variant="primary" onClick={onAdd}>
             <Plus className="mr-2 size-4" />
             Adicionar Plano
           </Button>

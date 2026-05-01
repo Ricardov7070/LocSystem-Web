@@ -83,7 +83,7 @@ export default function LegalAdvisoriesPage() {
           <p className="text-muted-foreground">Gerenciamento de Assessorias Jurídicas</p>
         </div>
         <div>
-          <Button onClick={onAdd}>
+          <Button variant="primary" onClick={onAdd}>
             <Plus className="mr-2 size-4" />
             Adicionar Assessoria
           </Button>

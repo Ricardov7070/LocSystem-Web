@@ -2,7 +2,7 @@
 import { z } from 'zod';
 import { create } from 'zustand';
 import { match } from 'ts-pattern';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Save } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { DefaultValues, UseFormReturn, useForm } from 'react-hook-form';
 import { ReactNode, useCallback, useEffect, useTransition } from 'react';
@@ -338,10 +338,12 @@ export function Dialoger() {
                           >
                             {props.cancelText ?? 'Cancelar'}
                           </Button>
-                          <Button type="submit" disabled={isLoading}>
-                            {props.submitText ?? 'Enviar'}
-                            {isLoading && (
+                          <Button type="submit" variant="success" disabled={isLoading}>
+                            Salvar
+                            {isLoading ? (
                               <Loader2 className="ml-2 size-4 animate-spin" />
+                            ) : (
+                              <Save className="ml-2 size-4" />
                             )}
                           </Button>
                         </DialogFooter>

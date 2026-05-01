@@ -39,7 +39,7 @@ class VehicleController extends Controller {
  *     ),
  * )
  */
-    public function vehicles ($request): JsonResponse {
+    public function vehicles (Request $request): JsonResponse {
         try {
 
             $vehicle = $this->serviceRegistration->viewVehicles($request);

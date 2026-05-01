@@ -73,7 +73,7 @@ export default function CountiesPage() {
           <p className="text-muted-foreground">Gerencie as comarcas onde você atua</p>
         </div>
         <div>
-          <Button onClick={onAdd}>
+          <Button variant="primary" onClick={onAdd}>
             <Plus className="mr-2 size-4" />
             Adicionar Comarca
           </Button>

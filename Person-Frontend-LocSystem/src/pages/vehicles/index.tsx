@@ -1,11 +1,15 @@
 import { z } from 'zod';
 import { Plus } from 'lucide-react';
 import { UseFormReturn } from 'react-hook-form';
-import { useState } from 'react';
-import { toast } from 'sonner';
+import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { type DateRange } from 'react-day-picker';
 
+import api from '../../services/api';
 import { Topbar } from '../../components/layout/app-topbar';
 import { DataTableEmptyState } from '../../components/DataTable/data-table-empty-state';
+import { DataTableSkeleton } from '../../components/DataTable/data-table-skeleton';
 import { dialog } from '../../components/dialog';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -17,14 +21,28 @@ import {
   FormControl,
 } from '../../components/ui/form';
 import { DateRangePicker } from '../../components/DateRangePicker';
+import CustomAlert from '../../hooks/useCustomAlert';
 
-// ─── Form Schema ────────────────────────────────────────────────────────────
+
+interface Vehicle {
+  i_id: string;
+  v_plate: string;
+  v_model: string;
+  v_phone: string;
+  i_legal_advisory_access_id: { name: number };
+  created_at: string;
+}
+
+
+
 const vehicleFormSchema = z.object({
-  plate: z.string().min(4, 'Placa deve ter no mínimo 4 caracteres'),
-  legalAdvisoryId: z.string().min(1, 'Assessoria jurídica é obrigatória'),
-  model: z.string().optional(),
-  phone: z.string().optional(),
+  v_plate: z.string().min(4, 'Placa deve ter no mínimo 4 caracteres'),
+  i_legal_advisory_access_id: z.string().min(1, 'Assessoria jurídica é obrigatória'),
+  v_model: z.string().optional(),
+  v_phone: z.string().optional(),
 });
+
+
 type VehicleFormSchema = z.infer<typeof vehicleFormSchema>;
 
 function VehicleForm({ form }: { form: UseFormReturn<VehicleFormSchema> }) {
@@ -32,7 +50,7 @@ function VehicleForm({ form }: { form: UseFormReturn<VehicleFormSchema> }) {
     <>
       <FormField
         control={form.control}
-        name="plate"
+        name="v_plate"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Placa</FormLabel>
@@ -45,7 +63,7 @@ function VehicleForm({ form }: { form: UseFormReturn<VehicleFormSchema> }) {
       />
       <FormField
         control={form.control}
-        name="legalAdvisoryId"
+        name="i_legal_advisory_access_id"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Assessoria Jurídica</FormLabel>
@@ -58,7 +76,7 @@ function VehicleForm({ form }: { form: UseFormReturn<VehicleFormSchema> }) {
       />
       <FormField
         control={form.control}
-        name="model"
+        name="v_model"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Modelo</FormLabel>
@@ -71,7 +89,7 @@ function VehicleForm({ form }: { form: UseFormReturn<VehicleFormSchema> }) {
       />
       <FormField
         control={form.control}
-        name="phone"
+        name="v_phone"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Contato</FormLabel>
@@ -86,12 +104,69 @@ function VehicleForm({ form }: { form: UseFormReturn<VehicleFormSchema> }) {
   );
 }
 
-// ─── Table ──────────────────────────────────────────────────────────────────
-function VehiclesTable() {
+
+const COLS = 'grid-cols-[minmax(150px,2fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(150px,2fr)_80px]';
+
+function VehiclesTable() 
+{
   const [search, setSearch] = useState('');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [alertInfo, setAlertInfo] = useState<{ message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null);
+
+  const showAlert = (message: string, type: 'success' | 'error' | 'warning' | 'info') => {
+    setAlertInfo({ message, type });
+  };
+
+  const { data: vehicles, isLoading, isError, error } = useQuery<Vehicle[]>({
+
+    queryKey: ['vehicles', dateRange?.from, dateRange?.to],
+
+    queryFn: async () => {
+
+      const body: Record<string, string> = {};
+
+      if (dateRange?.from && dateRange?.to) {
+        body.data_inicial = format(dateRange.from, 'yyyy-MM-dd');
+        body.data_final = format(dateRange.to, 'yyyy-MM-dd');
+      }
+
+      const response = await api.post('/vehicles', body);
+
+      return response.data.vehicle;
+
+    },
+
+    throwOnError: false,
+
+  });
+
+  useEffect(() => {
+    if (!isError) return;
+    const status = (error as any)?.response?.status;
+    if (status === 500) {
+      showAlert('🚫 Erro interno do servidor ao carregar veículos.', 'error');
+    } else {
+      showAlert('🚫 Ocorreu um erro inesperado ao conectar com a API.', 'error');
+    }
+  }, [isError, error]);
+
+
+  const filtered = (vehicles ?? []).filter((v) =>
+    v.v_plate.toLowerCase().includes(search.toLowerCase()),
+  );
 
   return (
-    <div className="space-y-4">
+    <>
+      {alertInfo && (
+        <div className="fixed top-4 right-4 z-[9999]">
+          <CustomAlert
+            message={alertInfo.message}
+            type={alertInfo.type}
+            onClose={() => setAlertInfo(null)}
+          />
+        </div>
+      )}
+      <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Input
           placeholder="Pesquisar por placa..."
@@ -100,6 +175,10 @@ function VehiclesTable() {
           className="w-64"
         />
         <DateRangePicker
+          date={dateRange}
+          onDateChange={(range) => {
+            setDateRange(range);
+          }}
           placeholder="Selecione as datas"
           triggerSize="sm"
           triggerClassName="w-56 sm:w-60"
@@ -109,7 +188,7 @@ function VehiclesTable() {
 
       <div className="overflow-auto rounded-lg border bg-background">
         <div className="sticky top-0 z-10 border-b bg-background">
-          <div className="grid grid-cols-[minmax(150px,2fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(150px,2fr)_80px] gap-4 p-4 font-medium text-muted-foreground text-sm">
+          <div className={`grid ${COLS} gap-4 p-4 font-medium text-muted-foreground text-sm`}>
             <div>Placa</div>
             <div>Modelo</div>
             <div>Contato</div>
@@ -118,13 +197,39 @@ function VehiclesTable() {
             <div>Ações</div>
           </div>
         </div>
-        <DataTableEmptyState
-          title="Nenhum veículo cadastrado"
-          description="Voce ainda nao possui veiculos cadastrados."
-          minHeightClassName="min-h-[404px]"
-        />
+
+        {isLoading ? (
+          <DataTableSkeleton columnCount={6} rowCount={6} />
+        ) : filtered.length === 0 ? (
+          <DataTableEmptyState
+            title="Nenhum veículo cadastrado"
+            description="Você ainda não possui veículos cadastrados."
+            minHeightClassName="min-h-[404px]"
+          />
+        ) : (
+          <div className="divide-y">
+            {filtered.map((vehicle) => (
+              <div
+                key={vehicle.i_id}
+                className={`grid ${COLS} gap-4 p-4 text-sm items-center`}
+              >
+                <div className="font-medium">{vehicle.v_plate}</div>
+                <div className="text-muted-foreground">{vehicle.v_model ?? '—'}</div>
+                <div className="text-muted-foreground">{vehicle.v_phone ?? '—'}</div>
+                <div className="text-muted-foreground">
+                  {vehicle.i_legal_advisory_access_id?.name ?? '—'}
+                </div>
+                <div className="text-muted-foreground">
+                  {format(new Date(vehicle.created_at), 'dd/MM/yyyy')}
+                </div>
+                <div />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
+    </>
   );
 }
 
@@ -143,12 +248,13 @@ function AddVehicle() {
     });
 
     if (vehicle) {
-      toast.success(`Veículo ${(vehicle as VehicleFormSchema).plate} adicionado com sucesso`);
+      // TODO: exibir alerta de sucesso via CustomAlert quando integrado com a API
+      console.log('Veículo adicionado:', (vehicle as VehicleFormSchema).v_plate);
     }
   }
 
   return (
-    <Button onClick={onAdd}>
+    <Button variant="primary" onClick={onAdd}>
       Adicionar veículo
       <Plus className="size-4" />
     </Button>
