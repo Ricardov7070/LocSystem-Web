@@ -56,11 +56,11 @@ Após clonar o projeto, é nescessário renomear ou copiar o arquivo .env.exampl
 
 cp .env.example .env
 
-### 3. Inicialização dos Containers
+### 4. Inicialização dos Containers
 Dentro da pasta da API (.\LocSystem-Web\Api-Backend-LocSystem), execute:
 docker compose up -d
 
-### 4. Configuração da Rede Docker
+### 5. Configuração da Rede Docker
 Para que os serviços se comuniquem corretamente, execute os comandos abaixo para conectar os containers à rede laravel_app:
 
 # Criar a rede se não existir
