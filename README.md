@@ -1,79 +1,85 @@
-📖 Projeto LocSystem 🔥
-Sistema web de gerenciamento de localização e controle de pessoas, voltado para escritórios de assessoria jurídica. Permite:
+# 📖 LocSystem — Gestão e Backoffice Jurídico
 
-Autenticação de usuários com controle de sessão (login, logout, redefinição de senha)
-Gestão de veículos associados a assessorias jurídicas
-Gestão de operadores (localizadores) e seus prepostos
-Gestão de assessorias jurídicas e seus usuários de acesso
-Incidências (registro e consulta retroativa de ocorrências)
-Comarcas onde as assessorias atuam
-Carteiras e planos de preços para controle financeiro
-Anúncios de veículos e busca por comarca
-Sessões, logs e usuários banidos para auditoria e segurança
-Dashboard com visão geral do sistema
-Em resumo: uma plataforma de backoffice jurídico para rastreamento e controle de pessoas, veículos e operações relacionadas a assessorias jurídicas.
+![Laravel](https://img.shields.io/badge/Laravel-10-FF2D20?style=for-the-badge&logo=laravel)
+![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react)
+![Docker](https://img.shields.io/badge/Docker-Container-2496ED?style=for-the-badge&logo=docker)
+![Nginx](https://img.shields.io/badge/Nginx-Load--Balancing-009639?style=for-the-badge&logo=nginx)
 
-Tecnologias e Ferramentas 💡
-PHP: 8.1.34
-Laravel: 10.50.2
-Composer: 2.9.7
-React: 19.2.4
-Typescript: 6.0.2
-Docker: Para conteinerização e instalação de todas as dependências do projeto
-Insomnia: Para testar as rotas da API
-Swagger: Para a documentação da API
-Sanctum: Para gerar token de autenticação
-PHPMailer: Para envio de emails via SMTP
-PHPUnit: Para teste unitários das funções do backend
-MailHog: Para testes de envio de email
-NgRok: Para criação de túnels externos para acesso ao localhost
-Mysql: Para criação do banco de dados
-Nginx: Para gerenciamento de acesso aos containeres do docker, criação de proxy reverso e também Load-Balanced
-Redis: Para armazenamento de dados em cache
-Requisitos
-Sistema operacional de preferência uma " Distribuição do Linux".
-GitHub Instalado.
-Docker Instalado.
-Configuração do Projeto 🛠️
-Clonar o Repositório:
+O **LocSystem** é uma plataforma robusta de backoffice voltada para escritórios de assessoria jurídica. O sistema centraliza o controle de localização de pessoas, gestão de veículos e operações de campo, oferecendo alta disponibilidade através de balanceamento de carga e auditoria completa.
 
-Em um diretório, clone o repositório e entre na pasta do projeto. git clone https://github.com/Ricardov7070/LocSystem-Web.git
+---
 
-Executando os Containeres
+## 🚀 Funcionalidades Principais
 
-Após clonar o projeto, é nescessário renomear ou copiar o arquivo .env.example para .env nos caminhos (".\LocSystem-Web\Api-Backend-LocSystem") e (".\LocSystem-Web\Person-Frontend-LocSystem") e ajustar as variáveis de ambiente conforme necessário, incluindo as configurações para acesso ao banco de dados, para funcionando do serviço de email e para funcionamento correto do "Redis". Caso esteja em um ambiente linux, basta somente rodar o comando abaixo dentro da pasta do projeto:
+- **🔒 Segurança & Acesso:** Autenticação via Sanctum, controle de sessão, redefinição de senha e gestão de usuários banidos.
+- **🚗 Gestão de Veículos:** Controle de frotas associadas a assessorias e sistema de anúncios por comarca.
+- **👥 Operações de Campo:** Gerenciamento de operadores (localizadores), prepostos e usuários de acesso.
+- **📍 Logística Jurídica:** Cadastro de comarcas e registro retroativo de ocorrências (Incidências).
+- **💰 Financeiro:** Gestão de carteiras e planos de preços para controle de faturamento.
+- **📊 Inteligência:** Dashboard administrativo com visão geral e logs de auditoria.
 
-cp .env.example .env
+---
 
-O projeto se encontra configurado e ambientado para rodar os containeres utilizando a ferramenta do Docker. O sistema está configurado em 3 containeres de aplicação da API para assim a ferramenta conseguir realizar o balanceamento de carga de acesso entre eles. Para inicializar, em um ambiente onde se encontra instalado o docker, você precisará entrar na pasta do projeto (".\LocSystem-Web\Api-Backend-LocSystem") e executar o comando abaixo para subir os containeres já configurados:
+## 🛠️ Stack Tecnológica
 
+| Camada | Tecnologias |
+| :--- | :--- |
+| **Backend** | PHP 8.1, Laravel 10, Sanctum (Auth), PHPMailer |
+| **Frontend** | React 19, TypeScript 6 |
+| **Infra/DevOps** | Docker, Nginx (Proxy Reverso & Load Balancing), NgRok |
+| **Banco & Cache** | MySQL 8, Redis |
+| **Testes/Docs** | Swagger (OpenAPI), MailHog (SMTP Test), PHPUnit |
+
+---
+
+## 📦 Arquitetura de Infraestrutura
+
+O projeto utiliza **Alta Disponibilidade**. O Nginx atua como um Proxy Reverso distribuindo o tráfego entre **3 containers** da API Laravel, garantindo estabilidade sob carga.
+
+---
+
+## 🔧 Configuração do Ambiente
+
+### 1. Requisitos
+- Sistema Operacional Linux (preferencial).
+- Docker e Docker Compose instalados.
+- Git.
+
+### 2. Clonagem e Variáveis de Ambiente
+```bash
+git clone [https://github.com/Ricardov7070/LocSystem-Web.git](https://github.com/Ricardov7070/LocSystem-Web.git)
+cd LocSystem-Web
+
+### 3. Inicialização dos Containers
+Dentro da pasta da API (./Api-Backend-LocSystem), execute:
 docker compose up -d
 
-Reiniciando os Containeres:
-
-Caso haja a nescessidade, você pode reiniciar todos os containeres rodando os comando abaixo:
-
-docker stop $(docker ps -q) --> para parar. docker start $(docker ps -q) --> para iniciar.
-
-Colocando os containeres na rede:
-
-Para adiciona-los na mesma rede no intuito de conectar um container no outro, basta somente rodar os comandos abaixo no terminal:
-
-docker network connect laravel_app nginx-container docker network connect laravel_app laravel-1 docker network connect laravel_app laravel-2 docker network connect laravel_app laravel-3 react-container docker network connect laravel_app redis-container docker network connect laravel_app mysql-container docker network connect laravel_app mailhog-container docker network connect laravel_app ngrok-container
-
-Caso a rede "laravel_app" ainda não exista. Você pode criá-la rodando o comando abaixo antes de adicionar todos os containeres nesta rede:
-
+### 4. Configuração da Rede Docker
+Para que os serviços se comuniquem corretamente, execute os comandos abaixo para conectar os containers à rede laravel_app:
+# Criar a rede se não existir
 docker network create laravel_app
 
-Testar as Rotas da API:
+# Conectar os serviços
+docker network connect laravel_app nginx-container
+docker network connect laravel_app laravel-1
+docker network connect laravel_app laravel-2
+docker network connect laravel_app laravel-3
+docker network connect laravel_app react-container
+docker network connect laravel_app redis-container
+docker network connect laravel_app mysql-container
+docker network connect laravel_app mailhog-container
+docker network connect laravel_app ngrok-container
 
-É possível acessar o backend atraves de "http://localhost:90/api/" nas rotas abaixo. Utilize o Insomnia para testar as rotas da API individualmente. As rotas principais incluem:
+## 📑 Documentação e Acesso
 
-Swagger ✉️
-Caso deseje visualizar a documentação das rotas da API, você pode acessar através de "http://localhost:90/api/documentation":
+- API Base URL: http://localhost:90/api/
+- Documentação Swagger: http://localhost:90/api/documentation
+- Frontend: http://localhost:3000 (conforme configuração do container React)
+- MailHog (Testes de E-mail): Interface para captura de e-mails em ambiente de desenvolvimento.
 
-Contribuição 🤲
-Contribuições são bem-vindas! Se você encontrar problemas ou tiver sugestões, sinta-se à vontade para abrir uma issue ou enviar um pull request.
+## 🤝 Contribuição
 
-Licença 😸
-The Laravel framework is open-sourced software licensed under the MIT license.
+- Faça um Fork do projeto.
+- Crie uma Branch para sua feature (git checkout -b feature/MinhaFeature).
+- Dê um Commit nas alterações (git commit -m 'Add: Minha nova feature').
+- Envie um Pull Request
