@@ -43,7 +43,7 @@ services:
       php artisan vendor:publish --provider='Laravel\\Sanctum\\SanctumServiceProvider' &&
 
       echo '🔐 Publishing Swagger...' &&
-      php artisan vendor:publish --provider='L5Swagger\L5SwaggerServiceProvider' &&
+      php artisan vendor:publish --provider="L5Swagger\\L5SwaggerServiceProvider" &&
 
       echo '🌐 Configuring permissions...' &&
       chown -R www-data:www-data /var/www/laravel/storage /var/www/laravel/bootstrap/cache &&
