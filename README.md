@@ -47,15 +47,22 @@ O projeto utiliza **Alta Disponibilidade**. O Nginx atua como um Proxy Reverso d
 
 ### 2. Clonagem e Variáveis de Ambiente
 ```bash
-git clone [https://github.com/Ricardov7070/LocSystem-Web.git](https://github.com/Ricardov7070/LocSystem-Web.git)
+git clone (https://github.com/Ricardov7070/LocSystem-Web.git)
 cd LocSystem-Web
 
+### 3 Executando os Conatineres
+
+Após clonar o projeto, é nescessário renomear ou copiar o arquivo .env.example para .env nos caminhos (".\LocSystem-Web\Api-Backend-LocSystem") e (".\LocSystem-Web\Person-Frontend-LocSystem") no intuido de ajustar as variáveis de ambiente conforme necessário, incluindo as configurações para acesso ao banco de dados, para funcionando do serviço de email e para funcionamento correto do "Redis". Caso esteja em um ambiente linux, basta somente rodar o comando abaixo dentro da pasta do projeto:
+
+cp .env.example .env
+
 ### 3. Inicialização dos Containers
-Dentro da pasta da API (./Api-Backend-LocSystem), execute:
+Dentro da pasta da API (.\LocSystem-Web\Api-Backend-LocSystem), execute:
 docker compose up -d
 
 ### 4. Configuração da Rede Docker
 Para que os serviços se comuniquem corretamente, execute os comandos abaixo para conectar os containers à rede laravel_app:
+
 # Criar a rede se não existir
 docker network create laravel_app
 
@@ -74,7 +81,7 @@ docker network connect laravel_app ngrok-container
 
 - API Base URL: http://localhost:90/api/
 - Documentação Swagger: http://localhost:90/api/documentation
-- Frontend: http://localhost:3000 (conforme configuração do container React)
+- Frontend: http://localhost:5174 (conforme configuração do container React)
 - MailHog (Testes de E-mail): Interface para captura de e-mails em ambiente de desenvolvimento.
 
 ## 🤝 Contribuição
