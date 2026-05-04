@@ -51,7 +51,7 @@ O projeto utiliza **Alta Disponibilidade**. O Nginx atua como um Proxy Reverso d
 git clone (https://github.com/Ricardov7070/LocSystem-Web.git)
 cd LocSystem-Web
 
-### 3 Executando os Containers
+### 3. Executando os Containers
 
 Após clonar o projeto, é nescessário renomear ou copiar o arquivo .env.example para .env nos caminhos (".\LocSystem-Web\Api-Backend-LocSystem") e (".\LocSystem-Web\Person-Frontend-LocSystem") no intuido de ajustar as variáveis de ambiente conforme necessário, incluindo as configurações para acesso ao banco de dados, para funcionando do serviço de email e para funcionamento correto do "Redis". Caso esteja em um ambiente linux, basta somente rodar o comando abaixo dentro da pasta do projeto:
 
