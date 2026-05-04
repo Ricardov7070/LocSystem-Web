@@ -332,14 +332,14 @@ export function Dialoger() {
                           {props.footer}
                           <Button
                             type="button"
-                            variant="outline"
-                            className="cursor-pointer !border-white/20 !bg-transparent !text-white hover:!bg-white/10 hover:!text-white"
+                            variant="secondary"
+                            className="cursor-pointer border border-zinc-300 dark:!border-white/20 dark:!bg-transparent dark:!text-white dark:hover:!bg-white/10 dark:hover:!text-white"
                             onClick={() => handleCancel()}
                           >
                             {props.cancelText ?? 'Cancelar'}
                           </Button>
                           <Button type="submit" variant="success" disabled={isLoading}>
-                            Salvar
+                            {props.submitText ?? 'Salvar'}
                             {isLoading ? (
                               <Loader2 className="ml-2 size-4 animate-spin" />
                             ) : (

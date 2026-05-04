@@ -3,6 +3,8 @@
 use App\Http\Controllers\User\UserAuthenticationController;
 use App\Http\Controllers\User\UserRegistrationController;
 use App\Http\Controllers\Vehicle\VehicleController;
+use App\Http\Controllers\Wallet\WalletController;
+use App\Http\Controllers\PricingPlan\PricingPlanController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -28,5 +30,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/registerVehicle', [VehicleController::class, 'registerVehicle']);
     Route::put('/updateVehicle/{id}', [VehicleController::class, 'updateRecord']);
     Route::delete('/deleteVehicle/{id}', [VehicleController::class, 'deleteRecord']);
+
+    // Rotas "Carteiras"
+    Route::get('/wallets', [WalletController::class, 'wallets']);
+    Route::get('/singleWallet/{id}', [WalletController::class, 'singleWallet']);
+    Route::post('/registerWallet', [WalletController::class, 'registerWallet']);
+    Route::put('/updateWallet/{id}', [WalletController::class, 'updateRecord']);
+    Route::delete('/deleteWallet/{id}', [WalletController::class, 'deleteRecord']);
+
+    // Rotas "Planos de Preços"
+    Route::get('/pricingPlans', [PricingPlanController::class, 'pricingPlans']);
+    Route::get('/singlePricingPlan/{id}', [PricingPlanController::class, 'singlePricingPlan']);
+    Route::post('/registerPricingPlan', [PricingPlanController::class, 'registerPricingPlan']);
+    Route::put('/updatePricingPlan/{id}', [PricingPlanController::class, 'updateRecord']);
+    Route::delete('/deletePricingPlan/{id}', [PricingPlanController::class, 'deleteRecord']);
 
 });

@@ -21,7 +21,7 @@ class UserServiceRegistration {
 
 
     // Método Cadastro de Usuário
-    public function createUser ($request): array {
+    public function createUser($request): array {
         return DB::transaction(function () use ($request) {
 
             $user = $this->modelUser->create([

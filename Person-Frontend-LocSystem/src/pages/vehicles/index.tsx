@@ -100,7 +100,7 @@ function VehicleForm({ form }: { form: UseFormReturn<VehicleFormSchema> }) {
           const isOld = /^[A-Z]{3}[0-9]{4}$/.test(raw);
           return (
           <FormItem>
-            <FormLabel>Placa</FormLabel>
+            <FormLabel>Placa <span className="text-red-500">*</span></FormLabel>
             <FormControl>
               <Input
                 placeholder="Ex: ABC-1234 ou ABC1D23"
@@ -125,7 +125,7 @@ function VehicleForm({ form }: { form: UseFormReturn<VehicleFormSchema> }) {
         name="v_model"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Modelo</FormLabel>
+            <FormLabel>Modelo <span className="text-red-500">*</span></FormLabel>
             <FormControl>
               <Input placeholder="Ex: Corolla" {...field} />
             </FormControl>
@@ -138,7 +138,7 @@ function VehicleForm({ form }: { form: UseFormReturn<VehicleFormSchema> }) {
         name="v_phone"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Telefone de Contato</FormLabel>
+            <FormLabel>Telefone de Contato <span className="text-red-500">*</span></FormLabel>
             <FormControl>
               <Input
                 type="tel"
@@ -157,7 +157,7 @@ function VehicleForm({ form }: { form: UseFormReturn<VehicleFormSchema> }) {
         name="i_legal_advisory_access_id"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Assessoria Jurídica</FormLabel>
+            <FormLabel>Assessoria Jurídica <span className="text-red-500">*</span></FormLabel>
             {/* TODO: substituir por select/combobox de assessorias */}
             <FormControl>
               <div className="flex h-9 w-full items-center rounded-md border border-input bg-muted/40 px-3 text-sm text-muted-foreground select-none cursor-not-allowed">

@@ -8,7 +8,7 @@ class EmailService
 {
     protected $mail;
 
-    public function __construct () {
+    public function __construct() {
 
         $this->mail = new PHPMailer(true);
         $this->mail->setLanguage('br');
@@ -18,7 +18,7 @@ class EmailService
     }
 
     
-    private function configureMail (): void {
+    private function configureMail(): void {
 
         $this->mail->isSMTP();                                   
         $this->mail->Host = config('mail.mailers.smtp.host');  
@@ -31,7 +31,7 @@ class EmailService
     }
 
 
-    public function sendEmail ($to, $subject, $body, $from): void {     
+    public function sendEmail($to, $subject, $body, $from): void {     
         
         $this->mail->setFrom($from ?? env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME'));
         $this->mail->addAddress($to);

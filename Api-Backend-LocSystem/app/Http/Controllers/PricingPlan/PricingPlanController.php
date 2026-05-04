@@ -1,36 +1,36 @@
 <?php
 
-namespace App\Http\Controllers\Wallet;
+namespace App\Http\Controllers\PricingPlan;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Illuminate\Http\JsonResponse;
-use App\Http\Requests\WalletManagementRequests\WalletRegistrationRequest;
-use App\Http\Services\WalletService\WalletRegistrationService;
-use App\Http\Services\WalletService\WalletValidationService;
+use App\Http\Requests\PricingPlanManagementRequests\PricingPlanRegistrationRequest;
+use App\Http\Services\PricingPlanService\PricingPlanRegistrationService;
+use App\Http\Services\PricingPlanService\PricingPlanValidationService;
 
 
-class WalletController extends Controller {
+class PricingPlanController extends Controller {
 
     protected $serviceRegistration;
     protected $serviceValidation;
 
     // Método Construtor
-    public function __construct(WalletRegistrationService $walletRegistrationService, WalletValidationService $walletValidationService) {
-        $this->serviceRegistration = $walletRegistrationService;
-        $this->serviceValidation = $walletValidationService;
+    public function __construct(PricingPlanRegistrationService $pricingPlanRegistrationService, PricingPlanValidationService $pricingPlanValidationService) {
+        $this->serviceRegistration = $pricingPlanRegistrationService;
+        $this->serviceValidation = $pricingPlanValidationService;
     }
   
 
 /**
  * @OA\Get(
- *     path="/api/wallets",
- *     summary="Realiza o retorno das carteiras cadastradas.",
- *     tags={"Gerenciamento de Carteiras"},
+ *     path="/api/pricingPlans",
+ *     summary="Realiza o retorno dos planos de preços cadastrados.",
+ *     tags={"Gerenciamento de Planos de Preços"},
  *     @OA\Response(
  *         response=200,
- *         description="Carteiras retornadas com sucesso!"
+ *         description="Planos de preços retornados com sucesso!"
  *     ),
  *     @OA\Response(
  *         response=500,
@@ -38,14 +38,14 @@ class WalletController extends Controller {
  *     ),
  * )
  */
-    public function wallets(): JsonResponse {
+    public function pricingPlans(): JsonResponse {
         try {
 
-            $wallet = $this->serviceRegistration->viewWallets();
+            $pricingPlans = $this->serviceRegistration->viewPricingPlans();
 
             return response()->json([
-                'success' => 'Carteiras retornadas com sucesso!',
-                'wallet' => $wallet,  
+                'success' => 'Planos de preços retornados com sucesso!',
+                'pricingPlans' => $pricingPlans,  
             ], 200);
 
         } catch (\Throwable $th) {
@@ -60,16 +60,16 @@ class WalletController extends Controller {
 
 /**
  * @OA\Get(
- *     path="/api/wallet/{id}",
- *     summary="Realiza o retorno de uma carteira específica.",
- *     tags={"Gerenciamento de Carteiras"},
+ *     path="/api/singlePricingPlan/{id}",
+ *     summary="Realiza o retorno de um plano de preços específico.",
+ *     tags={"Gerenciamento de Planos de Preços"},
  *     @OA\Response(
  *         response=200,
- *         description="Carteira retornada com sucesso!"
+ *         description="Plano de preços retornado com sucesso!"
  *     ),
  *      @OA\Response(
  *         response=401,
- *         description="Carteira não encontrada!"
+ *         description="Plano de preços não encontrado!"
  *     ),
  *     @OA\Response(
  *         response=500,
@@ -77,16 +77,16 @@ class WalletController extends Controller {
  *     ),
  * )
  */
-    public function singleWallet($idWallet): JsonResponse {
+    public function singlePricingPlan($idPricingPlan): JsonResponse {
         try {
 
-            $this->serviceValidation->searchWallet($idWallet);
+            $this->serviceValidation->searchPricingPlan($idPricingPlan);
 
-            $wallet = $this->serviceRegistration->viewSingleWallet($idWallet);
+            $pricingPlan = $this->serviceRegistration->viewSinglePricingPlan($idPricingPlan);
 
             return response()->json([
-                'success' => 'Carteira retornada com sucesso!',
-                'wallet' => $wallet,  
+                'success' => 'Plano de preços retornado com sucesso!',
+                'pricingPlan' => $pricingPlan,  
             ], 200);
 
         } catch (\Throwable $th) {
@@ -101,16 +101,16 @@ class WalletController extends Controller {
 
 /**
  * @OA\Post(
- *     path="/api/registerWallet",
- *     summary="Realiza o registro da carteira.",
- *     tags={"Gerenciamento de Carteiras"},
+ *     path="/api/registerPricingPlan",
+ *     summary="Realiza o registro do plano de preços.",
+ *     tags={"Gerenciamento de Planos de Preços"},
  *     @OA\Response(
  *         response=201,
  *         description="Registro realizado com sucesso!"
  *     ),
  *     @OA\Response(
  *         response=409,
- *         description="Carteira já cadastrada!"
+ *         description="Plano de preços já cadastrado!"
  *     ),
  *     @OA\Response(
  *         response=500,
@@ -122,16 +122,16 @@ class WalletController extends Controller {
  *     ),
  * )
  */
-    public function registerWallet(WalletRegistrationRequest $request): JsonResponse {
+    public function registerPricingPlan(PricingPlanRegistrationRequest $request): JsonResponse {
         try {
 
-            $this->serviceValidation->verificationRegisterWallets($request, null);
+            $this->serviceValidation->verificationRegisterPricingPlans($request, null);
 
-            $wallet = $this->serviceRegistration->createWallet($request, auth()->id());
+            $pricingPlan = $this->serviceRegistration->createPricingPlan($request);
 
             return response()->json([
                 'success' => 'Registro realizado com sucesso!',
-                'wallet' => $wallet,  
+                'pricingPlan' => $pricingPlan,  
             ], 201);        
 
         } catch (HttpException $e) {
@@ -157,9 +157,9 @@ class WalletController extends Controller {
 
 /**
  * @OA\Put(
- *     path="/api/updateWallet/{id}",
- *     summary="Realiza a atualização de dados cadastrais de uma carteira registrada.",
- *     tags={"Gerenciamento de Carteiras"},
+ *     path="/api/updatePricingPlan/{id}",
+ *     summary="Realiza a atualização de dados cadastrais de um plano de preços registrado.",
+ *     tags={"Gerenciamento de Planos de Preços"},
  *     @OA\Response(
  *         response=200,
  *         description="Atualização realizada com sucesso!"
@@ -170,11 +170,11 @@ class WalletController extends Controller {
  *     ),
  *     @OA\Response(
  *         response=401,
- *         description="Carteira não encontrada!"
+ *         description="Plano de preços não encontrado!"
  *     ),
  *     @OA\Response(
  *         response=409,
- *         description="Carteira já cadastrada para outro usuário!"
+ *         description="Já existe um plano de preços cadastrado com esses dados!"
  *     ),
  *     @OA\Response(
  *         response=422,
@@ -182,18 +182,18 @@ class WalletController extends Controller {
  *     ),
  * )
  */
-    public function updateRecord(WalletRegistrationRequest $request, $idWallet): JsonResponse  {
+    public function updateRecord(PricingPlanRegistrationRequest $request, $idPricingPlan): JsonResponse  {
         try {
             
-            $this->serviceValidation->searchWallet($idWallet);
+            $this->serviceValidation->searchPricingPlan($idPricingPlan);
 
-            $this->serviceValidation->verificationRegisterWallets($request, $idWallet);
+            $this->serviceValidation->verificationRegisterPricingPlans($request, $idPricingPlan);
 
-            $updatedWallet = $this->serviceRegistration->updateWallet($request, $idWallet, auth()->id());
+            $updatedPricingPlan = $this->serviceRegistration->updatePricingPlan($request, $idPricingPlan);
 
             return response()->json([
                 'success' => 'Atualização realizada com sucesso!',
-                'wallet' => $updatedWallet
+                'pricingPlan' => $updatedPricingPlan
             ], 200);
 
         } catch (HttpException $e) {
@@ -219,16 +219,16 @@ class WalletController extends Controller {
 
 /**
  * @OA\Delete(
- *     path="/api/deleteWallet/{id}",
- *     summary="Realiza a exclusão da carteira selecionada do banco de dados",
- *     tags={"Gerenciamento de Carteiras"},
+ *     path="/api/deletePricingPlan/{id}",
+ *     summary="Realiza a exclusão do plano de preços selecionado do banco de dados",
+ *     tags={"Gerenciamento de Planos de Preços"},
  *     @OA\Response(
  *         response=200,
  *         description="Excluído com sucesso!"
  *     ),
  *     @OA\Response(
  *         response=401,
- *         description="Carteira não encontrada!"
+ *         description="Plano de preços não encontrado!"
  *     ),
  *     @OA\Response(
  *         response=500,
@@ -236,16 +236,16 @@ class WalletController extends Controller {
  *     ),
  * )
  */
-    public function deleteRecord($idWallet): JsonResponse {
+    public function deleteRecord($idPricingPlan): JsonResponse {
         try{
 
-            $this->serviceValidation->searchWallet($idWallet);
+            $this->serviceValidation->searchPricingPlan($idPricingPlan);
 
-            $deletedWallet = $this->serviceRegistration->deleteWallet($idWallet);
+            $deletedPricingPlan = $this->serviceRegistration->deletePricingPlan($idPricingPlan);
 
             return response()->json([
                 'success' => 'Excluído com sucesso!',
-                'wallet' => $deletedWallet,
+                'pricingPlan' => $deletedPricingPlan,
                 'status' => 'Deletado.'
             ], 200); 
 

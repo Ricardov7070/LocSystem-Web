@@ -13,7 +13,7 @@ class VehicleRegistrationService {
     protected $modelVehicle;
 
     // Método Construtor
-    public function __construct (Vehicle $modelVehicle) {
+    public function __construct(Vehicle $modelVehicle) {
         $this->modelVehicle = $modelVehicle;
     }
 
@@ -22,7 +22,7 @@ class VehicleRegistrationService {
     public function viewVehicles($request): Collection {
         $cacheKey = 'vehicles_list_' . md5(json_encode($request->only(['data_inicial', 'data_final'])));
 
-        return Cache::remember($cacheKey, 60, function () use ($request) {
+        return Cache::remember($cacheKey, 30, function () use ($request) {
             
             return $this->modelVehicle::query()
                 ->whereNull('deleted_at')
@@ -39,7 +39,7 @@ class VehicleRegistrationService {
 
 
     // Método para visualizar um veículo específico através de seu ID
-    public function viewSingleVehicle ($idVehicle): array {
+    public function viewSingleVehicle($idVehicle): array {
         $vehicle = $this->modelVehicle::where('i_id', $idVehicle)
                                         ->whereNull('deleted_at')
                                         ->first();
@@ -49,7 +49,7 @@ class VehicleRegistrationService {
 
 
     // Método para cadastrar um novo veículo
-    public function createVehicles($request, $i_user_id): array  {
+    public function createVehicle($request, $i_user_id): array  {
         return DB::transaction(function () use ($request, $i_user_id) {
 
             $vehicle = $this->modelVehicle::create([
@@ -68,7 +68,7 @@ class VehicleRegistrationService {
 
 
     // Método para atualizar um veículo
-    public function updateVehicles($request, $vehicleId, $i_user_id): array {
+    public function updateVehicle($request, $vehicleId, $i_user_id): array {
         return DB::transaction(function () use ($request, $vehicleId, $i_user_id) {
 
             $vehicle = $this->modelVehicle->findOrFail($vehicleId);
@@ -89,7 +89,7 @@ class VehicleRegistrationService {
 
 
     // Método para deletar um veículo
-    public function deleteVehicles($idVehicle): array {
+    public function deleteVehicle($idVehicle): array {
         $vehicle = $this->modelVehicle::where('i_id', $idVehicle)
                                         ->whereNull('deleted_at')
                                         ->first();

@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Illuminate\Http\JsonResponse;
-use App\Http\Requests\vehicleManagementRequests\VehicleRegistrationRequest;
+use App\Http\Requests\VehicleManagementRequests\VehicleRegistrationRequest;
 use App\Http\Services\VehicleService\VehicleRegistrationService;
 use App\Http\Services\VehicleService\VehicleValidationService;
 use Illuminate\Http\Request; 
@@ -39,7 +39,7 @@ class VehicleController extends Controller {
  *     ),
  * )
  */
-    public function vehicles (Request $request): JsonResponse {
+    public function vehicles(Request $request): JsonResponse {
         try {
 
             $vehicle = $this->serviceRegistration->viewVehicles($request);
@@ -78,7 +78,7 @@ class VehicleController extends Controller {
  *     ),
  * )
  */
-    public function singleVehicle ($idVehicle): JsonResponse {
+    public function singleVehicle($idVehicle): JsonResponse {
         try {
 
             $this->serviceValidation->searchVehicle($idVehicle);
@@ -123,12 +123,12 @@ class VehicleController extends Controller {
  *     ),
  * )
  */
-    public function registerVehicle (VehicleRegistrationRequest $request): JsonResponse {
+    public function registerVehicle(VehicleRegistrationRequest $request): JsonResponse {
         try {
 
             $this->serviceValidation->verificationRegisterVehicles($request, null);
 
-            $vehicle = $this->serviceRegistration->createVehicles($request, auth()->id());
+            $vehicle = $this->serviceRegistration->createVehicle($request, auth()->id());
 
             return response()->json([
                 'success' => 'Registro realizado com sucesso!',
@@ -191,7 +191,7 @@ class VehicleController extends Controller {
 
             $this->serviceValidation->verificationRegisterVehicles($request, $idVehicle);
 
-            $updatedVehicle = $this->serviceRegistration->updateVehicles($request, $idVehicle, auth()->id());
+            $updatedVehicle = $this->serviceRegistration->updateVehicle($request, $idVehicle, auth()->id());
 
             return response()->json([
                 'success' => 'Atualização realizada com sucesso!',
@@ -221,7 +221,7 @@ class VehicleController extends Controller {
 
 /**
  * @OA\Delete(
- *     path="/api/deleteRecord",
+ *     path="/api/deleteVehicle/{id}",
  *     summary="Realiza a exclusão do veículo selecionado do banco de dados",
  *     tags={"Gerenciamento de Veículos"},
  *     @OA\Response(
@@ -243,7 +243,7 @@ class VehicleController extends Controller {
 
             $this->serviceValidation->searchVehicle($idVehicle);
 
-            $deletedVehicle = $this->serviceRegistration->deleteVehicles($idVehicle);
+            $deletedVehicle = $this->serviceRegistration->deleteVehicle($idVehicle);
 
             return response()->json([
                 'success' => 'Excluído com sucesso!',

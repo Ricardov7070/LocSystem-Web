@@ -15,7 +15,7 @@ class UserServiceAuthentication {
     protected $modelAccount;
 
     // Método Construtor
-    public function __construct (User $modelUser, Account $modelAccount) {
+    public function __construct(User $modelUser, Account $modelAccount) {
         $this->modelUser = $modelUser;
         $this->modelAccount = $modelAccount;
     }
@@ -81,7 +81,7 @@ class UserServiceAuthentication {
 
 
     // Método de Logout
-    public function logout (User $user): void  {     
+    public function logout(User $user): void  {     
         $user->tokens()->delete();
 
         $account = $this->modelAccount->where('i_user_id', $user->i_id)->whereNull('deleted_at')->first();
@@ -116,7 +116,7 @@ class UserServiceAuthentication {
 
 
     // Método para atualizar a senha do usuário
-    public function newPassword (array $emailCredentials, array $passwordCredentials): void {   
+    public function newPassword(array $emailCredentials, array $passwordCredentials): void {   
         $user = $this->modelUser->where('v_email', $emailCredentials['v_email'])
                 ->where('e_approval_status', 'APPROVED')
                 ->where('b_banned', false)

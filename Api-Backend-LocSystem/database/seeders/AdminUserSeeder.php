@@ -35,7 +35,7 @@ class AdminUserSeeder extends Seeder
                 ['i_user_id' => $user->i_id],
                 [
                     'i_provider_id' => 0,
-                    'v_password'    => Hash::make('12345678'),
+                    'v_password'    => Hash::make('Admin@237605*#'),
                     'deleted_at'    => null,
                 ]
             );

@@ -6,6 +6,112 @@
         "version": "1.0.0"
     },
     "paths": {
+        "/api/pricingPlans": {
+            "get": {
+                "tags": [
+                    "Gerenciamento de Planos de Preços"
+                ],
+                "summary": "Realiza o retorno dos planos de preços cadastrados.",
+                "operationId": "0789713dc53dd8c5a8b52757ea57f5b0",
+                "responses": {
+                    "200": {
+                        "description": "Planos de preços retornados com sucesso!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado, tente novamente!"
+                    }
+                }
+            }
+        },
+        "/api/singlePricingPlan/{id}": {
+            "get": {
+                "tags": [
+                    "Gerenciamento de Planos de Preços"
+                ],
+                "summary": "Realiza o retorno de um plano de preços específico.",
+                "operationId": "a80ecf576db390d287c2ecc2835376c3",
+                "responses": {
+                    "200": {
+                        "description": "Plano de preços retornado com sucesso!"
+                    },
+                    "401": {
+                        "description": "Plano de preços não encontrado!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado, tente novamente!"
+                    }
+                }
+            }
+        },
+        "/api/registerPricingPlan": {
+            "post": {
+                "tags": [
+                    "Gerenciamento de Planos de Preços"
+                ],
+                "summary": "Realiza o registro do plano de preços.",
+                "operationId": "9cb2380fbe729bcbb99e425311493c27",
+                "responses": {
+                    "201": {
+                        "description": "Registro realizado com sucesso!"
+                    },
+                    "409": {
+                        "description": "Plano de preços já cadastrado!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro, tente novamente!"
+                    },
+                    "422": {
+                        "description": "Erro de validação!"
+                    }
+                }
+            }
+        },
+        "/api/updatePricingPlan/{id}": {
+            "put": {
+                "tags": [
+                    "Gerenciamento de Planos de Preços"
+                ],
+                "summary": "Realiza a atualização de dados cadastrais de um plano de preços registrado.",
+                "operationId": "753e347fd0732c9ed4375de0cdc91b73",
+                "responses": {
+                    "200": {
+                        "description": "Atualização realizada com sucesso!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro, tente novamente!"
+                    },
+                    "401": {
+                        "description": "Plano de preços não encontrado!"
+                    },
+                    "409": {
+                        "description": "Já existe um plano de preços cadastrado com esses dados!"
+                    },
+                    "422": {
+                        "description": "Erro de validação!"
+                    }
+                }
+            }
+        },
+        "/api/deletePricingPlan/{id}": {
+            "delete": {
+                "tags": [
+                    "Gerenciamento de Planos de Preços"
+                ],
+                "summary": "Realiza a exclusão do plano de preços selecionado do banco de dados",
+                "operationId": "6630256a879e3d9421804dc3b3110af9",
+                "responses": {
+                    "200": {
+                        "description": "Excluído com sucesso!"
+                    },
+                    "401": {
+                        "description": "Plano de preços não encontrado!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro, tente novamente!"
+                    }
+                }
+            }
+        },
         "/api/auth/signin": {
             "post": {
                 "tags": [
@@ -36,12 +142,12 @@
             }
         },
         "/api/logoutUser": {
-            "post": {
+            "get": {
                 "tags": [
                     "Gerenciamento de Usuário"
                 ],
                 "summary": "Realiza o logout do usuário atual autenticado",
-                "operationId": "94f28b6f8d7ae11470040b4ccd9958d9",
+                "operationId": "aad226caf4367d1cf563abe2caac0494",
                 "responses": {
                     "200": {
                         "description": "Logout realizado com sucesso!"
@@ -167,13 +273,13 @@
                 }
             }
         },
-        "/api/deleteRecord/": {
+        "/api/deleteRecord/{id}": {
             "delete": {
                 "tags": [
                     "Gerenciamento de Usuário"
                 ],
                 "summary": "Realiza a exclusão do usuário selecionado do banco de dados",
-                "operationId": "fdf876234e8de460d6da91082cfa98f6",
+                "operationId": "3a7bb0ad2db67afabba006d689ee083c",
                 "responses": {
                     "200": {
                         "description": "Excluído com sucesso!"
@@ -200,6 +306,26 @@
                 "responses": {
                     "200": {
                         "description": "Veículos retornados com sucesso!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado, tente novamente!"
+                    }
+                }
+            }
+        },
+        "/api/singleVehicle/{id}": {
+            "get": {
+                "tags": [
+                    "Gerenciamento de Veículos"
+                ],
+                "summary": "Realiza o retorno de um veículo específico.",
+                "operationId": "5151c6e736f9dc8b38c10d40af9655be",
+                "responses": {
+                    "200": {
+                        "description": "Veículo retornado com sucesso!"
+                    },
+                    "401": {
+                        "description": "Veículo não encontrado!"
                     },
                     "500": {
                         "description": "Ocorreu um erro inesperado, tente novamente!"
@@ -256,19 +382,125 @@
                 }
             }
         },
-        "/api/deleteRecord": {
+        "/api/deleteVehicle/{id}": {
             "delete": {
                 "tags": [
                     "Gerenciamento de Veículos"
                 ],
                 "summary": "Realiza a exclusão do veículo selecionado do banco de dados",
-                "operationId": "cc7c4fab692d32052dc09f8e56ea040f",
+                "operationId": "4f44b88e9d594d943eb6914d32e2540a",
                 "responses": {
                     "200": {
                         "description": "Excluído com sucesso!"
                     },
                     "401": {
                         "description": "Veículo não encontrado!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro, tente novamente!"
+                    }
+                }
+            }
+        },
+        "/api/wallets": {
+            "get": {
+                "tags": [
+                    "Gerenciamento de Carteiras"
+                ],
+                "summary": "Realiza o retorno das carteiras cadastradas.",
+                "operationId": "c862b56e75a9b0157d590c265f7c7c16",
+                "responses": {
+                    "200": {
+                        "description": "Carteiras retornadas com sucesso!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado, tente novamente!"
+                    }
+                }
+            }
+        },
+        "/api/wallet/{id}": {
+            "get": {
+                "tags": [
+                    "Gerenciamento de Carteiras"
+                ],
+                "summary": "Realiza o retorno de uma carteira específica.",
+                "operationId": "c093409921ad0004bd6eeff2cf9c8816",
+                "responses": {
+                    "200": {
+                        "description": "Carteira retornada com sucesso!"
+                    },
+                    "401": {
+                        "description": "Carteira não encontrada!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado, tente novamente!"
+                    }
+                }
+            }
+        },
+        "/api/registerWallet": {
+            "post": {
+                "tags": [
+                    "Gerenciamento de Carteiras"
+                ],
+                "summary": "Realiza o registro da carteira.",
+                "operationId": "958c49b1280e12e8b37456ff06ba1b41",
+                "responses": {
+                    "201": {
+                        "description": "Registro realizado com sucesso!"
+                    },
+                    "409": {
+                        "description": "Carteira já cadastrada!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro, tente novamente!"
+                    },
+                    "422": {
+                        "description": "Erro de validação!"
+                    }
+                }
+            }
+        },
+        "/api/updateWallet/{id}": {
+            "put": {
+                "tags": [
+                    "Gerenciamento de Carteiras"
+                ],
+                "summary": "Realiza a atualização de dados cadastrais de uma carteira registrada.",
+                "operationId": "3d9c3c63aec508768db1a125170c51e1",
+                "responses": {
+                    "200": {
+                        "description": "Atualização realizada com sucesso!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro, tente novamente!"
+                    },
+                    "401": {
+                        "description": "Carteira não encontrada!"
+                    },
+                    "409": {
+                        "description": "Carteira já cadastrada para outro usuário!"
+                    },
+                    "422": {
+                        "description": "Erro de validação!"
+                    }
+                }
+            }
+        },
+        "/api/deleteWallet/{id}": {
+            "delete": {
+                "tags": [
+                    "Gerenciamento de Carteiras"
+                ],
+                "summary": "Realiza a exclusão da carteira selecionada do banco de dados",
+                "operationId": "acaa39ba56a83afdb643b6b75892ff2a",
+                "responses": {
+                    "200": {
+                        "description": "Excluído com sucesso!"
+                    },
+                    "401": {
+                        "description": "Carteira não encontrada!"
                     },
                     "500": {
                         "description": "Ocorreu um erro, tente novamente!"
@@ -288,12 +520,20 @@
     },
     "tags": [
         {
+            "name": "Gerenciamento de Planos de Preços",
+            "description": "Gerenciamento de Planos de Preços"
+        },
+        {
             "name": "Gerenciamento de Usuário",
             "description": "Gerenciamento de Usuário"
         },
         {
             "name": "Gerenciamento de Veículos",
             "description": "Gerenciamento de Veículos"
+        },
+        {
+            "name": "Gerenciamento de Carteiras",
+            "description": "Gerenciamento de Carteiras"
         }
     ]
 }

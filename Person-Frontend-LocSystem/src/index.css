@@ -106,3 +106,24 @@
     cursor: pointer;
   }
 }
+
+/* Calendar selected day */
+.locsystem-calendar td[data-selected] button {
+  background-color: #18181b !important;
+  border-radius: 9999px !important;
+  color: white !important;
+}
+
+.locsystem-calendar td[data-selected] button:hover {
+  background-color: #18181b !important;
+}
+
+.dark .locsystem-calendar td[data-selected] button {
+  background-color: #e4e4e7 !important;
+  border-radius: 9999px !important;
+  color: black !important;
+}
+
+.dark .locsystem-calendar td[data-selected] button:hover {
+  background-color: #e4e4e7 !important;
+}

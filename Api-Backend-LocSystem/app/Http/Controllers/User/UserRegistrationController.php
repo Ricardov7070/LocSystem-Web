@@ -8,8 +8,8 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 use App\Http\Services\UserService\UserServiceAuthentication;
 use App\Http\Services\UserService\UserServiceValidation;
 use App\Http\Services\UserService\UserServiceRegistration;
-use App\Http\Requests\userManagementRequests\UserRegisterRequest;
-use App\Http\Requests\userManagementRequests\UserUpdateRequest;
+use App\Http\Requests\UserManagementRequests\UserRegisterRequest;
+use App\Http\Requests\UserManagementRequests\UserUpdateRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request; 
 
@@ -150,7 +150,7 @@ class UserRegistrationController extends Controller {
 
 /**
  * @OA\Delete(
- *     path="/api/deleteRecord/",
+ *     path="/api/deleteRecord/{id}",
  *     summary="Realiza a exclusão do usuário selecionado do banco de dados",
  *     tags={"Gerenciamento de Usuário"},
  *     @OA\Response(

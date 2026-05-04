@@ -17,7 +17,7 @@ function Calendar({
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
-      className={cn('relative rounded-xl border border-zinc-300 p-4 pt-12 text-black dark:border-white/10 dark:text-white', className)}
+      className={cn('locsystem-calendar relative rounded-xl border border-zinc-300 p-4 pt-12 text-black dark:border-white/10 dark:text-white', className)}
       classNames={{
         months: 'flex flex-col sm:flex-row gap-6',
         month: 'flex flex-col gap-4',
@@ -37,19 +37,18 @@ function Calendar({
         weekday: 'w-9 rounded-md text-center text-[0.78rem] font-normal lowercase text-zinc-500 dark:text-zinc-400',
         week: 'mt-1 flex w-full',
         day: cn(
-          'relative h-9 w-9 p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-zinc-200 dark:[&:has([aria-selected])]:bg-zinc-800 [&:has([aria-selected].day-outside)]:bg-zinc-100 dark:[&:has([aria-selected].day-outside)]:bg-zinc-900/60 [&:has([aria-selected].day-range-end)]:rounded-r-md',
+          'relative h-9 w-9 p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-zinc-200 dark:[&:has([aria-selected])]:bg-zinc-800 [&:has([aria-selected].day-outside)]:bg-zinc-100 dark:[&:has([aria-selected].day-outside)]:bg-zinc-900/60 [&:has([aria-selected].day-range-end)]:rounded-r-full',
           props.mode === 'range'
-            ? '[&:has(>.day-range-end)]:rounded-r-md [&:has(>.day-range-start)]:rounded-l-md first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md'
-            : '[&:has([aria-selected])]:rounded-md'
+            ? '[&:has(>.day-range-end)]:rounded-r-full [&:has(>.day-range-start)]:rounded-l-full first:[&:has([aria-selected])]:rounded-l-full last:[&:has([aria-selected])]:rounded-r-full'
+            : '[&:has([aria-selected])]:rounded-full'
         ),
         day_button: cn(
           buttonVariants({ variant: 'ghost' }),
-          'h-9 w-9 rounded-md p-0 font-medium text-black hover:bg-zinc-100 dark:text-white dark:hover:bg-zinc-800 aria-selected:opacity-100'
+          '!rounded-full h-9 w-9 p-0 font-medium text-black hover:bg-zinc-100 dark:text-white dark:hover:bg-zinc-800'
         ),
         range_start: 'day-range-start',
         range_end: 'day-range-end',
-        selected:
-          'bg-zinc-800 text-white hover:bg-zinc-800 hover:text-white focus:bg-zinc-800 focus:text-white dark:bg-zinc-200 dark:text-black dark:hover:bg-zinc-200 dark:hover:text-black dark:focus:bg-zinc-200 dark:focus:text-black',
+        selected: '',
         today: 'bg-zinc-100 text-black dark:bg-zinc-800 dark:text-white',
         outside:
           'day-outside text-zinc-400 dark:text-zinc-600 opacity-50 aria-selected:bg-accent/50 aria-selected:text-zinc-400 dark:aria-selected:text-zinc-600 aria-selected:opacity-30',

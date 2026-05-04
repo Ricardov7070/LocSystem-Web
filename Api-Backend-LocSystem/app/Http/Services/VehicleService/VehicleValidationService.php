@@ -11,13 +11,13 @@ class VehicleValidationService {
     protected $modelVehicle;
 
     // Método Construtor
-    public function __construct (Vehicle $modelVehicle) {
+    public function __construct(Vehicle $modelVehicle) {
         $this->modelVehicle = $modelVehicle;
     }
 
 
     // Método para verificar se o veículo já possui cadastro na base através de sua placa
-    public function verificationRegisterVehicles ($request, $idVehicle = null): void {
+    public function verificationRegisterVehicles($request, $idVehicle = null): void {
         $query = $this->modelVehicle::where('v_plate', $request->input('v_plate'))
                                     ->whereNull('deleted_at');
 
@@ -34,7 +34,7 @@ class VehicleValidationService {
 
     
     // Método para verificar se o veículo existe no sistema através de seu ID
-    public function searchVehicle ($idVehicle): void {
+    public function searchVehicle($idVehicle): void {
         $vehicle = $this->modelVehicle::where('i_id', $idVehicle)
                                         ->whereNull('deleted_at')
                                         ->first();

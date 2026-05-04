@@ -7,9 +7,9 @@ use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use App\Http\Services\UserService\UserServiceAuthentication;
 use App\Http\Services\UserService\UserServiceValidation;
-use App\Http\Requests\userManagementRequests\UserLoginRequest;
-use App\Http\Requests\userManagementRequests\ForgotPasswordRequest;
-use App\Http\Requests\userManagementRequests\UpdatePasswordRequest;
+use App\Http\Requests\UserManagementRequests\UserLoginRequest;
+use App\Http\Requests\UserManagementRequests\ForgotPasswordRequest;
+use App\Http\Requests\UserManagementRequests\UpdatePasswordRequest;
 use Illuminate\Http\JsonResponse;
 use App\Http\Services\EmailService\EmailService;    
 use Illuminate\Http\Request; 
@@ -60,7 +60,7 @@ class UserAuthenticationController extends Controller {
  *     ),
  * )
  */
-    public function userAuthentication (UserLoginRequest $request): JsonResponse {
+    public function userAuthentication(UserLoginRequest $request): JsonResponse {
         try {
                 $data = $this->serviceAuthentication->authenticate(
                     $request->only('v_email'),

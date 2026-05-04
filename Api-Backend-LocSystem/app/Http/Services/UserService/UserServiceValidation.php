@@ -60,7 +60,7 @@ class UserServiceValidation {
 
 
     // Método de validação existencial pelo o ID do usuário selecionado para update
-    public function searchUser ($id_user): void {      
+    public function searchUser($id_user): void {      
         $user = $this->modelUser::where('i_id', $id_user)
             ->where('e_approval_status', 'APPROVED')
             ->where('b_banned', false)

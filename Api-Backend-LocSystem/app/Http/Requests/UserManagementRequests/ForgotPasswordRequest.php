@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\userManagementRequests;
+namespace App\Http\Requests\UserManagementRequests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
@@ -9,14 +9,14 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 class ForgotPasswordRequest extends FormRequest
 {
 
-    public function authorize (): bool {
+    public function authorize(): bool {
 
         return true; 
 
     }
 
 
-    public function rules (): array {
+    public function rules(): array {
 
         return [
             'v_email' => 'required|string|email',
@@ -26,7 +26,7 @@ class ForgotPasswordRequest extends FormRequest
     }
 
     
-    public function messages (): array {
+    public function messages(): array {
 
         return [
             'v_email.required' => 'O campo de e-mail é obrigatório.',
@@ -40,7 +40,7 @@ class ForgotPasswordRequest extends FormRequest
     }
 
 
-    protected function failedValidation (Validator $validator): never {
+    protected function failedValidation(Validator $validator): never {
 
         throw new HttpResponseException(response()->json([
             'errors' => $validator->errors()

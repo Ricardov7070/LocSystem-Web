@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\vehicleManagementRequests;
+namespace App\Http\Requests\VehicleManagementRequests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
@@ -9,14 +9,14 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 class VehicleRegistrationRequest extends FormRequest
 {
 
-    public function authorize (): bool {
+    public function authorize(): bool {
 
         return true; 
 
     }
 
 
-    public function rules (): array {
+    public function rules(): array {
 
         return [
             'v_plate' => 'required|string|max:20',
@@ -29,7 +29,7 @@ class VehicleRegistrationRequest extends FormRequest
     }
 
     
-    public function messages (): array {
+    public function messages(): array {
 
         return [
             'v_plate.required' => 'O campo de placa é obrigatório.',
@@ -52,7 +52,7 @@ class VehicleRegistrationRequest extends FormRequest
     }
 
 
-    protected function failedValidation (Validator $validator): never {
+    protected function failedValidation(Validator $validator): never {
 
         throw new HttpResponseException(response()->json([
             'errors' => $validator->errors()
