@@ -70,7 +70,7 @@ Para que os serviços se comuniquem corretamente, execute os comandos abaixo par
 
 docker network create laravel_app
 
-## 🛜 Conectar os serviços
+## 📡 Conectar os serviços
 
 docker network connect laravel_app nginx-container
 docker network connect laravel_app laravel-1
