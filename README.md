@@ -4,6 +4,7 @@
 ![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react)
 ![Docker](https://img.shields.io/badge/Docker-Container-2496ED?style=for-the-badge&logo=docker)
 ![Nginx](https://img.shields.io/badge/Nginx-Load--Balancing-009639?style=for-the-badge&logo=nginx)
+![Redis](https://img.shields.io/badge/Redis-Cache-DC382D?style=for-the-badge&logo=redis)
 
 O **LocSystem** é uma plataforma robusta de backoffice voltada para escritórios de assessoria jurídica. O sistema centraliza o controle de localização de pessoas, gestão de veículos e operações de campo, oferecendo alta disponibilidade através de balanceamento de carga e auditoria completa.
 
