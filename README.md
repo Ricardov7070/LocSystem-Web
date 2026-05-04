@@ -70,12 +70,12 @@ docker compose up -d
 
 Para que os serviços se comuniquem corretamente, execute os comandos abaixo para conectar os containers à rede laravel_app:
 
-## 🖥️ Criar a rede se não existir
+### 🖥️ Criar a rede se não existir
 ```bash
 docker network create laravel_app
 ```
 
-## 📡 Conectar os serviços
+### 📡 Conectar os serviços
 ```bash
 docker network connect laravel_app nginx-container
 docker network connect laravel_app laravel-1
