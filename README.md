@@ -50,7 +50,7 @@ O projeto utiliza **Alta Disponibilidade**. O Nginx atua como um Proxy Reverso d
 git clone (https://github.com/Ricardov7070/LocSystem-Web.git)
 cd LocSystem-Web
 
-### 3 Executando os Conatineres
+### 3 Executando os Containers
 
 Após clonar o projeto, é nescessário renomear ou copiar o arquivo .env.example para .env nos caminhos (".\LocSystem-Web\Api-Backend-LocSystem") e (".\LocSystem-Web\Person-Frontend-LocSystem") no intuido de ajustar as variáveis de ambiente conforme necessário, incluindo as configurações para acesso ao banco de dados, para funcionando do serviço de email e para funcionamento correto do "Redis". Caso esteja em um ambiente linux, basta somente rodar o comando abaixo dentro da pasta do projeto:
 
@@ -65,11 +65,11 @@ docker compose up -d
 
 Para que os serviços se comuniquem corretamente, execute os comandos abaixo para conectar os containers à rede laravel_app:
 
-# Criar a rede se não existir
+## 🖥️ Criar a rede se não existir
 
 docker network create laravel_app
 
-# Conectar os serviços
+## 🛜 Conectar os serviços
 
 docker network connect laravel_app nginx-container
 docker network connect laravel_app laravel-1
@@ -87,6 +87,11 @@ docker network connect laravel_app ngrok-container
 - Documentação Swagger: http://localhost:90/api/documentation
 - Frontend: http://localhost:5174 (conforme configuração do container React)
 - MailHog (Testes de E-mail): Interface para captura de e-mails em ambiente de desenvolvimento.
+
+## Usuário Administrador Principal
+
+- User: admin@admin.com
+- Password: Admin@237605*#
 
 ## 🤝 Contribuição
 
