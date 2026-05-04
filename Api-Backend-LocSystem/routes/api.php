@@ -44,5 +44,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/registerPricingPlan', [PricingPlanController::class, 'registerPricingPlan']);
     Route::put('/updatePricingPlan/{id}', [PricingPlanController::class, 'updateRecord']);
     Route::delete('/deletePricingPlan/{id}', [PricingPlanController::class, 'deleteRecord']);
+    Route::put('/activateDeactivatePricingPlans/{id}', [PricingPlanController::class, 'activateDeactivatePricingPlans']);
 
 });

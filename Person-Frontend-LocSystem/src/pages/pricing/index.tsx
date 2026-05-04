@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Plus, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { Plus, MoreHorizontal, Pencil, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 import { UseFormReturn } from 'react-hook-form';
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
@@ -156,6 +156,7 @@ function PricingTable() {
  
   const queryClient = useQueryClient();
 
+
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Record<string, unknown> }) => {
       const response = await api.put(`/updatePricingPlan/${id}`, data);
@@ -163,9 +164,18 @@ function PricingTable() {
     },
   });
 
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await api.delete(`/deletePricingPlan/${id}`);
+      return response.data;
+    },
+  });
+
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await api.put(`/activateDeactivatePricingPlans/${id}`);
       return response.data;
     },
   });
@@ -265,6 +275,58 @@ function PricingTable() {
 
   }
 
+
+  async function handleToggleStatus(plan: PricingPlan) {
+
+    const action = plan.b_is_active ? 'desativar' : 'ativar';
+    const confirmed = await dialog.confirm(
+      plan.b_is_active ? 'Desativar Plano' : 'Ativar Plano',
+      {
+        description: `Tem certeza que deseja ${action} o plano "${plan.v_name}"?`,
+        actionText: plan.b_is_active ? 'Desativar' : 'Ativar',
+        cancelText: 'Cancelar',
+      },
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const response = await toggleStatusMutation.mutateAsync(plan.i_id);
+      showAlert(`✅ ${response?.success}`, 'success');
+      queryClient.invalidateQueries({ queryKey: ['pricingPlans'] });
+    } catch (error: any) {
+
+      if (error?.response) {
+
+        const { status, data: errData } = error.response;
+
+        if (status === 401) {
+
+          showAlert(`⚠️ ${errData?.info}`, 'warning');
+
+        } else if (status === 409) {
+
+          showAlert(`⚠️ ${errData?.info}`, 'info');
+
+        } else if (status === 422) {
+
+          showAlert(`⚠️ ${errData?.message ?? errData?.error}`, 'warning');
+
+        } else {
+
+          showAlert(`🚫 ${errData?.error}`, 'error');
+     
+        }
+     
+      } else {
+
+        showAlert('🚫 Ocorreu um erro inesperado ao conectar com a API.', 'error');
+
+      }
+
+    }
+
+  }
 
   async function handleDelete(plan: PricingPlan) {
 
@@ -424,9 +486,20 @@ function PricingTable() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEdit(plan)}>
-                          <Pencil className="mr-2 size-4" />
-                          Atualizar
+                        {plan.b_is_active && (
+                          <DropdownMenuItem onClick={() => handleEdit(plan)}>
+                            <Pencil className="mr-2 size-4" />
+                            Atualizar
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem
+                          onClick={() => handleToggleStatus(plan)}
+                          className={plan.b_is_active ? 'text-yellow-600 focus:text-yellow-600' : 'text-green-600 focus:text-green-600'}
+                        >
+                          {plan.b_is_active
+                            ? <ToggleLeft className="mr-2 size-4" />
+                            : <ToggleRight className="mr-2 size-4" />}
+                          {plan.b_is_active ? 'Desativar' : 'Ativar'}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => handleDelete(plan)}

@@ -262,4 +262,50 @@ class PricingPlanController extends Controller {
         }
     }
 
+
+    /**
+ * @OA\Put(
+ *     path="/api/activateDeactivatePricingPlans/{id}",
+ *     summary="Realiza a ativação ou desativação do plano de preço selecionado",
+ *     tags={"Gerenciamento de Planos de Preços"},
+ *     @OA\Response(
+ *         response=200,
+ *         description="Atualizado com sucesso!"
+ *     ),
+ *     @OA\Response(
+ *         response=401,
+ *         description="Plano de preços não encontrado!"
+ *     ),
+ *     @OA\Response(
+ *         response=500,
+ *         description="Ocorreu um erro, tente novamente!"
+ *     ),
+ * )
+ */
+    public function activateDeactivatePricingPlans($idPricingPlan): JsonResponse {
+        try{
+
+            $this->serviceValidation->searchPricingPlan($idPricingPlan);
+
+            $updatedPricingPlan = $this->serviceRegistration->activateDeactivatePricingPlans($idPricingPlan);
+
+            return response()->json([
+                'success' => 'Atualizado com sucesso!',
+                'pricingPlan' => $updatedPricingPlan,
+                'status' => 'Atualizado.'
+            ], 200); 
+
+        } catch (HttpException $e) {
+   
+            return response()->json(['info' => $e->getMessage()], $e->getStatusCode());
+
+        } catch (\Throwable $th) {
+  
+            return response()->json([
+                'error' => 'Ocorreu um erro, tente novamente!',
+            ], 500);
+
+        }
+    }
+
 }

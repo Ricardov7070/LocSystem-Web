@@ -89,4 +89,19 @@ class PricingPlanRegistrationService {
 
         return [];
     }
+
+
+    // Método para ativar ou desativar um plano de preços
+    public function activateDeactivatePricingPlans ($idPricingPlan): array {
+        $pricingPlans = $this->modelPricingPlan::where('i_id', $idPricingPlan)
+                                                ->whereNull('deleted_at')
+                                                ->get();
+
+        foreach ($pricingPlans as $plan) {
+            $plan->b_is_active = !$plan->b_is_active;
+            $plan->save();
+        }
+
+        return $pricingPlans->toArray();
+    }
 }
