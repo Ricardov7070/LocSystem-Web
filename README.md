@@ -88,7 +88,7 @@ docker network connect laravel_app ngrok-container
 - Frontend: http://localhost:5174 (conforme configuração do container React)
 - MailHog (Testes de E-mail): Interface para captura de e-mails em ambiente de desenvolvimento.
 
-## Usuário Administrador Principal
+## 🔒 Usuário Administrador Principal
 
 - User: admin@admin.com
 - Password: Admin@237605*#
