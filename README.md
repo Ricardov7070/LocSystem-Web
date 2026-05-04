@@ -61,22 +61,22 @@ cp .env.example .env
 
 ### 4. Inicialização dos Containers
 
-```bash
 Dentro da pasta da API (.\LocSystem-Web\Api-Backend-LocSystem), execute:
+```bash
 docker compose up -d
 ```
 
 ### 5. Configuração da Rede Docker
 
-```bash
 Para que os serviços se comuniquem corretamente, execute os comandos abaixo para conectar os containers à rede laravel_app:
 
 ## 🖥️ Criar a rede se não existir
-
+```bash
 docker network create laravel_app
+```
 
 ## 📡 Conectar os serviços
-
+```bash
 docker network connect laravel_app nginx-container
 docker network connect laravel_app laravel-1
 docker network connect laravel_app laravel-2
