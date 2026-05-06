@@ -6,6 +6,7 @@ use App\Models\User\User;
 use App\Models\Account\Account;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 
@@ -56,6 +57,15 @@ class UserServiceAuthentication {
             throw new HttpException(409, 'Altere sua senha de acesso!');
         }
 
+        if ($user->b_twoFactorEnabled) {
+            $preAuthToken = Str::uuid()->toString();
+            Cache::put('2fa_pending:' . $preAuthToken, $user->i_id, now()->addMinutes(5));
+            return [
+                'two_factor_redirect' => true,
+                'pre_auth_token'      => $preAuthToken,
+            ];
+        }
+
         $expiresAt = now()->addMinutes((int) env('TOKEN_TTL_MINUTES', 1440));
 
         $tokenResult = $user->createToken('auth_token', ['*'], $expiresAt);
@@ -74,8 +84,9 @@ class UserServiceAuthentication {
         $shortName = implode(' ', array_slice($nameParts, 0, 2));
 
         return [
-            'user_name'    => $shortName,
-            'access_token' => $plainTextToken,
+            'user_name'          => $shortName,
+            'access_token'       => $plainTextToken,
+            'twoFactorEnabled'   => (bool) $user->b_twoFactorEnabled,
         ];
     }
 

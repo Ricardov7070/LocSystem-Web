@@ -70,7 +70,6 @@ function formatCurrencyDisplay(value: string | number | null | undefined): strin
 
 
 function parseCurrencyToDecimal(formatted: string): string {
-  // Mantém apenas dígitos e a vírgula (separador decimal em pt-BR), depois converte para ponto
   const cleaned = formatted.replace(/[^\d,]/g, '');
   return cleaned.replace(',', '.');
 }

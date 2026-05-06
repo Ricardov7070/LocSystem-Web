@@ -67,11 +67,19 @@ class UserAuthenticationController extends Controller {
                     $request->only('v_password') 
                 );
 
+                if (!empty($data['two_factor_redirect'])) {
+                    return response()->json([
+                        'twoFactorRedirect' => true,
+                        'preAuthToken'      => $data['pre_auth_token'],
+                    ], 200);
+                }
+
                 return response()->json([
-                    'success'      => 'Login realizado. Bem-Vindo ' . $data['user_name'] . '!',
-                    'user'         => $data['user_name'],
-                    'access_token' => $data['access_token'],
-                    'token_type'   => 'Bearer',
+                    'success'          => 'Login realizado. Bem-Vindo ' . $data['user_name'] . '!',
+                    'user'             => $data['user_name'],
+                    'access_token'     => $data['access_token'],
+                    'token_type'       => 'Bearer',
+                    'twoFactorEnabled' => $data['twoFactorEnabled'],
                 ], 200);
 
         } catch (HttpException $e) {

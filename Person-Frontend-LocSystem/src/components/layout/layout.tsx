@@ -101,7 +101,7 @@ export default function AuthLayout({
             </p>
           </header>
         )}
-        <Card className="mx-auto w-full max-w-lg border-white/20 bg-black/40 p-8 shadow-2xl backdrop-blur-lg">
+        <Card className="mx-auto flex w-full max-w-lg items-center justify-center border-white/20 bg-black/40 p-8 shadow-2xl backdrop-blur-lg">
           {children}
         </Card>
       </main>

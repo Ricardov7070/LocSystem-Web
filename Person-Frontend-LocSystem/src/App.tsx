@@ -8,6 +8,7 @@ import { AppLayout } from "./components/layout/app-layout";
 
 const DashboardPage = lazy(() => import("./pages/dashboard"));
 const ProfilePage = lazy(() => import("./pages/profile"));
+const TwoFactorPage = lazy(() => import("./pages/two-factor"));
 const VehiclesPage = lazy(() => import("./pages/vehicles"));
 const OperatorsPage = lazy(() => import("./pages/operators"));
 const OperatorDetailPage = lazy(() => import("./pages/operators/detail"));
@@ -36,6 +37,7 @@ const App: React.FC = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/2fa" element={<TwoFactorPage />} />
 
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<DashboardPage />} />

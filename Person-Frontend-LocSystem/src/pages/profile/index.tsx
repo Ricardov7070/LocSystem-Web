@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Edit, ShieldCheck, Loader2 } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
+import api from '../../services/api';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -201,18 +203,92 @@ function ProfilePassword() {
 }
 
 function ProfileTwoFactor() {
-  const [step, setStep] = useState<'idle' | 'password' | 'qr' | 'verify'>('idle');
+  const stored = localStorage.getItem('locsystem_user');
+  const userStored = stored ? JSON.parse(stored) : {};
+
+  const [step, setStep] = useState<'idle' | 'password' | 'qr' | 'verify' | 'disable'>('idle');
+  const [isEnabled, setIsEnabled] = useState<boolean>(userStored.twoFactorEnabled ?? false);
   const [password, setPassword] = useState('');
+  const [totpURI, setTotpURI] = useState('');
+  const [manualSecret, setManualSecret] = useState('');
   const [code, setCode] = useState('');
+  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Busca o status real do backend ao montar o componente
+  useEffect(() => {
+    api.get('/auth/2fa/status')
+      .then(({ data }) => {
+        setIsEnabled(data.twoFactorEnabled);
+        updateStoredTwoFactor(data.twoFactorEnabled);
+      })
+      .catch(() => {});
+  }, []);
 
   function resetState() {
     setStep('idle');
     setPassword('');
+    setTotpURI('');
+    setManualSecret('');
     setCode('');
+    setError('');
     setIsLoading(false);
   }
 
+  function updateStoredTwoFactor(value: boolean) {
+    const s = localStorage.getItem('locsystem_user');
+    if (s) {
+      const u = JSON.parse(s);
+      localStorage.setItem('locsystem_user', JSON.stringify({ ...u, twoFactorEnabled: value }));
+    }
+  }
+
+  async function handleEnable() {
+    setIsLoading(true);
+    setError('');
+    try {
+      const { data } = await api.post('/auth/2fa/enable', { password });
+      setTotpURI(data.totpURI);
+      setManualSecret((data.secret as string).replace(/(.{4})/g, '$1 ').trim());
+      setStep('qr');
+    } catch (err: any) {
+      setError(err.response?.data?.error ?? 'Erro ao ativar o autenticador.');
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleVerify() {
+    setIsLoading(true);
+    setError('');
+    try {
+      await api.post('/auth/2fa/verify-activate', { code });
+      updateStoredTwoFactor(true);
+      setIsEnabled(true);
+      resetState();
+    } catch (err: any) {
+      setError(err.response?.data?.error ?? 'Código inválido. Tente novamente.');
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleDisable() {
+    setIsLoading(true);
+    setError('');
+    try {
+      await api.post('/auth/2fa/disable', { password });
+      updateStoredTwoFactor(false);
+      setIsEnabled(false);
+      resetState();
+    } catch (err: any) {
+      setError(err.response?.data?.error ?? 'Erro ao desativar o autenticador.');
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  // ── Passo: confirmar senha para ativar ──────────────────────────────────
   if (step === 'password') {
     return (
       <Card>
@@ -230,15 +306,16 @@ function ProfileTwoFactor() {
               type="password"
               placeholder="Sua senha"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (!e.target.value) setError('');
+              }}
             />
+            {error && <p className="text-sm text-red-500">{error}</p>}
           </div>
         </div>
         <div className="flex gap-2 p-6">
-          <Button
-            onClick={() => { setIsLoading(true); setTimeout(() => { setIsLoading(false); setStep('qr'); }, 500); }}
-            disabled={!password || isLoading}
-          >
+          <Button onClick={handleEnable} disabled={!password || isLoading}>
             {isLoading ? <><Loader2 className="size-4 animate-spin" /> Gerando...</> : 'Continuar'}
           </Button>
           <Button variant="outline" onClick={resetState} className="cursor-pointer !border-white/20 !bg-transparent !text-white hover:!bg-white/10 hover:!text-white">Cancelar</Button>
@@ -247,21 +324,27 @@ function ProfileTwoFactor() {
     );
   }
 
+  // ── Passo: exibir QR Code ───────────────────────────────────────────────
   if (step === 'qr') {
     return (
       <Card>
         <header className="flex items-center gap-3 p-6">
           <ShieldCheck className="size-5 text-muted-foreground" />
-          <h3 className="text-lg font-semibold">Escanear novo QR Code</h3>
+          <h3 className="text-lg font-semibold">Escanear QR Code</h3>
         </header>
         <div className="space-y-4 px-6">
           <p className="text-sm text-muted-foreground">
-            Escaneie o código abaixo com seu aplicativo autenticador.
+            Escaneie com Google Authenticator, Authy ou similar. O app mostrará{' '}
+            <strong>LocSystem</strong>.
           </p>
           <div className="flex justify-center rounded-lg border bg-white p-6">
-            <div className="flex h-[200px] w-[200px] items-center justify-center bg-gray-100 text-sm text-muted-foreground">
-              QR Code será exibido aqui
-            </div>
+            <QRCodeSVG value={totpURI} size={240} level="H" includeMargin />
+          </div>
+          <p className="text-xs text-muted-foreground text-center">
+            Caso não consiga escanear, insira manualmente no app:
+          </p>
+          <div className="rounded-md border bg-muted px-4 py-2 text-center font-mono text-sm tracking-widest select-all">
+            {manualSecret}
           </div>
         </div>
         <div className="flex gap-2 p-6">
@@ -272,16 +355,17 @@ function ProfileTwoFactor() {
     );
   }
 
+  // ── Passo: verificar código para ativar ─────────────────────────────────
   if (step === 'verify') {
     return (
       <Card>
         <header className="flex items-center gap-3 p-6">
           <ShieldCheck className="size-5 text-muted-foreground" />
-          <h3 className="text-lg font-semibold">Verificar novo autenticador</h3>
+          <h3 className="text-lg font-semibold">Verificar autenticador</h3>
         </header>
         <div className="space-y-4 px-6">
           <p className="text-sm text-muted-foreground">
-            Digite o código de 6 dígitos exibido no seu aplicativo autenticador.
+            Digite o código de 6 dígitos exibido no app.
           </p>
           <Input
             type="text"
@@ -294,12 +378,10 @@ function ProfileTwoFactor() {
             onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
             autoFocus
           />
+          {error && <p className="text-sm text-red-500">{error}</p>}
         </div>
         <div className="flex gap-2 p-6">
-          <Button
-            onClick={() => { setIsLoading(true); setTimeout(() => { setIsLoading(false); resetState(); }, 500); }}
-            disabled={code.length !== 6 || isLoading}
-          >
+          <Button onClick={handleVerify} disabled={code.length !== 6 || isLoading}>
             {isLoading ? <><Loader2 className="size-4 animate-spin" /> Verificando...</> : 'Verificar'}
           </Button>
           <Button variant="outline" onClick={resetState} className="cursor-pointer !border-white/20 !bg-transparent !text-white hover:!bg-white/10 hover:!text-white">Cancelar</Button>
@@ -308,22 +390,78 @@ function ProfileTwoFactor() {
     );
   }
 
+  // ── Passo: confirmar senha para desativar ───────────────────────────────
+  if (step === 'disable') {
+    return (
+      <Card>
+        <header className="flex items-center gap-3 p-6">
+          <ShieldCheck className="size-5 text-muted-foreground" />
+          <h3 className="text-lg font-semibold">Desativar autenticação em duas etapas</h3>
+        </header>
+        <div className="space-y-4 px-6">
+          <p className="text-sm text-muted-foreground">
+            Insira sua senha para confirmar a desativação do autenticador.
+          </p>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Senha atual</label>
+            <Input
+              type="password"
+              placeholder="Sua senha"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (!e.target.value) setError('');
+              }}
+            />
+            {error && <p className="text-sm text-red-500">{error}</p>}
+          </div>
+        </div>
+        <div className="flex gap-2 p-6">
+          <Button variant="destructive" onClick={handleDisable} disabled={!password || isLoading}>
+            {isLoading ? <><Loader2 className="size-4 animate-spin" /> Desativando...</> : 'Confirmar desativação'}
+          </Button>
+          <Button variant="outline" onClick={resetState} className="cursor-pointer !border-white/20 !bg-transparent !text-white hover:!bg-white/10 hover:!text-white">Cancelar</Button>
+        </div>
+      </Card>
+    );
+  }
+
+  // ── Estado idle: ativo ou inativo ───────────────────────────────────────
   return (
     <Card>
       <header className="flex items-center justify-between p-6">
         <div className="flex items-center gap-3">
-          <ShieldCheck className="size-5 text-muted-foreground" />
+          <ShieldCheck className={`size-5 ${isEnabled ? 'text-green-500' : 'text-muted-foreground'}`} />
           <h3 className="text-lg font-semibold">Autenticação em duas etapas</h3>
         </div>
+        {isEnabled && (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-green-500/10 px-3 py-1 text-xs font-medium text-green-500">
+            <span className="size-1.5 rounded-full bg-green-500" />
+            Ativada
+          </span>
+        )}
       </header>
       <Separator />
       <div className="space-y-4 p-6">
-        <p className="text-sm text-muted-foreground">
-          Configure um aplicativo autenticador para aumentar a segurança da sua conta.
-        </p>
-        <Button onClick={() => setStep('password')}>
-          Configurar autenticador
-        </Button>
+        {isEnabled ? (
+          <>
+            <p className="text-sm text-muted-foreground">
+              Sua conta está protegida com autenticação em duas etapas via aplicativo autenticador.
+            </p>
+            <Button variant="outline" onClick={() => setStep('disable')} className="cursor-pointer !border-white/20 !bg-transparent !text-white hover:!bg-white/10 hover:!text-white">
+              Desativar autenticador
+            </Button>
+          </>
+        ) : (
+          <>
+            <p className="text-sm text-muted-foreground">
+              Configure um aplicativo autenticador para aumentar a segurança da sua conta.
+            </p>
+            <Button onClick={() => setStep('password')}>
+              Configurar autenticador
+            </Button>
+          </>
+        )}
       </div>
     </Card>
   );

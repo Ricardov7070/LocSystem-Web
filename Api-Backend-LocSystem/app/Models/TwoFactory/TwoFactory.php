@@ -9,6 +9,8 @@ class TwoFactory extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
     protected $primaryKey = 'i_id';
     protected $table = 'two_factories';
 

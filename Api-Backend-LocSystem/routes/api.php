@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\User\UserAuthenticationController;
 use App\Http\Controllers\User\UserRegistrationController;
+use App\Http\Controllers\User\TwoFactorController;
 use App\Http\Controllers\Vehicle\VehicleController;
 use App\Http\Controllers\Wallet\WalletController;
 use App\Http\Controllers\PricingPlan\PricingPlanController;
@@ -14,6 +15,7 @@ Route::post('/auth/signup', [UserRegistrationController::class, 'registerUsers']
 Route::post('/auth/forgotPassword', [UserAuthenticationController::class, 'forgotPassword']);
 Route::put('/auth/updatePassword', [UserAuthenticationController::class, 'updatePassword']);
 Route::post('/auth/checkAuthenticationPerformed', [UserAuthenticationController::class, 'checkAuthenticationPerformed']);
+Route::post('/auth/2fa/verify-login', [TwoFactorController::class, 'verifyLogin']);
 
 
 // Rotas que nescessitam de autenticação
@@ -23,6 +25,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/updateUser/{id}', [UserRegistrationController::class, 'updateRecord']);
     Route::get('/logoutUser', [UserAuthenticationController::class, 'logoutUser']);
     Route::delete('/deleteUser/{id}', [UserRegistrationController::class, 'deleteRecord']);
+
+    // Rotas "2FA"
+    Route::get('/auth/2fa/status',          [TwoFactorController::class, 'status']);
+    Route::post('/auth/2fa/enable', [TwoFactorController::class, 'enable']);
+    Route::post('/auth/2fa/verify-activate', [TwoFactorController::class, 'verifyAndActivate']);
+    Route::post('/auth/2fa/disable', [TwoFactorController::class, 'disable']);
 
     // Rotas "Veículos"
     Route::post('/vehicles', [VehicleController::class, 'vehicles']);

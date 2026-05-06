@@ -104,7 +104,14 @@ export default function Login() {
     
     onSuccess: ({ data, values }) => {
 
-      showAlert(`✅ ${data.success}`, "success");
+      if (data.twoFactorRedirect) {
+        sessionStorage.setItem('locsystem_preauth', data.preAuthToken);
+        sessionStorage.setItem('locsystem_preauth_email', values.email);
+        setTimeout(() => navigate('/2fa'), 500);
+        return;
+      }
+
+      if (data.success) showAlert(`✅ ${data.success}`, "success");
 
       const token = data.token ?? data.access_token ?? data.user?.token;
       if (token) {
@@ -120,6 +127,7 @@ export default function Login() {
         role: data.role ?? data.user?.role ?? current.role ?? 'ADMIN',
         id: data.id ?? data.user?.id ?? current.id ?? '',
         image: data.image ?? data.user?.image ?? current.image ?? undefined,
+        twoFactorEnabled: data.twoFactorEnabled ?? false,
       }));
 
       setTimeout(() => {

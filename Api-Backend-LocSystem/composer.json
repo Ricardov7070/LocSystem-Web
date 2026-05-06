@@ -12,6 +12,7 @@
         "laravel/sanctum": "^3.3",
         "laravel/tinker": "^2.8",
         "phpmailer/phpmailer": "^7.0",
+        "pragmarx/google2fa": "^9.0",
         "predis/predis": "^3.4"
     },
     "require-dev": {
