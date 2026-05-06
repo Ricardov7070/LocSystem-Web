@@ -21,7 +21,7 @@ class UserUpdateRequest extends FormRequest
         return [
             'v_email' => 'required|string|email',
             'v_name' => 'required|string|min:3|max:255',
-            'v_password' => 'required|string|min:8|max:16',
+            'v_password' => 'nullable|string|min:8|max:16',
             'v_phone' => 'required|string|max:11|regex:/^[0-9]+$/',
         ];
 
@@ -37,7 +37,6 @@ class UserUpdateRequest extends FormRequest
             'v_name.string' => 'O campo de nome deve ser uma string válida.',
             'v_name.min' => 'O campo de nome deve ter pelo menos 3 caracteres.',
             'v_name.max' => 'O campo de nome não pode exceder 255 caracteres.',
-            'v_password.required' => 'O campo de senha é obrigatório.',
             'v_password.string' => 'O campo de senha deve ser uma string válida.',
             'v_password.min' => 'O campo de senha deve ter pelo menos 8 caracteres.',
             'v_password.max' => 'O campo de senha não pode exceder 16 caracteres.',

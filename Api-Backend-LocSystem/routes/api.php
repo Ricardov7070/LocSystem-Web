@@ -25,9 +25,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/updateUser/{id}', [UserRegistrationController::class, 'updateRecord']);
     Route::get('/logoutUser', [UserAuthenticationController::class, 'logoutUser']);
     Route::delete('/deleteUser/{id}', [UserRegistrationController::class, 'deleteRecord']);
+    Route::post('/verify-password', [UserAuthenticationController::class, 'verifyPassword']);
+    Route::put('/change-password', [UserAuthenticationController::class, 'changePassword']);
 
     // Rotas "2FA"
-    Route::get('/auth/2fa/status',          [TwoFactorController::class, 'status']);
+    Route::get('/auth/2fa/status', [TwoFactorController::class, 'status']);
     Route::post('/auth/2fa/enable', [TwoFactorController::class, 'enable']);
     Route::post('/auth/2fa/verify-activate', [TwoFactorController::class, 'verifyAndActivate']);
     Route::post('/auth/2fa/disable', [TwoFactorController::class, 'disable']);

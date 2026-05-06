@@ -10,6 +10,7 @@ use App\Http\Services\UserService\UserServiceValidation;
 use App\Http\Requests\UserManagementRequests\UserLoginRequest;
 use App\Http\Requests\UserManagementRequests\ForgotPasswordRequest;
 use App\Http\Requests\UserManagementRequests\UpdatePasswordRequest;
+use App\Http\Requests\UserManagementRequests\ChangePasswordRequest;
 use Illuminate\Http\JsonResponse;
 use App\Http\Services\EmailService\EmailService;    
 use Illuminate\Http\Request; 
@@ -80,6 +81,10 @@ class UserAuthenticationController extends Controller {
                     'access_token'     => $data['access_token'],
                     'token_type'       => 'Bearer',
                     'twoFactorEnabled' => $data['twoFactorEnabled'],
+                    'id'               => $data['id'],
+                    'role'             => $data['role'],
+                    'email'            => $data['email'],
+                    'phone'            => $data['phone'],
                 ], 200);
 
         } catch (HttpException $e) {
@@ -200,7 +205,7 @@ class UserAuthenticationController extends Controller {
         } catch (\Throwable $th) {
 
             return response()->json([
-                'error' => "Ocorreu um erro inesperado, tente novamente!"
+                'error' => "Ocorreu um erro inesperado, tente novamente!",
             ], 500);
 
         }
@@ -294,6 +299,111 @@ class UserAuthenticationController extends Controller {
             ], 500);
 
         }   
+    }
+
+
+/**
+ * @OA\Post(
+ *     path="/api/verify-password",
+ *     summary="Verifica se a senha digitada pelo usuário está correta.",
+ *     tags={"Gerenciamento de Usuário"},
+ *     @OA\Response(
+ *         response=200,
+ *         description="Senha correta!"
+ *     ),
+ *    @OA\Response(
+ *         response=401,
+ *         description="Usuário não autenticado!, Senha incorreta!, Conta não encontrada!"
+ *     ),
+ *     @OA\Response(
+ *         response=500,
+ *         description="Ocorreu um erro inesperado, tente novamente!"
+ *     ),
+ * )
+ */
+    public function verifyPassword(Request $request): JsonResponse {
+        try {
+
+            $user = auth()->user();
+
+            if (!$user) {
+                return response()->json(['warning' => 'Usuário não autenticado!'], 401);
+            }
+
+            $isValid = $this->serviceAuthentication->verifyCurrentPassword(
+                $user->i_id,
+                $request->input('password', '')
+            );
+
+            if (!$isValid) {
+                return response()->json(['warning' => 'Senha incorreta!'], 401);
+            }
+
+            return response()->json([
+                'success' => 'Senha correta!',
+            ], 200);
+
+        } catch (\Throwable $th) {
+
+            return response()->json([
+                'error' => 'Ocorreu um erro inesperado, tente novamente!',
+            ], 500);
+
+        }
+    }
+
+
+/**
+ * @OA\Put(
+ *     path="/api/change-password",
+ *     summary="Altera a senha do usuário autenticado.",
+ *     tags={"Gerenciamento de Usuário"},
+ *     @OA\Response(
+ *         response=200,
+ *         description="Senha atualizada com sucesso. Realize o login novamente!"
+ *     ),
+ *    @OA\Response(
+ *         response=401,
+ *         description="Usuário não autenticado!, Conta não encontrada!, Senha atual incorreta!"
+ *     ),
+ *     @OA\Response(
+ *         response=500,
+ *         description="Ocorreu um erro inesperado, tente novamente!"
+ *     ),
+ * )
+ */
+    public function changePassword(ChangePasswordRequest $request): JsonResponse {
+        try {
+
+            $user = auth()->user();
+
+            if (!$user) {
+                return response()->json(['error' => 'Usuário não autenticado!'], 401);
+            }
+
+            $this->serviceAuthentication->changePassword(
+                $user->i_id,
+                $request->input('current_password'),
+                $request->input('new_password')
+            );
+
+            $this->serviceAuthentication->logout(auth()->user());
+
+            return response()->json([
+                'success' => 'Senha atualizada com sucesso. Realize o login novamente!',
+            ], 200);
+
+        } catch (HttpException $e) {
+
+            return response()->json(['error' => $e->getMessage()], $e->getStatusCode());
+
+        } catch (\Throwable $th) {
+
+            return response()->json([
+                'error' => 'Ocorreu um erro inesperado, tente novamente!',
+            ], 500);
+
+        }
     }
 
 }

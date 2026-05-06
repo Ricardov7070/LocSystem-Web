@@ -120,14 +120,17 @@ export default function Login() {
 
       const stored = localStorage.getItem('locsystem_user');
       const current = stored ? JSON.parse(stored) : {};
+      const rawPhone = data.phone ?? current.phone ?? '';
+      const formattedPhone = rawPhone.replace(/\D/g, '').replace(/^(\d{2})(\d{4,5})(\d{4})$/, '($1) $2-$3');
       localStorage.setItem('locsystem_user', JSON.stringify({
         ...current,
-        email: values.email,
-        name: data.name ?? data.user?.name ?? values.email,
-        role: data.role ?? data.user?.role ?? current.role ?? 'ADMIN',
-        id: data.id ?? data.user?.id ?? current.id ?? '',
-        image: data.image ?? data.user?.image ?? current.image ?? undefined,
+        email: data.email ?? values.email,
+        name: data.user ?? current.name ?? values.email,
+        role: data.role ?? current.role ?? 'ADMIN',
+        id: data.id ?? current.id ?? '',
+        image: data.image ?? current.image ?? undefined,
         twoFactorEnabled: data.twoFactorEnabled ?? false,
+        phone: formattedPhone,
       }));
 
       setTimeout(() => {

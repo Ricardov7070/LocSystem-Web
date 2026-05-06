@@ -36,8 +36,15 @@ services:
       php artisan config:clear &&
       php artisan cache:clear &&
 
-      echo '⚡Running migrations and seeders...' &&
-      php artisan migrate --seed --force &&
+      echo '⚡Running migrations...' &&
+      php artisan migrate --force &&
+      if [ ! -f /var/www/laravel/storage/.seeded ]; then
+        echo '🌱 Running seeders for the first time...' &&
+        php artisan db:seed --force &&
+        touch /var/www/laravel/storage/.seeded;
+      else
+        echo '⏭ Seeders already executed, skipping...';
+      fi &&
 
       echo '🔐 Publishing Laravel Sanctum...' &&
       php artisan vendor:publish --provider='Laravel\\Sanctum\\SanctumServiceProvider' &&

@@ -65,7 +65,7 @@ class UserServiceRegistration {
                 'v_phone' => $request->input('v_phone'),
             ]);
 
-            if ($request->filled('v_password')) {
+            if ($request->has('v_password')) {
                 $account = $this->modelAccount->where('i_user_id', $user->i_id)->whereNull('deleted_at')->first();
 
                 if ($account) {

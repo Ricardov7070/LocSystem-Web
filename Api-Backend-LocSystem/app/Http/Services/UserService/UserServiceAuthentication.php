@@ -87,6 +87,10 @@ class UserServiceAuthentication {
             'user_name'          => $shortName,
             'access_token'       => $plainTextToken,
             'twoFactorEnabled'   => (bool) $user->b_twoFactorEnabled,
+            'id'                 => $user->i_id,
+            'role'               => $user->e_role,
+            'email'              => $user->v_email,
+            'phone'              => $user->v_phone,
         ];
     }
 
@@ -142,6 +146,40 @@ class UserServiceAuthentication {
             'b_mustChangePassword' => false,
         ]);
     }   
+
+
+    // Verifica se a senha atual do usuário autenticado está correta
+    public function verifyCurrentPassword(int $userId, string $currentPassword): bool {     
+        $account = $this->modelAccount->where('i_user_id', $userId)
+            ->whereNull('deleted_at')
+            ->first();
+
+        if (!$account) {
+            throw new HttpException(401, 'Conta não encontrada!');
+        }
+
+        return Hash::check($currentPassword, $account->v_password);
+    }
+
+
+    // Altera a senha do usuário autenticado verificando a senha atual primeiro
+    public function changePassword(int $userId, string $currentPassword, string $newPassword): void {
+        $account = $this->modelAccount->where('i_user_id', $userId)
+            ->whereNull('deleted_at')
+            ->first();
+
+        if (!$account) {
+            throw new HttpException(401, 'Conta não encontrada!');
+        }
+
+        if (!Hash::check($currentPassword, $account->v_password)) {
+            throw new HttpException(401, 'Senha atual incorreta!');
+        }
+
+        $account->update([
+            'v_password' => Hash::make($newPassword),
+        ]);
+    }
 
 
     // Método para verificar se o usuário já realizou uma autenticação válida e ativa

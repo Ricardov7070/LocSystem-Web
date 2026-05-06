@@ -34,12 +34,15 @@ export default function TwoFactorPage() {
       const { data } = await api.post('/auth/2fa/verify-login', { preAuthToken, code });
 
       localStorage.setItem('locsystem_token', data.access_token);
+      const rawPhone2fa = data.phone ?? '';
+      const formattedPhone2fa = rawPhone2fa.replace(/\D/g, '').replace(/^(\d{2})(\d{4,5})(\d{4})$/, '($1) $2-$3');
       localStorage.setItem('locsystem_user', JSON.stringify({
         id:               data.id    ?? '',
         name:             data.user  ?? email,
         email:            data.email ?? email,
         role:             data.role  ?? 'ADMIN',
         image:            data.image ?? undefined,
+        phone:            formattedPhone2fa,
         twoFactorEnabled: true,
       }));
 

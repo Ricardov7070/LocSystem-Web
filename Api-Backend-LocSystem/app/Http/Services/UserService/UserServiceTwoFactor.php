@@ -18,6 +18,7 @@ class UserServiceTwoFactor {
     protected $modelTwoFactory;
     protected $google2fa;
 
+    // Método Construtor
     public function __construct(User $modelUser, Account $modelAccount, TwoFactory $modelTwoFactory, Google2FA $google2fa) {
         $this->modelUser        = $modelUser;
         $this->modelAccount     = $modelAccount;
@@ -149,6 +150,7 @@ class UserServiceTwoFactor {
             'user_id'      => $user->i_id,
             'user_email'   => $user->v_email,
             'user_image'   => $user->v_image,
+            'user_phone'   => $user->v_phone,
         ];
     }
 }

@@ -26,10 +26,13 @@ class AdminUserSeeder extends Seeder
                     'b_is_courtesy'        => false,
                     'e_subscriptionStatus' => 'ACTIVE',
                     'b_mustChangePassword' => false,
-                    'b_twoFactorEnabled'   => false,
                     'deleted_at'           => null,
                 ]
             );
+
+            if ($user->wasRecentlyCreated) {
+                $user->update(['b_twoFactorEnabled' => false]);
+            }
 
             Account::withTrashed()->updateOrCreate(
                 ['i_user_id' => $user->i_id],

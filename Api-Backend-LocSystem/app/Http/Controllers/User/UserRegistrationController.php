@@ -10,6 +10,7 @@ use App\Http\Services\UserService\UserServiceValidation;
 use App\Http\Services\UserService\UserServiceRegistration;
 use App\Http\Requests\UserManagementRequests\UserRegisterRequest;
 use App\Http\Requests\UserManagementRequests\UserUpdateRequest;
+use App\Models\User\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request; 
 
@@ -120,7 +121,8 @@ class UserRegistrationController extends Controller {
 
             $updatedUser = $this->serviceRegistration->updateUser($request, $id);
 
-            $this->serviceAuthentication->logout($id);
+            $user = User::find($id);
+            $this->serviceAuthentication->logout($user);
 
             return response()->json([
                 'success' => 'Atualização realizada com sucesso. Faça login novamente!',
@@ -141,7 +143,8 @@ class UserRegistrationController extends Controller {
         } catch (\Throwable $th) {
 
            return response()->json([
-                'error' => 'Ocorreu um erro, tente novamente!',
+                //'error' => 'Ocorreu um erro, tente novamente!',
+                'error' => $th->getMessage(),
             ], 500);
 
         }

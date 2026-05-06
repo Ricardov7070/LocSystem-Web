@@ -95,6 +95,7 @@ class TwoFactorController extends Controller {
                 'id'               => $data['user_id'],
                 'email'            => $data['user_email'],
                 'image'            => $data['user_image'],
+                'phone'            => $data['user_phone'],
                 'twoFactorEnabled' => true,
             ], 200);
 

@@ -1,10 +1,13 @@
-import { useState, useEffect } from 'react';
-import { Edit, ShieldCheck, Loader2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Edit, ShieldCheck, Loader2, Pencil, Save } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import api from '../../services/api';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import CustomAlert from '../../hooks/useCustomAlert';
+import { useMutation } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 
 import { Topbar } from '../../components/layout/app-topbar';
 import { useAuth } from '../../components/providers/auth';
@@ -15,6 +18,16 @@ import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Separator } from '../../components/ui/separator';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../../components/ui/alert-dialog';
+import {
   Form,
   FormItem,
   FormLabel,
@@ -22,6 +35,7 @@ import {
   FormControl,
   FormMessage,
 } from '../../components/ui/form';
+
 
 function initials(name: string): string {
   return name
@@ -32,23 +46,31 @@ function initials(name: string): string {
     .join('');
 }
 
+
 const ProfileNameSchema = z.object({
-  name: z.string().min(1, 'Nome é obrigatório'),
-  email: z.string().email(),
+  name:  z.string().min(3, 'O nome deve ter pelo menos 3 caracteres').max(255, 'Máximo 255 caracteres'),
+  email: z.string().email('E-mail inválido').max(50, 'Máximo 50 caracteres'),
+  phone: z.string().min(10, 'Telefone inválido').max(15, 'Máximo 15 caracteres'),
 });
+
+
 type ProfileNameSchema = z.infer<typeof ProfileNameSchema>;
+
 
 const ProfilePasswordSchema = z
   .object({
-    currentPassword: z.string().min(1, 'Senha atual é obrigatória'),
-    newPassword: z.string().min(8, 'Mínimo 8 caracteres'),
-    confirmNewPassword: z.string(),
+    currentPassword: z.string().min(1, 'Senha atual é obrigatória').max(16, 'Máximo 16 caracteres'),
+    newPassword: z.string().min(8, 'Mínimo 8 caracteres').max(16, 'Máximo 16 caracteres'),
+    confirmNewPassword: z.string().max(16, 'Máximo 16 caracteres'),
   })
   .refine((d) => d.newPassword === d.confirmNewPassword, {
     message: 'As senhas não conferem',
     path: ['confirmNewPassword'],
   });
+
+
 type ProfilePasswordSchema = z.infer<typeof ProfilePasswordSchema>;
+
 
 function ProfileHeader() {
   const { user } = useAuth();
@@ -73,83 +95,279 @@ function ProfileHeader() {
   );
 }
 
+
+function formatPhone(value: string): string {
+  const digits = value.replace(/\D/g, '');
+  if (digits.length <= 10) {
+    return digits.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{4})(\d)/, '$1-$2');
+  }
+  return digits.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)/, '$1-$2').slice(0, 15);
+}
+
+
 function ProfileName() {
-  const { user } = useAuth();
+
+  const { user, setUser } = useAuth();
+  const navigate = useNavigate();
+
+  const [alertInfo, setAlertInfo] = useState<{ message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null);
 
   const form = useForm<ProfileNameSchema>({
-    defaultValues: { name: user.name, email: user.email },
+    defaultValues: {
+      name:  user.name ?? '',
+      email: user.email ?? '',
+      phone: formatPhone(user.phone ?? ''),
+    },
     resolver: zodResolver(ProfileNameSchema),
   });
 
-  function onSubmit(_data: ProfileNameSchema) {
-    // TODO: chamar API
-  }
+  const updateMutation = useMutation({
 
+    mutationFn: async (values: ProfileNameSchema) => {
+
+      const response = await api.put(`/updateUser/${user.id}`, {
+        v_name:  values.name,
+        v_email: values.email,
+        v_phone: values.phone.replace(/\D/g, ''),
+      });
+      return response.data;
+
+    },
+
+    onSuccess: (data, values) => {
+
+      const storedRaw = localStorage.getItem('locsystem_user');
+      const stored = storedRaw ? JSON.parse(storedRaw) : {};
+      const updated = { ...stored, name: values.name, email: values.email, phone: values.phone };
+      localStorage.setItem('locsystem_user', JSON.stringify(updated));
+      setUser({ ...user, name: values.name, email: values.email, phone: values.phone });
+      setAlertInfo({ message: `✅ ${data.success}`, type: 'success' });
+      setTimeout(() => navigate('/login'), 1500);
+
+    },
+
+    onError: (error: any) => {
+
+      if (error?.response) {
+
+        const { status, data } = error.response;
+
+        if (status === 422 && data?.errors) {
+
+          const e = data.errors;
+
+          if (e.v_name)  form.setError('name',  { message: e.v_name[0] });
+          if (e.v_email) form.setError('email', { message: e.v_email[0] });
+          if (e.v_phone) form.setError('phone', { message: e.v_phone[0] });
+          
+        } else if (status === 409) {
+
+          setAlertInfo({ message: `⚠️ ${data.info}`, type: 'info' });
+
+        } else if (status === 401) {
+
+          setAlertInfo({ message: `⚠️ ${data.info}`, type: 'warning' });
+
+        } else {
+
+          setAlertInfo({ message: `🚫 ${data.error}`, type: 'error' });
+        
+        }
+
+      } else {
+       
+        setAlertInfo({ message: '🚫 Ocorreu um erro inesperado ao conectar com a API.', type: 'error' });
+     
+      }
+
+    },
+
+  });
+
+  
   return (
-    <Card>
-      <header className="p-6">
-        <h3 className="text-lg font-semibold">Alterar o nome do usuário</h3>
-      </header>
+    <>
+      {alertInfo && (
+        <div className="fixed top-4 right-4 z-[9999]">
+          <CustomAlert
+            message={alertInfo.message}
+            type={alertInfo.type}
+            onClose={() => setAlertInfo(null)}
+          />
+        </div>
+      )}
+      <Card>
+        <header className="p-6">
+          <h3 className="text-lg font-semibold">Alterar informações do usuário</h3>
+        </header>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <div className="flex w-full flex-wrap items-center gap-6 px-6">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Nome" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit((v) => updateMutation.mutate(v))}>
+            <div className="flex w-full flex-wrap items-start gap-6 px-6">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nome completo" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>E-mail</FormLabel>
-                  <FormControl>
-                    <Input disabled placeholder="E-mail" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>E-mail</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="E-mail" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <div className="p-6">
-            <Button type="submit">Salvar</Button>
-          </div>
-        </form>
-      </Form>
-    </Card>
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Telefone</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="(00) 00000-0000"
+                        maxLength={15}
+                        {...field}
+                        onChange={(e) => {
+                          const digits = e.target.value.replace(/\D/g, '');
+                          let formatted = digits;
+                          if (digits.length <= 10) {
+                            formatted = digits.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{4})(\d)/, '$1-$2');
+                          } else {
+                            formatted = digits.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)/, '$1-$2').slice(0, 15);
+                          }
+                          field.onChange(formatted);
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="p-6">
+              <Button type="submit" variant="success" disabled={updateMutation.isPending}>
+                {updateMutation.isPending
+                  ? <><Loader2 className="size-4 animate-spin" /> Salvando...</>
+                  : <><Save className="size-4" /> Salvar</>}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </Card>
+    </>
   );
 }
 
-function ProfilePassword() {
-  const form = useForm<ProfilePasswordSchema>({
-    resolver: zodResolver(ProfilePasswordSchema),
-  });
 
-  function onSubmit(_data: ProfilePasswordSchema) {
-    // TODO: chamar API
+function ProfilePassword() {
+
+  const navigate = useNavigate();
+  const form = useForm<ProfilePasswordSchema>(
+    { resolver: zodResolver(ProfilePasswordSchema) }
+  );
+
+  const [currentPwStatus, setCurrentPwStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle');
+  const [currentPwMessage, setCurrentPwMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [alertInfo, setAlertInfo] = useState<{ message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function handleCurrentPasswordChange(value: string) {
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    setCurrentPwStatus('idle');
+    setCurrentPwMessage('');
+    form.clearErrors('currentPassword');
+    if (!value) return;
+    setCurrentPwStatus('checking');
+    debounceRef.current = setTimeout(async () => {
+
+      try {
+
+        await api.post('/verify-password', { password: value });
+        setCurrentPwStatus('valid');
+        setCurrentPwMessage('Senha correta!');
+
+      } catch {
+
+        setCurrentPwStatus('invalid');
+        setCurrentPwMessage('Senha incorreta!');
+
+      }
+
+    }, 600);
+
   }
 
+  async function onSubmit(data: ProfilePasswordSchema) {
+
+    if (currentPwStatus !== 'valid') return;
+    setIsSubmitting(true);
+
+    try {
+
+      await api.put('/change-password', {
+        current_password: data.currentPassword,
+        new_password: data.newPassword,
+      });
+
+      form.reset();
+      setCurrentPwStatus('idle');
+      setCurrentPwMessage('');
+      setAlertInfo({ message: '✅ Senha alterada com sucesso!', type: 'success' });
+      setTimeout(() => navigate('/login'), 1500);
+
+    } catch (err: any) {
+
+      const msg = err.response?.data?.error ?? 'Erro ao alterar a senha.';
+      form.setError('currentPassword', { type: 'manual', message: msg });
+
+    } finally {
+
+      setIsSubmitting(false);
+
+    }
+
+  }
+
+
   return (
-    <Card>
-      <header className="p-6">
-        <h3 className="text-lg font-semibold">Alterar a senha</h3>
+    <>
+      {alertInfo && (
+        <div className="fixed top-4 right-4 z-[9999]">
+          <CustomAlert
+            message={alertInfo.message}
+            type={alertInfo.type}
+            onClose={() => setAlertInfo(null)}
+          />
+        </div>
+      )}
+      <Card>
+        <header className="p-6">
+          <h3 className="text-lg font-semibold">Alterar a senha</h3>
       </header>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <div className="flex w-full flex-wrap items-center gap-6 px-6">
+          <div className="flex w-full flex-wrap items-start gap-6 px-6 -mt-2">
             <FormField
               control={form.control}
               name="currentPassword"
@@ -157,9 +375,29 @@ function ProfilePassword() {
                 <FormItem>
                   <FormLabel>Senha atual</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="Senha atual" {...field} />
+                    <Input
+                      type="password"
+                      placeholder="Senha atual"
+                      maxLength={16}
+                      {...field}
+                      onChange={(e) => {
+                        field.onChange(e);
+                        handleCurrentPasswordChange(e.target.value);
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
+                  {currentPwStatus === 'checking' && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Loader2 className="size-3 animate-spin" /> Verificando...
+                    </p>
+                  )}
+                  {currentPwStatus === 'valid' && (
+                    <p className="text-xs text-green-500">{currentPwMessage}</p>
+                  )}
+                  {currentPwStatus === 'invalid' && (
+                    <p className="text-xs text-red-500">{currentPwMessage}</p>
+                  )}
                 </FormItem>
               )}
             />
@@ -171,7 +409,13 @@ function ProfilePassword() {
                 <FormItem>
                   <FormLabel>Nova senha</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="Nova senha" {...field} />
+                    <Input
+                      type="password"
+                      placeholder="Nova senha"
+                      maxLength={16}
+                      disabled={currentPwStatus !== 'valid'}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -185,7 +429,13 @@ function ProfilePassword() {
                 <FormItem>
                   <FormLabel>Confirmar nova senha</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="Confirmar nova senha" {...field} />
+                    <Input
+                      type="password"
+                      placeholder="Confirmar nova senha"
+                      maxLength={16}
+                      disabled={currentPwStatus !== 'valid'}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -194,15 +444,43 @@ function ProfilePassword() {
           </div>
 
           <div className="p-6">
-            <Button type="submit">Alterar senha</Button>
+            <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
+              <Button
+                type="button"
+                variant="success"
+                disabled={currentPwStatus !== 'valid' || isSubmitting}
+                onClick={() => form.handleSubmit(() => setShowConfirm(true))()}
+              >
+                {isSubmitting
+                  ? <><Loader2 className="size-4 animate-spin" /> Salvando...</>
+                  : <><Pencil className="size-4" /> Alterar senha</>}
+              </Button>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Confirmar alteração de senha</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Confirma a alteração de sua senha de acesso?
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => form.handleSubmit(onSubmit)()}>
+                    Confirmar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </form>
       </Form>
     </Card>
+    </>
   );
 }
 
+
 function ProfileTwoFactor() {
+
   const stored = localStorage.getItem('locsystem_user');
   const userStored = stored ? JSON.parse(stored) : {};
 
@@ -215,7 +493,6 @@ function ProfileTwoFactor() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Busca o status real do backend ao montar o componente
   useEffect(() => {
     api.get('/auth/2fa/status')
       .then(({ data }) => {
@@ -237,55 +514,86 @@ function ProfileTwoFactor() {
 
   function updateStoredTwoFactor(value: boolean) {
     const s = localStorage.getItem('locsystem_user');
+
     if (s) {
+
       const u = JSON.parse(s);
       localStorage.setItem('locsystem_user', JSON.stringify({ ...u, twoFactorEnabled: value }));
+ 
     }
   }
 
   async function handleEnable() {
+
     setIsLoading(true);
     setError('');
+
     try {
+
       const { data } = await api.post('/auth/2fa/enable', { password });
       setTotpURI(data.totpURI);
       setManualSecret((data.secret as string).replace(/(.{4})/g, '$1 ').trim());
       setStep('qr');
+   
     } catch (err: any) {
+ 
       setError(err.response?.data?.error ?? 'Erro ao ativar o autenticador.');
+    
     } finally {
+  
       setIsLoading(false);
+    
     }
+
   }
 
   async function handleVerify() {
+
     setIsLoading(true);
     setError('');
+
     try {
+
       await api.post('/auth/2fa/verify-activate', { code });
       updateStoredTwoFactor(true);
       setIsEnabled(true);
       resetState();
+
     } catch (err: any) {
+
+   
       setError(err.response?.data?.error ?? 'Código inválido. Tente novamente.');
+   
     } finally {
+
       setIsLoading(false);
+
     }
+
   }
 
   async function handleDisable() {
+
     setIsLoading(true);
     setError('');
+
     try {
+
       await api.post('/auth/2fa/disable', { password });
       updateStoredTwoFactor(false);
       setIsEnabled(false);
       resetState();
+
     } catch (err: any) {
+
       setError(err.response?.data?.error ?? 'Erro ao desativar o autenticador.');
+  
     } finally {
+
       setIsLoading(false);
+
     }
+
   }
 
   // ── Passo: confirmar senha para ativar ──────────────────────────────────
@@ -457,8 +765,8 @@ function ProfileTwoFactor() {
             <p className="text-sm text-muted-foreground">
               Configure um aplicativo autenticador para aumentar a segurança da sua conta.
             </p>
-            <Button onClick={() => setStep('password')}>
-              Configurar autenticador
+            <Button variant="primary" onClick={() => setStep('password')}>
+              <ShieldCheck className="size-4" /> Configurar autenticador
             </Button>
           </>
         )}
