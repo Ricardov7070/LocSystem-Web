@@ -66,28 +66,6 @@ Dentro da pasta da API (.\LocSystem-Web\Api-Backend-LocSystem), execute:
 docker compose up -d
 ```
 
-### 5. Configuração da Rede Docker
-
-Para que os serviços se comuniquem corretamente, execute os comandos abaixo para conectar os containers à rede laravel_app:
-
-### 🖥️ Criar a rede se não existir
-```bash
-docker network create laravel_app
-```
-
-### 📡 Conectar os serviços
-```bash
-docker network connect laravel_app nginx-container
-docker network connect laravel_app laravel-1
-docker network connect laravel_app laravel-2
-docker network connect laravel_app laravel-3
-docker network connect laravel_app react-container
-docker network connect laravel_app redis-container
-docker network connect laravel_app mysql-container
-docker network connect laravel_app mailhog-container
-docker network connect laravel_app ngrok-container
-```
-
 ### 📑 Documentação e Acesso
 
 - API Base URL: http://localhost:90/api/
