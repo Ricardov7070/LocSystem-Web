@@ -94,6 +94,9 @@ export default function TwoFactorPage() {
               setError('');
               setCode(e.target.value.replace(/\D/g, ''));
             }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && code.length === 6 && !isLoading) handleVerify();
+            }}
             autoFocus
           />
           {error && <p className="text-sm text-red-500 text-center">{error}</p>}

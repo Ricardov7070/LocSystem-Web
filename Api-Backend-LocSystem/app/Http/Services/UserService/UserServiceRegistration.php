@@ -102,4 +102,26 @@ class UserServiceRegistration {
         });
     }
 
+
+    // Método de Upload de Imagem de Perfil
+    public function uploadProfileImage($request, $user): string {
+        foreach (['jpg', 'jpeg', 'png', 'gif', 'webp'] as $ext) {
+            $old = public_path('images/users/' . $user->i_id . '.' . $ext);
+            if (file_exists($old)) {
+                unlink($old);
+            }
+        }
+
+        $extension = $request->file('image')->extension();
+        $filename  = $user->i_id . '.' . $extension;
+
+        $request->file('image')->move(public_path('images/users'), $filename);
+
+        $imageUrl = $request->getSchemeAndHttpHost() . '/images/users/' . $filename . '?v=' . time();
+
+        $user->update(['v_image' => $imageUrl]);
+
+        return $imageUrl;
+    }
+
 }

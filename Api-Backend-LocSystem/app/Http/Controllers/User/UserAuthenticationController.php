@@ -85,6 +85,7 @@ class UserAuthenticationController extends Controller {
                     'role'             => $data['role'],
                     'email'            => $data['email'],
                     'phone'            => $data['phone'],
+                    'image'            => $data['image'],
                 ], 200);
 
         } catch (HttpException $e) {

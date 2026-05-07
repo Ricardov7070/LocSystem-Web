@@ -12,7 +12,7 @@ use App\Http\Requests\UserManagementRequests\UserRegisterRequest;
 use App\Http\Requests\UserManagementRequests\UserUpdateRequest;
 use App\Models\User\User;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request; 
+use Illuminate\Http\Request;
 
 
 class UserRegistrationController extends Controller {
@@ -201,6 +201,50 @@ class UserRegistrationController extends Controller {
   
             return response()->json([
                 'error' => 'Ocorreu um erro, tente novamente!',
+            ], 500);
+
+        }
+    }
+
+
+/**
+ * @OA\Post(
+ *     path="/api/uploadProfileImage",
+ *     summary="Realiza o upload da imagem de perfil do usuário",
+ *     tags={"Gerenciamento de Usuário"},
+ *     @OA\Response(
+ *         response=200,
+ *         description="Foto de perfil atualizada com sucesso!"
+ *     ),
+ *     @OA\Response(
+ *         response=500,
+ *         description="Ocorreu um erro, tente novamente!"
+ *     )
+ * )
+ */
+    public function uploadProfileImageRecord(Request $request): JsonResponse {
+        try {
+
+            $request->validate([
+                'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:4096',
+            ]);
+
+            $imageUrl = $this->serviceRegistration->uploadProfileImage($request, $request->user());
+
+            return response()->json([
+                'success' => 'Foto de perfil atualizada com sucesso!',
+                'image'   => $imageUrl,
+            ], 200);
+
+        } catch (ValidationException $e) {
+
+            return response()->json(['errors' => $e->errors()], 422);
+
+        } catch (\Throwable $th) {
+
+            return response()->json([
+                //'error' => 'Ocorreu um erro ao fazer upload da imagem.',
+                'error' => $th->getMessage(),
             ], 500);
 
         }

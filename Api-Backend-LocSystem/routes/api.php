@@ -23,6 +23,7 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Rotas "Usuários"
     Route::put('/updateUser/{id}', [UserRegistrationController::class, 'updateRecord']);
+    Route::post('/uploadProfileImage', [UserRegistrationController::class, 'uploadProfileImageRecord']);
     Route::get('/logoutUser', [UserAuthenticationController::class, 'logoutUser']);
     Route::delete('/deleteUser/{id}', [UserRegistrationController::class, 'deleteRecord']);
     Route::post('/verify-password', [UserAuthenticationController::class, 'verifyPassword']);

@@ -38,9 +38,13 @@ class UserServiceTwoFactor {
             throw new HttpException(401, 'Senha incorreta!');
         }
 
-        $secret  = $this->google2fa->generateSecretKey();
-        $account = rawurlencode($user->v_email);
-        $totpURI = "otpauth://totp/LocSystem:{$account}?secret={$secret}&issuer=LocSystem";
+        if ($user->b_twoFactorEnabled) {
+            throw new HttpException(422, 'A autenticação de dois fatores já está ativa. Para reconfigurar, desative-a primeiro.');
+        }
+
+        $secret      = $this->google2fa->generateSecretKey();
+        $encodedEmail = rawurlencode($user->v_email);
+        $totpURI     = "otpauth://totp/LocSystem:{$encodedEmail}?secret={$secret}&issuer=LocSystem";
 
         $this->modelTwoFactory->updateOrCreate(
             ['v_user_id' => (string) $user->i_id],
@@ -62,7 +66,7 @@ class UserServiceTwoFactor {
         }
 
         $secret = decrypt($twoFactor->v_secret);
-        $valid  = $this->google2fa->verifyKey($secret, $code, 4);
+        $valid  = $this->google2fa->verifyKey($secret, $code, 8);
 
         if (!$valid) {
             throw new HttpException(422, 'Código inválido. Tente novamente.');
@@ -114,7 +118,7 @@ class UserServiceTwoFactor {
         }
 
         $secret = decrypt($twoFactor->v_secret);
-        $valid  = $this->google2fa->verifyKey($secret, $code, 4);
+        $valid  = $this->google2fa->verifyKey($secret, $code, 8);
 
         if (!$valid) {
             throw new HttpException(422, 'Código inválido. Tente novamente.');

@@ -91,6 +91,7 @@ class UserServiceAuthentication {
             'role'               => $user->e_role,
             'email'              => $user->v_email,
             'phone'              => $user->v_phone,
+            'image'              => $user->v_image,
         ];
     }
 

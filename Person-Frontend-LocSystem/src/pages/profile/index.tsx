@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { Edit, ShieldCheck, Loader2, Pencil, Save } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ShieldCheck, Loader2, Pencil, Save } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import api from '../../services/api';
 import { useForm } from 'react-hook-form';
@@ -73,25 +73,78 @@ type ProfilePasswordSchema = z.infer<typeof ProfilePasswordSchema>;
 
 
 function ProfileHeader() {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [alertInfo, setAlertInfo] = useState<{ message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null);
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    setIsUploading(true);
+    try {
+      const { data } = await api.post('/uploadProfileImage', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      const storedRaw = localStorage.getItem('locsystem_user');
+      const stored = storedRaw ? JSON.parse(storedRaw) : {};
+      localStorage.setItem('locsystem_user', JSON.stringify({ ...stored, image: data.image }));
+      setUser({ ...user, image: data.image });
+      setAlertInfo({ message: `✅ ${data.success}`, type: 'success' });
+    } catch {
+      setAlertInfo({ message: '🚫 Erro ao enviar imagem. Verifique o formato e tente novamente.', type: 'error' });
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  }
 
   return (
-    <Card className="flex items-center gap-6 p-6">
-      <div className="relative">
-        <Avatar className="size-20">
-          <AvatarImage src={user.image ?? ''} alt={user.name} />
-          <AvatarFallback>{initials(user.name)}</AvatarFallback>
-        </Avatar>
-        <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/20 opacity-0 backdrop-blur-sm transition-opacity duration-150 hover:opacity-100 cursor-pointer">
-          <Edit className="size-5 text-white" />
+    <>
+      {alertInfo && (
+        <div className="fixed top-4 right-4 z-[9999]">
+          <CustomAlert
+            message={alertInfo.message}
+            type={alertInfo.type}
+            onClose={() => setAlertInfo(null)}
+          />
         </div>
-      </div>
-      <div>
-        <h1 className="text-2xl font-semibold">{user.name}</h1>
-        <p className="text-muted-foreground">{user.email}</p>
-        <Badge variant="secondary" className="mt-1">{user.role}</Badge>
-      </div>
-    </Card>
+      )}
+      <Card className="flex items-center gap-6 p-6">
+        <div
+          className="relative cursor-pointer"
+          onClick={() => !isUploading && fileInputRef.current?.click()}
+          title="Clique para alterar a foto de perfil"
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+          <Avatar className="size-20">
+            <AvatarImage src={user.image ?? ''} alt={user.name} />
+            <AvatarFallback>{initials(user.name)}</AvatarFallback>
+          </Avatar>
+          <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 backdrop-blur-sm transition-opacity duration-150 hover:opacity-100">
+            {isUploading
+              ? <Loader2 className="size-5 text-white animate-spin" />
+              : <Pencil className="size-5 text-white" />}
+          </div>
+        </div>
+        <div>
+          <h1 className="text-2xl font-semibold">{user.name}</h1>
+          <p className="text-muted-foreground">{user.email}</p>
+          <Badge variant="secondary" className="mt-1">{user.role}</Badge>
+        </div>
+      </Card>
+    </>
   );
 }
 
