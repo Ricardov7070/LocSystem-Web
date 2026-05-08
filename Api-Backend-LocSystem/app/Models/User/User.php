@@ -35,6 +35,7 @@ class User extends Authenticatable
         'i_device_id',
         'd_device_last_seen',
         'v_device_name',
+        'v_device_country',
         'd_device_registered_at',
         'b_is_courtesy',
         'i_operator_id',

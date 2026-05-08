@@ -15,11 +15,11 @@ class Session extends Model
     protected $table = 'sessions';
 
     protected $fillable = [
+        'i_user_id',
         'd_expires_at',
         'v_token',
         'v_ip_address',
         'v_user_agent',
-        'i_user_id',
         't_impersonated_by'
     ];
 

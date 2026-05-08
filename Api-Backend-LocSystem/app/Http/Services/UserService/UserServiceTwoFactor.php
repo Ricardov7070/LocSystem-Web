@@ -4,6 +4,7 @@ namespace App\Http\Services\UserService;
 
 use App\Models\User\User;
 use App\Models\Account\Account;
+use App\Models\Session\Session;
 use App\Models\TwoFactory\TwoFactory;
 use PragmaRX\Google2FA\Google2FA;
 use Illuminate\Support\Facades\Hash;
@@ -15,13 +16,15 @@ class UserServiceTwoFactor {
 
     protected $modelUser;
     protected $modelAccount;
+    protected $modelSession;
     protected $modelTwoFactory;
     protected $google2fa;
 
     // Método Construtor
-    public function __construct(User $modelUser, Account $modelAccount, TwoFactory $modelTwoFactory, Google2FA $google2fa) {
+    public function __construct(User $modelUser, Account $modelAccount, Session $modelSession, TwoFactory $modelTwoFactory, Google2FA $google2fa) {
         $this->modelUser        = $modelUser;
         $this->modelAccount     = $modelAccount;
+        $this->modelSession     = $modelSession;
         $this->modelTwoFactory  = $modelTwoFactory;
         $this->google2fa        = $google2fa;
     }
@@ -143,6 +146,14 @@ class UserServiceTwoFactor {
             'v_access_token'            => $tokenHash,
             'd_access_token_expires_at' => $expiresAt,
         ]);
+
+        $this->modelSession->updateOrCreate(
+            ['i_user_id' => $user->i_id],
+            [
+                'd_expires_at' => $expiresAt,
+                'v_token'      => $tokenHash,
+            ]
+        );
 
         $nameParts = explode(' ', trim($user->v_name));
         $shortName = implode(' ', array_slice($nameParts, 0, 2));

@@ -12,7 +12,11 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        // Desbane automaticamente usuários com prazo expirado (roda a cada hora)
+        $schedule->command('users:unban-expired')->hourly();
+
+        // Invalida automaticamente sessões expiradas (roda a cada minuto)
+        $schedule->command('sessions:invalidate-expired')->everyMinute();
     }
 
     /**

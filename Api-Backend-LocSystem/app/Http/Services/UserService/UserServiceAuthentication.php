@@ -4,9 +4,11 @@ namespace App\Http\Services\UserService;
 
 use App\Models\User\User;
 use App\Models\Account\Account;
+use App\Models\Session\Session;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 
@@ -14,16 +16,65 @@ class UserServiceAuthentication {
 
     protected $modelUser;
     protected $modelAccount;
+    protected $modelSession;
 
     // Método Construtor
-    public function __construct(User $modelUser, Account $modelAccount) {
+    public function __construct(User $modelUser, Account $modelAccount, Session $modelSession) {
         $this->modelUser = $modelUser;
         $this->modelAccount = $modelAccount;
+        $this->modelSession = $modelSession;
+    }
+
+
+    // Método para analisar o User Agent e extrair informações do navegador e sistema operacional
+    private function parseDeviceName(string $userAgent): string {
+
+        if (str_contains($userAgent, 'Edg/'))         $browser = 'Edge';
+        elseif (str_contains($userAgent, 'OPR/') || str_contains($userAgent, 'Opera')) $browser = 'Opera';
+        elseif (str_contains($userAgent, 'Firefox/')) $browser = 'Firefox';
+        elseif (str_contains($userAgent, 'Chrome/'))  $browser = 'Chrome';
+        elseif (str_contains($userAgent, 'Safari/') && !str_contains($userAgent, 'Chrome')) $browser = 'Safari';
+        elseif (str_contains($userAgent, 'Trident/') || str_contains($userAgent, 'MSIE')) $browser = 'Internet Explorer';
+        else $browser = 'Navegador Desconhecido';
+
+        if (str_contains($userAgent, 'Android'))      $os = 'Android';
+        elseif (str_contains($userAgent, 'iPhone') || str_contains($userAgent, 'iPad')) $os = 'iOS';
+        elseif (str_contains($userAgent, 'Windows'))  $os = 'Windows';
+        elseif (str_contains($userAgent, 'Mac OS X')) $os = 'macOS';
+        elseif (str_contains($userAgent, 'Linux'))    $os = 'Linux';
+        else $os = 'SO Desconhecido';
+
+        return "{$browser} / {$os}";
+    }
+
+
+    // Método para resolver o código do país a partir do endereço IP usando um serviço de geolocalização
+    private function resolveCountryCode(string $ip): ?string {
+        $privateRanges = ['127.', '::1', '10.', '192.168.', '172.'];
+
+        foreach ($privateRanges as $prefix) {
+            if (str_starts_with($ip, $prefix)) {
+                return null;
+            }
+        }
+
+        try {
+
+            $response = Http::timeout(2)->get("http://ip-api.com/json/{$ip}?fields=status,countryCode");
+            if ($response->successful() && $response->json('status') === 'success') {
+                return $response->json('countryCode'); 
+            }
+
+        } catch (\Throwable) {
+            
+        }
+
+        return null;
     }
 
 
     // Método de Autenticação
-    public function authenticate(array $emailCredentials, array $passwordCredentials): array {
+    public function authenticate(array $emailCredentials, array $passwordCredentials, array $deviceInfo = []): array {
        
         $user = $this->modelUser->where('v_email', $emailCredentials['v_email'])
                 ->whereNull('deleted_at')
@@ -57,6 +108,20 @@ class UserServiceAuthentication {
             throw new HttpException(409, 'Altere sua senha de acesso!');
         }
 
+        $userAgent  = $deviceInfo['user_agent'] ?? '';
+        $ip         = $deviceInfo['ip'] ?? '';
+        $deviceName = $userAgent ? $this->parseDeviceName($userAgent) : 'Desconhecido';
+        $deviceId   = crc32($ip . $userAgent);
+        $country    = $ip ? $this->resolveCountryCode($ip) : null;
+
+        $user->update([
+            'd_device_last_seen'     => now(),
+            'v_device_name'          => $deviceName,
+            'v_device_country'       => $country ?? 'BR',
+            'i_device_id'            => $deviceId,
+            'd_device_registered_at' => $user->d_device_registered_at ?? now(),
+        ]);
+
         if ($user->b_twoFactorEnabled) {
             $preAuthToken = Str::uuid()->toString();
             Cache::put('2fa_pending:' . $preAuthToken, $user->i_id, now()->addMinutes(5));
@@ -80,6 +145,16 @@ class UserServiceAuthentication {
             'd_access_token_expires_at' => $expiresAt,
         ]);
 
+        $this->modelSession->updateOrCreate(
+            ['i_user_id' => $user->i_id],
+            [
+                'd_expires_at'  => $expiresAt,
+                'v_ip_address'  => $ip ?: null,
+                'v_user_agent'  => $userAgent ?: null,
+                'v_token'       => $tokenHash,
+            ]
+        );
+
         $nameParts = explode(' ', trim($user->v_name));
         $shortName = implode(' ', array_slice($nameParts, 0, 2));
 
@@ -101,6 +176,8 @@ class UserServiceAuthentication {
         $user->tokens()->delete();
 
         $account = $this->modelAccount->where('i_user_id', $user->i_id)->whereNull('deleted_at')->first();
+        $session = $this->modelSession->where('i_user_id', $user->i_id)->whereNull('deleted_at')->first();
+
 
         if ($account) {
 
@@ -108,6 +185,15 @@ class UserServiceAuthentication {
                 'v_id_token'                => null,
                 'v_access_token'            => null,
                 'd_access_token_expires_at' => null,
+            ]);
+            
+        }
+
+        if ($session) {
+
+            $session->update([
+                'v_token'      => null,
+                'd_expires_at' => null,
             ]);
 
         }

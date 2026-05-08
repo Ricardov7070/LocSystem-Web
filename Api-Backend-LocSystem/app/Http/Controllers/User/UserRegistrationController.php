@@ -243,8 +243,7 @@ class UserRegistrationController extends Controller {
         } catch (\Throwable $th) {
 
             return response()->json([
-                //'error' => 'Ocorreu um erro ao fazer upload da imagem.',
-                'error' => $th->getMessage(),
+                'error' => 'Ocorreu um erro ao fazer upload da imagem.',
             ], 500);
 
         }

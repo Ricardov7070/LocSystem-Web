@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Plus, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { Plus, MoreHorizontal, Pencil, Trash2, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { UseFormReturn } from 'react-hook-form';
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
@@ -65,6 +65,11 @@ const COLS = 'grid-cols-[minmax(200px,2fr)_minmax(160px,1fr)_80px]';
 
 const PAGE_SIZE = 10;
 
+function SortIcon({ colKey, sortKey, sortDir }: { colKey: string; sortKey: string | null; sortDir: 'asc' | 'desc' }) {
+  if (sortKey !== colKey) return <ArrowUpDown className="size-3.5 opacity-40" />;
+  return sortDir === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />;
+}
+
 
 function WalletsTable() {
 
@@ -72,12 +77,24 @@ function WalletsTable() {
 
   const [page, setPage] = useState(1);
 
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+
   const [alertInfo, setAlertInfo] = useState<{ message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null);
 
 
   const showAlert = (message: string, type: 'success' | 'error' | 'warning' | 'info') => {
     setAlertInfo({ message, type });
   };
+
+  function handleSort(key: string) {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  }
 
   const queryClient = useQueryClient();
 
@@ -258,9 +275,23 @@ function WalletsTable() {
   );
 
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const sorted = sortKey
+    ? [...filtered].sort((a, b) => {
+        let aVal: string | number = '';
+        let bVal: string | number = '';
+        switch (sortKey) {
+          case 'v_name': aVal = a.v_name; bVal = b.v_name; break;
+          case 'created_at': aVal = new Date(a.created_at).getTime(); bVal = new Date(b.created_at).getTime(); break;
+          default: return 0;
+        }
+        if (typeof aVal === 'number') return sortDir === 'asc' ? aVal - bVal : bVal - aVal;
+        return sortDir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+      })
+    : filtered;
 
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+
+  const paginated = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   useEffect(() => { setPage(1); }, [search]);
 
@@ -288,9 +319,13 @@ function WalletsTable() {
         <div className="overflow-auto rounded-lg border bg-background">
           <div className="sticky top-0 z-10 border-b bg-background">
             <div className={`grid ${COLS} gap-4 p-4 font-medium text-muted-foreground text-sm`}>
-              <div>Nome</div>
-              <div>Criado em</div>
-              <div className="pl-5">Ações</div>
+              <button className="flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => handleSort('v_name')}>
+                Nome <SortIcon colKey="v_name" sortKey={sortKey} sortDir={sortDir} />
+              </button>
+              <button className="flex items-center justify-center gap-1 hover:text-foreground transition-colors" onClick={() => handleSort('created_at')}>
+                Criado em <SortIcon colKey="created_at" sortKey={sortKey} sortDir={sortDir} />
+              </button>
+              <div className="text-center">Ações</div>
             </div>
           </div>
 
@@ -310,7 +345,7 @@ function WalletsTable() {
                   className={`grid ${COLS} gap-4 p-4 text-sm items-center`}
                 >
                   <div className="font-medium">{wallet.v_name}</div>
-                  <div className="text-muted-foreground">
+                  <div className="text-muted-foreground text-center">
                     {format(new Date(wallet.created_at), 'dd/MM/yyyy')}
                   </div>
                   <div className="flex justify-center">
@@ -341,10 +376,10 @@ function WalletsTable() {
           )}
         </div>
 
-        {!isLoading && filtered.length > PAGE_SIZE && (
+        {!isLoading && sorted.length > PAGE_SIZE && (
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <span>
-              Mostrando {Math.min((page - 1) * PAGE_SIZE + 1, filtered.length)}–{Math.min(page * PAGE_SIZE, filtered.length)} de {filtered.length} registros
+              Mostrando {Math.min((page - 1) * PAGE_SIZE + 1, sorted.length)}–{Math.min(page * PAGE_SIZE, sorted.length)} de {sorted.length} registros
             </span>
             <div className="flex items-center gap-2">
               <Button

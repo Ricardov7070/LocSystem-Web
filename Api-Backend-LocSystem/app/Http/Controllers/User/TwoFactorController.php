@@ -102,7 +102,8 @@ class TwoFactorController extends Controller {
         } catch (HttpException $e) {
             return response()->json(['error' => $e->getMessage()], $e->getStatusCode());
         } catch (\Throwable $th) {
-            return response()->json(['error' => 'Ocorreu um erro inesperado, tente novamente!'], 500);
+            // return response()->json(['error' => 'Ocorreu um erro inesperado, tente novamente!'], 500);
+            return response()->json(['error' => $th->getMessage()], 500);
         }
     }
 }

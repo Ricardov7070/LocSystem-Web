@@ -6,6 +6,8 @@ use App\Http\Controllers\User\TwoFactorController;
 use App\Http\Controllers\Vehicle\VehicleController;
 use App\Http\Controllers\Wallet\WalletController;
 use App\Http\Controllers\PricingPlan\PricingPlanController;
+use App\Http\Controllers\Banned\BannedController;
+use App\Http\Controllers\Session\SessionController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -57,4 +59,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/deletePricingPlan/{id}', [PricingPlanController::class, 'deleteRecord']);
     Route::put('/activateDeactivatePricingPlans/{id}', [PricingPlanController::class, 'activateDeactivatePricingPlans']);
 
+    // Rotas "Usuários Banidos"
+    Route::get('/banneds', [BannedController::class, 'banneds']);
+    Route::get('/singleBanned/{id}', [BannedController::class, 'singleBanned']);
+
+    // Rotas "Sessões"
+    Route::get('/sessions', [SessionController::class, 'sessions']);
+    Route::post('/singleSession/{id}', [SessionController::class, 'singleSession']);
 });

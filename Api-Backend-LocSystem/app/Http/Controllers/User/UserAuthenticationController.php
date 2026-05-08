@@ -65,7 +65,11 @@ class UserAuthenticationController extends Controller {
         try {
                 $data = $this->serviceAuthentication->authenticate(
                     $request->only('v_email'),
-                    $request->only('v_password') 
+                    $request->only('v_password'),
+                    [
+                        'ip'         => $request->ip(),
+                        'user_agent' => $request->userAgent() ?? '',
+                    ]
                 );
 
                 if (!empty($data['two_factor_redirect'])) {

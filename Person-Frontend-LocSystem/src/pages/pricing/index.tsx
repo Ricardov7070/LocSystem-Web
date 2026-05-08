@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Plus, MoreHorizontal, Pencil, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Plus, MoreHorizontal, Pencil, Trash2, ToggleLeft, ToggleRight, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { UseFormReturn } from 'react-hook-form';
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
@@ -142,16 +142,32 @@ function PricingForm({ form }: { form: UseFormReturn<PricingSchema> }) {
 const COLS = 'grid-cols-[minmax(180px,2fr)_minmax(140px,1fr)_minmax(140px,1fr)_minmax(100px,1fr)_minmax(120px,1fr)_80px]';
 const PAGE_SIZE = 10;
 
+function SortIcon({ colKey, sortKey, sortDir }: { colKey: string; sortKey: string | null; sortDir: 'asc' | 'desc' }) {
+  if (sortKey !== colKey) return <ArrowUpDown className="size-3.5 opacity-40" />;
+  return sortDir === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />;
+}
+
 
 function PricingTable() {
 
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [alertInfo, setAlertInfo] = useState<{ message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null);
 
   const showAlert = (message: string, type: 'success' | 'error' | 'warning' | 'info') => {
     setAlertInfo({ message, type });
   };
+
+  function handleSort(key: string) {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  }
  
   const queryClient = useQueryClient();
 
@@ -411,8 +427,25 @@ function PricingTable() {
   );
 
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const sorted = sortKey
+    ? [...filtered].sort((a, b) => {
+        let aVal: string | number = '';
+        let bVal: string | number = '';
+        switch (sortKey) {
+          case 'v_name': aVal = a.v_name; bVal = b.v_name; break;
+          case 'f_operator_price': aVal = parseFloat(a.f_operator_price); bVal = parseFloat(b.f_operator_price); break;
+          case 'f_preposto_price': aVal = parseFloat(a.f_preposto_price); bVal = parseFloat(b.f_preposto_price); break;
+          case 'b_is_active': aVal = a.b_is_active ? 1 : 0; bVal = b.b_is_active ? 1 : 0; break;
+          case 'created_at': aVal = new Date(a.created_at).getTime(); bVal = new Date(b.created_at).getTime(); break;
+          default: return 0;
+        }
+        if (typeof aVal === 'number') return sortDir === 'asc' ? aVal - bVal : bVal - aVal;
+        return sortDir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+      })
+    : filtered;
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const paginated = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
 
   useEffect(() => { setPage(1); }, [search]);
@@ -442,12 +475,22 @@ function PricingTable() {
         <div className="overflow-auto rounded-lg border bg-background">
           <div className="sticky top-0 z-10 border-b bg-background">
             <div className={`grid ${COLS} gap-4 p-4 font-medium text-muted-foreground text-sm`}>
-              <div>Nome</div>
-              <div className="-ml-5">Valor Localizador</div>
-              <div className="-ml-5">Valor Preposto</div>
-              <div>Status</div>
-              <div>Criado em</div>
-              <div className="pl-5">Ações</div>
+              <button className="flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => handleSort('v_name')}>
+                Nome <SortIcon colKey="v_name" sortKey={sortKey} sortDir={sortDir} />
+              </button>
+              <button className="flex items-center justify-center gap-1 hover:text-foreground transition-colors" onClick={() => handleSort('f_operator_price')}>
+                Valor Localizador <SortIcon colKey="f_operator_price" sortKey={sortKey} sortDir={sortDir} />
+              </button>
+              <button className="flex items-center justify-center gap-1 hover:text-foreground transition-colors" onClick={() => handleSort('f_preposto_price')}>
+                Valor Preposto <SortIcon colKey="f_preposto_price" sortKey={sortKey} sortDir={sortDir} />
+              </button>
+              <button className="flex items-center justify-center gap-1 hover:text-foreground transition-colors" onClick={() => handleSort('b_is_active')}>
+                Status <SortIcon colKey="b_is_active" sortKey={sortKey} sortDir={sortDir} />
+              </button>
+              <button className="flex items-center justify-center gap-1 hover:text-foreground transition-colors" onClick={() => handleSort('created_at')}>
+                Criado em <SortIcon colKey="created_at" sortKey={sortKey} sortDir={sortDir} />
+              </button>
+              <div className="text-center">Ações</div>
             </div>
           </div>
 
@@ -467,14 +510,14 @@ function PricingTable() {
                   className={`grid ${COLS} gap-4 p-4 text-sm items-center`}
                 >
                   <div className="font-medium">{plan.v_name}</div>
-                  <div className="text-muted-foreground">{formatCurrencyDisplay(plan.f_operator_price)}</div>
-                  <div className="text-muted-foreground">{formatCurrencyDisplay(plan.f_preposto_price)}</div>
-                  <div>
+                  <div className="text-muted-foreground text-center">{formatCurrencyDisplay(plan.f_operator_price)}</div>
+                  <div className="text-muted-foreground text-center">{formatCurrencyDisplay(plan.f_preposto_price)}</div>
+                  <div className="flex justify-center">
                     <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${plan.b_is_active ? 'bg-green-100 text-green-700 ring-1 ring-green-600/30' : 'bg-red-100 text-red-700 ring-1 ring-red-600/30'}`}>
                       {plan.b_is_active ? 'Ativo' : 'Inativo'}
                     </span>
                   </div>
-                  <div className="text-muted-foreground">
+                  <div className="text-muted-foreground text-center">
                     {format(new Date(plan.created_at), 'dd/MM/yyyy')}
                   </div>
                   <div className="flex justify-center">
@@ -516,10 +559,10 @@ function PricingTable() {
           )}
         </div>
 
-        {!isLoading && filtered.length > PAGE_SIZE && (
+        {!isLoading && sorted.length > PAGE_SIZE && (
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <span>
-              Mostrando {Math.min((page - 1) * PAGE_SIZE + 1, filtered.length)}–{Math.min(page * PAGE_SIZE, filtered.length)} de {filtered.length} registros
+              Mostrando {Math.min((page - 1) * PAGE_SIZE + 1, sorted.length)}–{Math.min(page * PAGE_SIZE, sorted.length)} de {sorted.length} registros
             </span>
             <div className="flex items-center gap-2">
               <Button
