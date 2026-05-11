@@ -434,7 +434,7 @@ function AddWallet() {
         try {
 
           const response = await registerWalletMutation.mutateAsync(data);
-          console.log(response);
+     
           return response;
 
         } catch (error: any) {

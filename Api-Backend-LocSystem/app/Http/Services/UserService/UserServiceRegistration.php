@@ -6,23 +6,26 @@ use App\Models\User\User;
 use App\Models\Account\Account;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use App\Http\Services\LogsService\LogsService;
 
 
 class UserServiceRegistration {
 
     protected $modelUser;
     protected $modelAccount;
+    protected $logsService;
 
     // Método Construtor
-    public function __construct (User $modelUser, Account $modelAccount) {
+    public function __construct (User $modelUser, Account $modelAccount, LogsService $logsService) {
         $this->modelUser = $modelUser;
         $this->modelAccount = $modelAccount;
+        $this->logsService = $logsService;
     }
 
 
     // Método Cadastro de Usuário
     public function createUser($request): array {
-        return DB::transaction(function () use ($request) {
+        $user = DB::transaction(function () use ($request) {
 
             $user = $this->modelUser->create([
                 'v_name'               => $request->input('v_name'),
@@ -50,12 +53,21 @@ class UserServiceRegistration {
             ];
 
         });
+
+        $this->logsService->createLog(
+            auth()->id(),
+            'Criação de Usuário',
+            $user,
+            'Usuário cadastrado com sucesso'
+        );
+
+        return $user;
     }
 
 
     // Método de Atualização de Usuário
     public function updateUser($request, $userId): array  {
-        return DB::transaction(function () use ($request, $userId) {
+        $user = DB::transaction(function () use ($request, $userId) {
 
             $user = $this->modelUser->findOrFail($userId);
 
@@ -82,12 +94,21 @@ class UserServiceRegistration {
             ];
 
         });
+
+        $this->logsService->createLog(
+            auth()->id(),
+            'Atualização de Usuário',
+            $user,
+            'Usuário atualizado com sucesso'
+        );
+
+        return $user;
     }
 
 
      // Método de Exclusão de Usuário
     public function deleteUser($id_user): array {
-        return DB::transaction(function () use ($id_user) {
+        $userData = DB::transaction(function () use ($id_user) {
 
             $user = $this->modelUser->findOrFail($id_user);
 
@@ -100,6 +121,15 @@ class UserServiceRegistration {
             return $userData;
 
         });
+
+        $this->logsService->createLog(
+            auth()->id(),
+            'Exclusão de Usuário',
+            $userData,
+            'Usuário excluído com sucesso'
+        );
+
+        return $userData;
     }
 
 
@@ -120,6 +150,13 @@ class UserServiceRegistration {
         $imageUrl = $request->getSchemeAndHttpHost() . '/images/users/' . $filename . '?v=' . time();
 
         $user->update(['v_image' => $imageUrl]);
+
+        $this->logsService->createLog(
+            $user->i_id,
+            'Upload de Imagem de Perfil',
+            ['v_image' => $imageUrl],
+            'Imagem de perfil atualizada com sucesso'
+        );
 
         return $imageUrl;
     }

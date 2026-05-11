@@ -12,12 +12,7 @@ return new class extends Migration {
             $table->string('v_action');
             $table->json('j_details');
             $table->string('v_description');
-            $table->foreignId('i_wallet_id')->nullable()->constrained('wallets', 'i_id')->onDelete('set null');
-            $table->foreignId('i_legal_advisory_id')->nullable()->constrained('legal_advisories', 'i_id')->onDelete('set null');
-            $table->foreignId('i_vehicle_id')->nullable()->constrained('vehicles', 'i_id')->onDelete('set null');
-            $table->foreignId('i_vehicle_import_id')->nullable()->constrained('vehicle_imports', 'i_id')->onDelete('set null');
             $table->foreignId('i_user_id')->constrained('users', 'i_id')->onDelete('restrict');
-            $table->foreignId('i_county_id')->nullable()->constrained('counties', 'i_id')->onDelete('set null');
             $table->timestamps();
             $table->softDeletes();
         });

@@ -8,6 +8,7 @@ use App\Http\Controllers\Wallet\WalletController;
 use App\Http\Controllers\PricingPlan\PricingPlanController;
 use App\Http\Controllers\Banned\BannedController;
 use App\Http\Controllers\Session\SessionController;
+use App\Http\Controllers\Logs\LogsController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -19,6 +20,8 @@ Route::put('/auth/updatePassword', [UserAuthenticationController::class, 'update
 Route::post('/auth/checkAuthenticationPerformed', [UserAuthenticationController::class, 'checkAuthenticationPerformed']);
 Route::post('/auth/2fa/verify-login', [TwoFactorController::class, 'verifyLogin']);
 
+// Rotas "Logs"
+Route::get('/logs', [LogsController::class, 'logs']);
 
 // Rotas que nescessitam de autenticação
 Route::middleware('auth:sanctum')->group(function () {

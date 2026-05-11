@@ -6,15 +6,18 @@ use App\Models\Vehicle\Vehicle;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use App\Http\Services\LogsService\LogsService;
 
 
 class VehicleRegistrationService {
 
     protected $modelVehicle;
+    protected $logsService;
 
     // Método Construtor
-    public function __construct(Vehicle $modelVehicle) {
+    public function __construct(Vehicle $modelVehicle, LogsService $logsService) {
         $this->modelVehicle = $modelVehicle;
+        $this->logsService = $logsService;
     }
 
 
@@ -50,7 +53,7 @@ class VehicleRegistrationService {
 
     // Método para cadastrar um novo veículo
     public function createVehicle($request, $i_user_id): array  {
-        return DB::transaction(function () use ($request, $i_user_id) {
+        $vehicle = DB::transaction(function () use ($request, $i_user_id) {
 
             $vehicle = $this->modelVehicle::create([
                 'v_plate'                    => $request->input('v_plate'),
@@ -64,12 +67,21 @@ class VehicleRegistrationService {
             return $vehicle->toArray();
 
         });
+
+        $this->logsService->createLog(
+            $i_user_id,
+            'Criação de Veículo',
+            $vehicle,
+            'Veículo cadastrado com sucesso'
+        );
+
+        return $vehicle;
     }
 
 
     // Método para atualizar um veículo
     public function updateVehicle($request, $vehicleId, $i_user_id): array {
-        return DB::transaction(function () use ($request, $vehicleId, $i_user_id) {
+        $vehicle = DB::transaction(function () use ($request, $vehicleId, $i_user_id) {
 
             $vehicle = $this->modelVehicle->findOrFail($vehicleId);
 
@@ -85,6 +97,15 @@ class VehicleRegistrationService {
             return $vehicle->refresh()->toArray();
 
         });
+
+        $this->logsService->createLog(
+            $i_user_id,
+            'Atualização de Veículo',
+            $vehicle,
+            'Veículo atualizado com sucesso'
+        );
+
+        return $vehicle;
     }
 
 
@@ -96,9 +117,18 @@ class VehicleRegistrationService {
 
         if ($vehicle) {
 
+            $vehicleData = $vehicle->toArray();
+
             $vehicle->delete();
 
-            return $vehicle->toArray();
+            $this->logsService->createLog(
+                auth()->id(),
+                'Exclusão de Veículo',
+                $vehicleData,
+                'Veículo deletado com sucesso'
+            );
+
+            return $vehicleData;
             
         }
 

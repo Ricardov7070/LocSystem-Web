@@ -15,15 +15,10 @@ class UserLog extends Model
     protected $table = 'user_logs';
 
     protected $fillable = [
-        'i_wallet_id',
-        'i_legal_advisory_id',
-        'i_vehicle_id',
-        'i_vehicle_import_id',
         'i_user_id',
         'v_action',
         'j_details',
         'v_description',
-        'i_county_id'
     ];
 
     protected $casts = [

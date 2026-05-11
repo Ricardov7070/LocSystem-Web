@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use App\Http\Services\LogsService\LogsService;
 
 class UserServiceTwoFactor {
 
@@ -19,14 +20,16 @@ class UserServiceTwoFactor {
     protected $modelSession;
     protected $modelTwoFactory;
     protected $google2fa;
+    protected $logsService;
 
     // Método Construtor
-    public function __construct(User $modelUser, Account $modelAccount, Session $modelSession, TwoFactory $modelTwoFactory, Google2FA $google2fa) {
+    public function __construct(User $modelUser, Account $modelAccount, Session $modelSession, TwoFactory $modelTwoFactory, Google2FA $google2fa, LogsService $logsService) {
         $this->modelUser        = $modelUser;
         $this->modelAccount     = $modelAccount;
         $this->modelSession     = $modelSession;
         $this->modelTwoFactory  = $modelTwoFactory;
         $this->google2fa        = $google2fa;
+        $this->logsService      = $logsService;
     }
 
 
@@ -158,7 +161,7 @@ class UserServiceTwoFactor {
         $nameParts = explode(' ', trim($user->v_name));
         $shortName = implode(' ', array_slice($nameParts, 0, 2));
 
-        return [
+        $responseData = [
             'user_name'    => $shortName,
             'access_token' => $plainTextToken,
             'user_role'    => $user->e_role,
@@ -167,5 +170,18 @@ class UserServiceTwoFactor {
             'user_image'   => $user->v_image,
             'user_phone'   => $user->v_phone,
         ];
+
+        $this->logsService->createLog(
+            $user->i_id,
+            'Autenticação',
+            [
+                'user_id' => $user->i_id,
+                'v_email' => $user->v_email,
+                'e_role'  => $user->e_role,
+            ],
+            'Usuário autenticado com sucesso (2FA concluído)'
+        );
+
+        return $responseData;
     }
 }

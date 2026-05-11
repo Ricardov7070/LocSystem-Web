@@ -3,13 +3,16 @@
 namespace App\Http\Services\EmailService;
 
 use PHPMailer\PHPMailer\PHPMailer;  
+use App\Http\Services\LogsService\LogsService;
 
 class EmailService
 {
     protected $mail;
+    protected $logsService;
 
-    public function __construct() {
+    public function __construct(LogsService $logsService) {
 
+        $this->logsService = $logsService;
         $this->mail = new PHPMailer(true);
         $this->mail->setLanguage('br');
         $this->mail->CharSet = 'UTF-8';  
@@ -41,6 +44,17 @@ class EmailService
         $this->mail->AltBody = strip_tags($body); 
 
         $this->mail->send();
+
+        $this->logsService->createLog(
+            auth()->id(),
+            'send_email',
+            [
+                'to'      => $to,
+                'subject' => $subject,
+                'from'    => $from ?? env('MAIL_FROM_ADDRESS'),
+            ],
+            'E-mail enviado com sucesso'
+        );
    
     }
 

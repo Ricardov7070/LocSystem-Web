@@ -6,15 +6,18 @@ use App\Models\Wallet\Wallet;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use App\Http\Services\LogsService\LogsService;
 
 
 class WalletRegistrationService {
 
     protected $modelWallet;
+    protected $logsService;
 
     // Método Construtor
-    public function __construct(Wallet $modelWallet) {
+    public function __construct(Wallet $modelWallet, LogsService $logsService) {
         $this->modelWallet = $modelWallet;
+        $this->logsService = $logsService;
     }
 
 
@@ -38,7 +41,7 @@ class WalletRegistrationService {
 
      // Método para cadastrar uma nova carteira
     public function createWallet($request, $i_user_id): array  {
-        return DB::transaction(function () use ($request, $i_user_id) {
+        $wallet = DB::transaction(function () use ($request, $i_user_id) {
 
             $wallet = $this->modelWallet::create([
                 'v_name'              => $request->input('v_name'),
@@ -48,12 +51,21 @@ class WalletRegistrationService {
             return $wallet->toArray();
 
         });
+
+        $this->logsService->createLog(
+            $i_user_id,
+            'Criação de Carteira',
+            $wallet,
+            'Carteira criada com sucesso'
+        );
+
+        return $wallet;
     }
 
     
     // Método para atualizar uma carteira
     public function updateWallet($request, $walletId, $i_user_id): array {
-        return DB::transaction(function () use ($request, $walletId, $i_user_id) {
+        $wallet = DB::transaction(function () use ($request, $walletId, $i_user_id) {
 
             $wallet = $this->modelWallet->findOrFail($walletId);
 
@@ -65,6 +77,15 @@ class WalletRegistrationService {
             return $wallet->refresh()->toArray();
 
         });
+
+        $this->logsService->createLog(
+            $i_user_id,
+            'Atualização de Carteira',
+            $wallet,
+            'Carteira atualizada com sucesso'
+        );
+
+        return $wallet;
     }
 
 
@@ -76,9 +97,18 @@ class WalletRegistrationService {
 
         if ($wallet) {
 
+            $walletData = $wallet->toArray();
+
             $wallet->delete();
 
-            return $wallet->toArray();
+            $this->logsService->createLog(
+                auth()->id(),
+                'Exclusão de Carteira',
+                $walletData,
+                'Carteira deletada com sucesso'
+            );
+
+            return $walletData;
             
         }
 

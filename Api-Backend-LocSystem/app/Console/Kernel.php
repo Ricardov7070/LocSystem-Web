@@ -17,6 +17,9 @@ class Kernel extends ConsoleKernel
 
         // Invalida automaticamente sessões expiradas (roda a cada minuto)
         $schedule->command('sessions:invalidate-expired')->everyMinute();
+
+        // Remove logs com mais de 90 dias (roda todo dia à meia-noite)
+        $schedule->command('logs:purge-old')->daily();
     }
 
     /**

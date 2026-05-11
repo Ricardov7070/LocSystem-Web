@@ -43,11 +43,8 @@ class InvalidateExpiredSessions extends Command
                     ]);
             }
 
-            // Nulifica o token e a expiração da sessão (mesma lógica do logout)
-            $session->update([
-                'v_token'      => null,
-                'd_expires_at' => null,
-            ]);
+            // Deleta a sessão expirada
+            $session->delete();
 
             $count++;
         }

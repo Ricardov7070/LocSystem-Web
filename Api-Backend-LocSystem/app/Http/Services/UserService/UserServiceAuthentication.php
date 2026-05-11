@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use App\Http\Services\LogsService\LogsService;
 
 
 class UserServiceAuthentication {
@@ -17,12 +18,14 @@ class UserServiceAuthentication {
     protected $modelUser;
     protected $modelAccount;
     protected $modelSession;
+    protected $logsService;
 
     // Método Construtor
-    public function __construct(User $modelUser, Account $modelAccount, Session $modelSession) {
+    public function __construct(User $modelUser, Account $modelAccount, Session $modelSession, LogsService $logsService) {
         $this->modelUser = $modelUser;
         $this->modelAccount = $modelAccount;
         $this->modelSession = $modelSession;
+        $this->logsService = $logsService;
     }
 
 
@@ -125,6 +128,21 @@ class UserServiceAuthentication {
         if ($user->b_twoFactorEnabled) {
             $preAuthToken = Str::uuid()->toString();
             Cache::put('2fa_pending:' . $preAuthToken, $user->i_id, now()->addMinutes(5));
+
+            $this->logsService->createLog(
+                $user->i_id,
+                'Autenticação',
+                [
+                    'user_id'          => $user->i_id,
+                    'v_email'          => $user->v_email,
+                    'e_role'           => $user->e_role,
+                    'v_device_name'    => $deviceName,
+                    'v_device_country' => $country ?? 'BR',
+                    'v_ip'             => $ip ?: null,
+                ],
+                'Usuário autenticado com sucesso (via 2FA)'
+            );
+
             return [
                 'two_factor_redirect' => true,
                 'pre_auth_token'      => $preAuthToken,
@@ -158,7 +176,7 @@ class UserServiceAuthentication {
         $nameParts = explode(' ', trim($user->v_name));
         $shortName = implode(' ', array_slice($nameParts, 0, 2));
 
-        return [
+        $responseData = [
             'user_name'          => $shortName,
             'access_token'       => $plainTextToken,
             'twoFactorEnabled'   => (bool) $user->b_twoFactorEnabled,
@@ -168,6 +186,22 @@ class UserServiceAuthentication {
             'phone'              => $user->v_phone,
             'image'              => $user->v_image,
         ];
+
+        $this->logsService->createLog(
+            $user->i_id,
+            'Autenticação',
+            [
+                'user_id'          => $user->i_id,
+                'v_email'          => $user->v_email,
+                'e_role'           => $user->e_role,
+                'v_device_name'    => $deviceName,
+                'v_device_country' => $country ?? 'BR',
+                'v_ip'             => $ip ?: null,
+            ],
+            'Usuário autenticado com sucesso'
+        );
+
+        return $responseData;
     }
 
 
@@ -191,12 +225,16 @@ class UserServiceAuthentication {
 
         if ($session) {
 
-            $session->update([
-                'v_token'      => null,
-                'd_expires_at' => null,
-            ]);
+            $session->delete();
 
         }
+
+        $this->logsService->createLog(
+            $user->i_id,
+            'Logout',
+            ['user_id' => $user->i_id, 'v_email' => $user->v_email],
+            'Usuário deslogado com sucesso'
+        );
     }
 
 
@@ -207,11 +245,17 @@ class UserServiceAuthentication {
         $this->modelAccount->where('i_user_id', $i_user_id)->update([
             'v_password' => Hash::make($temporaryPassword),
         ]);
-        
 
         $this->modelUser->where('i_id', $i_user_id)->update([
             'b_mustChangePassword' => true,
         ]);
+
+        $this->logsService->createLog(
+            auth()->id(),
+            'Geração de Senha Temporária',
+            ['target_user_id' => $i_user_id],
+            'Senha temporária gerada com sucesso'
+        );
 
         return $temporaryPassword;
     }
@@ -232,6 +276,13 @@ class UserServiceAuthentication {
         $this->modelUser->where('i_id', $user->i_id)->update([
             'b_mustChangePassword' => false,
         ]);
+
+        $this->logsService->createLog(
+            $user->i_id,
+            'Atualização de Senha',
+            ['user_id' => $user->i_id, 'v_email' => $user->v_email],
+            'Senha atualizada com sucesso'
+        );
     }   
 
 
@@ -266,6 +317,13 @@ class UserServiceAuthentication {
         $account->update([
             'v_password' => Hash::make($newPassword),
         ]);
+
+        $this->logsService->createLog(
+            $userId,
+            'Alteração de Senha',
+            ['user_id' => $userId],
+            'Senha alterada com sucesso'
+        );
     }
 
 
@@ -291,7 +349,7 @@ class UserServiceAuthentication {
                 ->first();
 
         if (!$account) {
-            throw new HttpException(401, 'Acessso expirado. Realize o login novamente!');
+            throw new HttpException(401, 'Acesso expirado. Realize o login novamente!');
         }
     }
 

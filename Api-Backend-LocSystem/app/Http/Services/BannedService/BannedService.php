@@ -5,15 +5,18 @@ namespace App\Http\Services\BannedService;
 use App\Models\User\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use App\Http\Services\LogsService\LogsService;
 
 
 class BannedService {
 
     protected $modelUser;
+    protected $logsService;
 
     // Método Construtor
-    public function __construct(User $modelUser) {
+    public function __construct(User $modelUser, LogsService $logsService) {
         $this->modelUser = $modelUser;
+        $this->logsService = $logsService;
     }
 
 
@@ -40,6 +43,13 @@ class BannedService {
             ]);
 
         });
+
+        $this->logsService->createLog(
+            auth()->id(),
+            'Atualização de Usuário Banido',
+            ['user_id' => $userId],
+            'Usuário desbanido com sucesso'
+        );
 
     }
 }
