@@ -8,6 +8,7 @@ import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Card } from '../../components/ui/card';
 import AuthLayout from '../../components/layout/layout';
+import Loading from '../../components/ui/Loading';
 
 export default function TwoFactorPage() {
   const navigate = useNavigate();
@@ -62,6 +63,7 @@ export default function TwoFactorPage() {
 
   return (
     <>
+      {isLoading && <Loading />}
       {alertInfo && (
         <div className="fixed top-4 right-4 z-[9999]">
           <CustomAlert

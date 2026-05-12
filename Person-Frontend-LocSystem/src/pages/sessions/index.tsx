@@ -10,7 +10,9 @@ import { DataTableSkeleton } from '../../components/DataTable/data-table-skeleto
 import { dialog } from '../../components/dialog';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
+
 import CustomAlert from '../../hooks/useCustomAlert';
+import Loading from '../../components/ui/Loading';
 
 
 interface Session {
@@ -184,6 +186,7 @@ function SessionsTable({ onCount, onIds }: { onCount?: (n: number) => void; onId
 
   return (
     <>
+      {singleSessionMutation?.isPending && <Loading />}
       {alertInfo && (
         <div className="fixed top-4 right-4 z-[9999]">
           <CustomAlert

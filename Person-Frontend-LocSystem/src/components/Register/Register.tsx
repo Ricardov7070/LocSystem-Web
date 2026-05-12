@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from '../../components/ui/select';
 import AuthLayout from '../layout/layout';
+import Loading from '../ui/Loading';
 
 
 const formSchema = z.object({
@@ -179,6 +180,7 @@ export default function Register() {
 
   return (
     <>
+      {signUpMutation.isPending && <Loading />}
       {alertInfo && (
         <div className="fixed top-4 right-4 z-[9999]">
           <CustomAlert

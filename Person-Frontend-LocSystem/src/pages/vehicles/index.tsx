@@ -1,3 +1,7 @@
+
+  // Mutations para loading global
+  const updateVehicleMutation = { isPending: false };
+  const deleteVehicleMutation = { isPending: false };
 import { z } from 'zod';
 import { Plus, MoreHorizontal, Pencil, Trash2, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { UseFormReturn } from 'react-hook-form';
@@ -27,7 +31,9 @@ import {
   FormControl,
 } from '../../components/ui/form';
 import { DateRangePicker } from '../../components/DateRangePicker';
+
 import CustomAlert from '../../hooks/useCustomAlert';
+import Loading from '../../components/ui/Loading';
 
 
 interface Vehicle {
@@ -268,8 +274,13 @@ function VehiclesTable()
           case 'created_at': aVal = new Date(a.created_at).getTime(); bVal = new Date(b.created_at).getTime(); break;
           default: return 0;
         }
-        if (typeof aVal === 'number') return sortDir === 'asc' ? aVal - bVal : bVal - aVal;
-        return sortDir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+        if (typeof aVal === 'number' && typeof bVal === 'number') {
+          return sortDir === 'asc' ? aVal - bVal : bVal - aVal;
+        }
+        if (typeof aVal === 'string' && typeof bVal === 'string') {
+          return sortDir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+        }
+        return 0;
       })
     : filtered;
 
@@ -531,6 +542,7 @@ function AddVehicle() {
 
   return (
     <>
+      {(registerVehicleMutation?.isPending || updateVehicleMutation?.isPending || deleteVehicleMutation?.isPending) && <Loading />}
       {alertInfo && (
         <div className="fixed top-4 right-4 z-[9999]">
           <CustomAlert

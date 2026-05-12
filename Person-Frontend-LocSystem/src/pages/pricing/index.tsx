@@ -688,6 +688,7 @@ function AddPricingPlan() {
 
   return (
     <>
+      {(updateMutation.isPending || deleteMutation.isPending || toggleStatusMutation.isPending) && <Loading />}
       {alertInfo && (
         <div className="fixed top-4 right-4 z-[9999]">
           <CustomAlert

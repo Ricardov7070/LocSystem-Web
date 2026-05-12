@@ -24,6 +24,7 @@ import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
 import AuthLayout from '../layout/layout';
+import Loading from '../ui/Loading';
 
 
 const formSchema = z.object({
@@ -252,6 +253,7 @@ export default function Login() {
 
   return (
     <>
+      {(signInMutation.isPending || resetPasswordMutation.isPending) && <Loading />}
       {alertInfo && (
         <div className="fixed top-4 right-4 z-[9999]">
           <CustomAlert

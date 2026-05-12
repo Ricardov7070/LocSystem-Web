@@ -25,7 +25,9 @@ import {
   FormMessage,
   FormControl,
 } from '../../components/ui/form';
+
 import CustomAlert from '../../hooks/useCustomAlert';
+import Loading from '../../components/ui/Loading';
 
 
 interface Wallet {
@@ -97,6 +99,14 @@ function WalletsTable() {
   }
 
   const queryClient = useQueryClient();
+
+
+  const registerWalletMutation = useMutation({
+    mutationFn: async (data: Record<string, unknown>) => {
+      const response = await api.post('/registerWallet', data);
+      return response.data;
+    },
+  });
 
   const updateWalletMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Record<string, unknown> }) => {
@@ -301,6 +311,7 @@ function WalletsTable() {
 
   return (
     <>
+      {(registerWalletMutation?.isPending || updateWalletMutation?.isPending || deleteWalletMutation?.isPending) && <Loading />}
       {alertInfo && (
         <div className="fixed top-4 right-4 z-[9999]">
           <CustomAlert

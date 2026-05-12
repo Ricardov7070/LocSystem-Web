@@ -188,6 +188,7 @@ function BannedTable({ onCount }: { onCount?: (n: number) => void }) {
 
   return (
     <>
+      {unbanMutation?.isPending && <Loading />}
       {alertInfo && (
         <div className="fixed top-4 right-4 z-[9999]">
           <CustomAlert
