@@ -284,8 +284,12 @@ function WalletsTable() {
           case 'created_at': aVal = new Date(a.created_at).getTime(); bVal = new Date(b.created_at).getTime(); break;
           default: return 0;
         }
-        if (typeof aVal === 'number') return sortDir === 'asc' ? aVal - bVal : bVal - aVal;
-        return sortDir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+        if (typeof aVal === 'number' && typeof bVal === 'number') {
+          return sortDir === 'asc' ? aVal - bVal : bVal - aVal;
+        }
+        return sortDir === 'asc'
+          ? String(aVal).localeCompare(String(bVal))
+          : String(bVal).localeCompare(String(aVal));
       })
     : filtered;
 

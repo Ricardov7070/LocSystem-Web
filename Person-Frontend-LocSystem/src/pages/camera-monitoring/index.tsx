@@ -438,7 +438,7 @@ export default function CameraMonitoringPage() {
       if (!response.ok) throw new Error(`Erro ${response.status}`);
 
       setConnectionStatus('connected');
-      toast.success('Conectado! Aguardando detecções...');
+      setAlertInfo({ message: 'Conectado! Aguardando detecções...', type: 'success' });
 
       const reader = response.body!.getReader();
       readerRef.current = reader;
@@ -516,7 +516,7 @@ export default function CameraMonitoringPage() {
     } catch {
       setConnectionStatus('error');
       setIsStreaming(false);
-      toast.error('Erro ao conectar com a câmera');
+      setAlertInfo({ message: 'Erro ao conectar com a câmera', type: 'error' });
     }
   };
 
@@ -687,6 +687,17 @@ export default function CameraMonitoringPage() {
         onClose={() => setShowVehicleAlert(false)}
         detection={alertVehicle}
       />
+
+      {/* Alerta CustomAlert global */}
+      {alertInfo && (
+        <div className="fixed top-4 right-4 z-[9999]">
+          <CustomAlert
+            message={alertInfo.message}
+            type={alertInfo.type}
+            onClose={() => setAlertInfo(null)}
+          />
+        </div>
+      )}
 
       {/* Modal de configurações */}
       <Dialog open={showSettings} onOpenChange={(open) => {
