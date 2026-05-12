@@ -14,7 +14,7 @@ import {
   CheckCircle2,
   XCircle,
 } from 'lucide-react';
-import { toast } from 'sonner';
+import CustomAlert from '../../hooks/useCustomAlert';
 import { format } from 'date-fns';
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -275,6 +275,7 @@ export default function CameraMonitoringPage() {
     b_enabled: true,
     bridgeHost: 'localhost:3030',
   });
+  const [alertInfo, setAlertInfo] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testMessage, setTestMessage] = useState('');
@@ -363,12 +364,12 @@ export default function CameraMonitoringPage() {
       return res.data;
     },
     onSuccess: () => {
-      toast.success('Configuração salva com sucesso');
+      setAlertInfo({ message: 'Configuração salva com sucesso', type: 'success' });
       localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
       setShowSettings(false);
     },
     onError: () => {
-      toast.error('Erro ao salvar configuração');
+      setAlertInfo({ message: 'Erro ao salvar configuração', type: 'error' });
     },
   });
 
@@ -706,23 +707,86 @@ export default function CameraMonitoringPage() {
           <div className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="v_host">Endereço IP da câmera</Label>
-              <Input id="v_host" placeholder="192.168.0.100" value={config.v_host} onChange={(e) => setConfig({ ...config, v_host: e.target.value })} />
+              <Input
+                id="v_host"
+                placeholder="192.168.0.100"
+                value={config.v_host}
+                maxLength={50}
+                pattern={"^([a-zA-Z0-9.-]+|((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))$"}
+                onChange={e => {
+                  // Permite apenas letras, números, ponto, hífen
+                  const val = e.target.value.replace(/[^a-zA-Z0-9.\-]/g, '');
+                  setConfig({ ...config, v_host: val });
+                }}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="v_username">Usuário</Label>
-              <Input id="v_username" placeholder="admin" value={config.v_username} onChange={(e) => setConfig({ ...config, v_username: e.target.value })} />
+              <Input
+                id="v_username"
+                placeholder="admin"
+                value={config.v_username}
+                maxLength={32}
+                onChange={e => {
+                  // Permite apenas letras, números e underline
+                  const val = e.target.value.replace(/[^a-zA-Z0-9_]/g, '');
+                  setConfig({ ...config, v_username: val });
+                }}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="v_password">Senha</Label>
-              <Input id="v_password" type="password" value={config.v_password} onChange={(e) => setConfig({ ...config, v_password: e.target.value })} />
+              <Input
+                id="v_password"
+                type="password"
+                value={config.v_password}
+                maxLength={32}
+                onChange={e => {
+                  // Permite qualquer caractere, mas limita tamanho
+                  setConfig({ ...config, v_password: e.target.value });
+                }}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="i_channel">Canal</Label>
-              <Input id="i_channel" type="number" min={1} max={16} value={config.i_channel} onChange={(e) => setConfig({ ...config, i_channel: parseInt(e.target.value) || 1 })} />
+              <Input
+                id="i_channel"
+                type="number"
+                min={1}
+                max={16}
+                value={config.i_channel}
+                onChange={e => {
+                  // Permite apenas números entre 1 e 16
+                  let val = parseInt(e.target.value.replace(/[^0-9]/g, ''));
+                  if (isNaN(val) || val < 1) val = 1;
+                  if (val > 16) val = 16;
+                  setConfig({ ...config, i_channel: val });
+                }}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="bridgeHost">IP do Camera Bridge</Label>
-              <Input id="bridgeHost" placeholder="localhost:3030" value={config.bridgeHost} onChange={(e) => setConfig({ ...config, bridgeHost: e.target.value })} />
+              <Input
+                id="bridgeHost"
+                placeholder="localhost:3030"
+                value={config.bridgeHost}
+                maxLength={50}
+                onChange={e => {
+                  // Permite letras, números, ponto, hífen, dois-pontos
+                  const val = e.target.value.replace(/[^a-zA-Z0-9.\-:]/g, '');
+                  setConfig({ ...config, bridgeHost: val });
+                }}
+              />
+                    {/* Alerta CustomAlert */}
+                    {alertInfo && (
+                      <div className="fixed top-4 right-4 z-[9999]">
+                        <CustomAlert
+                          message={alertInfo.message}
+                          type={alertInfo.type}
+                          onClose={() => setAlertInfo(null)}
+                        />
+                      </div>
+                    )}
               <p className="text-xs text-muted-foreground">Endereço do servidor local rodando no PC da câmera</p>
             </div>
             <div className="flex items-center gap-2 pt-2">
@@ -750,7 +814,7 @@ export default function CameraMonitoringPage() {
             )}
           </div>
 
-          <DialogFooter className="gap-2">
+          <DialogFooter className="">
             <Button
               variant="outline"
               onClick={() => {
