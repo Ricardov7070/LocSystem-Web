@@ -189,7 +189,7 @@ services:
       - laravel_app
     env_file:
       - .env
-    command: sh -c "yarn install && yarn build --host 0.0.0.0"
+    command: sh -c "yarn install && yarn build"
 
 
 # Container Mysql
