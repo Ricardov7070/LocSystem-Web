@@ -22,12 +22,14 @@ class LicensePlateIncidence extends Model
         'f_latitude',
         'f_longitude',
         'v_image',
+        'f_confidence',
         'b_positive',
         'e_capture_method',
-        'v_plate_mercosul'
+        'v_plate_mercosul',
     ];
 
     protected $casts = [
-        'b_positive' => 'boolean',
+        'b_positive'   => 'boolean',
+        'f_confidence' => 'float',
     ];
 }

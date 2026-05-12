@@ -9,6 +9,7 @@ use App\Http\Controllers\PricingPlan\PricingPlanController;
 use App\Http\Controllers\Banned\BannedController;
 use App\Http\Controllers\Session\SessionController;
 use App\Http\Controllers\Logs\LogsController;
+use App\Http\Controllers\CameraMonitoring\CameraMonitoringController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -69,4 +70,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // Rotas "Sessões"
     Route::get('/sessions', [SessionController::class, 'sessions']);
     Route::post('/singleSession/{id}', [SessionController::class, 'singleSession']);
+
+    // Rotas "Monitoramento de Câmera"
+    Route::get('/camera-monitoring/config', [CameraMonitoringController::class, 'getConfig']);
+    Route::post('/camera-monitoring/config', [CameraMonitoringController::class, 'saveConfig']);
+    Route::get('/camera-monitoring/search/{plate}', [CameraMonitoringController::class, 'searchByPlate']);
+    Route::post('/camera-monitoring/incidence', [CameraMonitoringController::class, 'saveIncidence']);
+    Route::get('/camera-monitoring/history', [CameraMonitoringController::class, 'getHistory']);
 });

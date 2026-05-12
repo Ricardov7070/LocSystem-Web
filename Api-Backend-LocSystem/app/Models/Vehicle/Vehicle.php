@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
+use App\Models\LegalAdvisoryAccess\LegalAdvisoryAccess;
 
 class Vehicle extends Model
 {
@@ -31,4 +32,9 @@ class Vehicle extends Model
     protected $casts = [
         'b_is_private_vehicle' => 'boolean',
     ];
+
+    public function legalAdvisoryAccess()
+    {
+        return $this->belongsTo(LegalAdvisoryAccess::class, 'i_legal_advisory_access_id', 'i_id');
+    }
 }

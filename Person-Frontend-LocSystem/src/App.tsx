@@ -27,6 +27,7 @@ const SearchByCountyPage = lazy(() => import("./pages/search-by-county"));
 const SessionsPage = lazy(() => import("./pages/sessions"));
 const BanidosPage = lazy(() => import("./pages/banidos"));
 const LogsPage = lazy(() => import("./pages/logs"));
+const CameraMonitoringPage = lazy(() => import("./pages/camera-monitoring"));
 
 
 const App: React.FC = () => {
@@ -60,6 +61,7 @@ const App: React.FC = () => {
           <Route path="/sessions" element={<SessionsPage />} />
           <Route path="/banidos" element={<BanidosPage />} />
           <Route path="/logs" element={<LogsPage />} />
+          <Route path="/camera-monitoring" element={<CameraMonitoringPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/login" />} />

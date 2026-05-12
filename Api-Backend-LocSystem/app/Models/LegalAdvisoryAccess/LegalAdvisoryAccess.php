@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
+use App\Models\LegalAdvisory\LegalAdvisory;
 
 class LegalAdvisoryAccess extends Model
 {
@@ -19,4 +20,9 @@ class LegalAdvisoryAccess extends Model
         'i_legal_advisory_id',
         'i_user_id'
     ];
+
+    public function legalAdvisory()
+    {
+        return $this->belongsTo(LegalAdvisory::class, 'i_legal_advisory_id', 'i_id');
+    }
 }
