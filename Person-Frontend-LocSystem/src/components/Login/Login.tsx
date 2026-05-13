@@ -134,9 +134,7 @@ export default function Login() {
         phone: formattedPhone,
       }));
 
-      setTimeout(() => {
-        navigate("/vehicles");
-      }, 1500);
+      navigate("/vehicles");
       
     },
 

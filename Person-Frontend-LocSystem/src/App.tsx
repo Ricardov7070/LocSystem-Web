@@ -1,9 +1,10 @@
-import React, { lazy } from "react";
+import React, { lazy, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./components/Login/Login";
 import Register from "./components/Register/Register";
 import ForgotPassword from "./components/ForgotPassword/ForgotPassword";
 import { AppLayout } from "./components/layout/app-layout";
+import Loading from "./components/ui/Loading";
 
 
 const DashboardPage = lazy(() => import("./pages/dashboard"));
@@ -33,39 +34,41 @@ const CameraMonitoringPage = lazy(() => import("./pages/camera-monitoring"));
 const App: React.FC = () => {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/2fa" element={<TwoFactorPage />} />
+      <Suspense fallback={<Loading />}>
+        <Routes>
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/2fa" element={<TwoFactorPage />} />
 
-        <Route element={<AppLayout />}>
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/vehicles" element={<VehiclesPage />} />
-          <Route path="/users/operators" element={<OperatorsPage />} />
-          <Route path="/users/operators" element={<OperatorDetailPage />} />
-          <Route path="/users/advisory-users" element={<AdvisoryUsersPage />} />
-          <Route path="/users/advisory-users" element={<AdvisoryUserDetailPage />} />
-          <Route path="/users/my-deputies" element={<MyDeputiesPage />} />
-          <Route path="/incidences" element={<IncidencesPage />} />
-          <Route path="/incidences-retroactive" element={<IncidencesRetroactivePage />} />
-          <Route path="/legal-advisories" element={<LegalAdvisoriesPage />} />
-          <Route path="/legal-advisories" element={<LegalAdvisoryDetailPage />} />
-          <Route path="/counties" element={<CountiesPage />} />
-          <Route path="/wallets" element={<WalletsPage />} />
-          <Route path="/pricing" element={<PricingPage />} />
-          <Route path="/vehicle-announcements" element={<VehicleAnnouncementsPage />} />
-          <Route path="/search-by-county" element={<SearchByCountyPage />} />
-          <Route path="/sessions" element={<SessionsPage />} />
-          <Route path="/banidos" element={<BanidosPage />} />
-          <Route path="/logs" element={<LogsPage />} />
-          <Route path="/camera-monitoring" element={<CameraMonitoringPage />} />
-        </Route>
+          <Route element={<AppLayout />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/vehicles" element={<VehiclesPage />} />
+            <Route path="/users/operators" element={<OperatorsPage />} />
+            <Route path="/users/operators" element={<OperatorDetailPage />} />
+            <Route path="/users/advisory-users" element={<AdvisoryUsersPage />} />
+            <Route path="/users/advisory-users" element={<AdvisoryUserDetailPage />} />
+            <Route path="/users/my-deputies" element={<MyDeputiesPage />} />
+            <Route path="/incidences" element={<IncidencesPage />} />
+            <Route path="/incidences-retroactive" element={<IncidencesRetroactivePage />} />
+            <Route path="/legal-advisories" element={<LegalAdvisoriesPage />} />
+            <Route path="/legal-advisories" element={<LegalAdvisoryDetailPage />} />
+            <Route path="/counties" element={<CountiesPage />} />
+            <Route path="/wallets" element={<WalletsPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/vehicle-announcements" element={<VehicleAnnouncementsPage />} />
+            <Route path="/search-by-county" element={<SearchByCountyPage />} />
+            <Route path="/sessions" element={<SessionsPage />} />
+            <Route path="/banidos" element={<BanidosPage />} />
+            <Route path="/logs" element={<LogsPage />} />
+            <Route path="/camera-monitoring" element={<CameraMonitoringPage />} />
+          </Route>
 
-        <Route path="*" element={<Navigate to="/login" />} />
-      </Routes>
+          <Route path="*" element={<Navigate to="/login" />} />
+        </Routes>
+      </Suspense>
     </Router>
   );
 };

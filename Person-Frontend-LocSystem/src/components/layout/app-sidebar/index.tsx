@@ -137,11 +137,11 @@ const allNavItems = [
     allowedRoles: ['ADMIN', 'OPERATOR', 'AUDITOR'],
   },
   {
-    title: 'Começar Monitoramento',
+    title: 'Monitoramento de Câmera',
     url: '/camera-monitoring',
     icon: Camera,
     allowedRoles: ['ADMIN', 'OPERATOR'],
-    target: '_blank',
+    // Removido target para abrir na mesma aba
   },
   {
     title: 'Sessões Ativas',
