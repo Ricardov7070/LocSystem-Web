@@ -6,6 +6,152 @@
         "version": "1.0.0"
     },
     "paths": {
+        "/api/banneds": {
+            "get": {
+                "tags": [
+                    "Gerenciamento de Usuários Banidos"
+                ],
+                "summary": "Realiza o retorno dos usuários banidos.",
+                "operationId": "e46d0cdf8e3d7dc8d894d1d568385c57",
+                "responses": {
+                    "200": {
+                        "description": "Usuários banidos retornados com sucesso!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado, tente novamente!"
+                    }
+                }
+            }
+        },
+        "/api/singleBanned/{id}": {
+            "post": {
+                "tags": [
+                    "Gerenciamento de Usuários Banidos"
+                ],
+                "summary": "Realiza o desbanimento de um usuário específico.",
+                "operationId": "f53d65bbac4973207ebbadc84213d397",
+                "responses": {
+                    "200": {
+                        "description": "Usuário desbanido com sucesso!"
+                    },
+                    "401": {
+                        "description": "Usuário banido não encontrado!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado, tente novamente!"
+                    }
+                }
+            }
+        },
+        "/api/camera-monitoring/config": {
+            "get": {
+                "tags": [
+                    "Camera de Monitoramento"
+                ],
+                "summary": "Retorna a configuração de câmera do usuário autenticado.",
+                "operationId": "a4562aab8a8e1ab46af6691130177b27",
+                "responses": {
+                    "200": {
+                        "description": "Configuração retornada com sucesso!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado, tente novamente!"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Camera de Monitoramento"
+                ],
+                "summary": "Salva a configuração de câmera do usuário autenticado.",
+                "operationId": "7718b2cb53045e4d9d63051eaed200c9",
+                "responses": {
+                    "200": {
+                        "description": "Configuração salva com sucesso!"
+                    },
+                    "422": {
+                        "description": "Erro de validação!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado, tente novamente!"
+                    }
+                }
+            }
+        },
+        "/api/camera-monitoring/search/{plate}": {
+            "get": {
+                "tags": [
+                    "Camera de Monitoramento"
+                ],
+                "summary": "Busca um veículo cadastrado pela placa (para o monitoramento ao vivo).",
+                "operationId": "e94f4560805eb81303d8bd70173e3a54",
+                "responses": {
+                    "200": {
+                        "description": "Veiculo encontrado com sucesso!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado, tente novamente!"
+                    }
+                }
+            }
+        },
+        "/api/camera-monitoring/incidence": {
+            "post": {
+                "tags": [
+                    "Camera de Monitoramento"
+                ],
+                "summary": "Salva uma incidência capturada pela câmera externa.",
+                "operationId": "5362c75e30646b56542bf8762e63f77d",
+                "responses": {
+                    "201": {
+                        "description": "Incidência registrada com sucesso!"
+                    },
+                    "401": {
+                        "description": "Placa inválida!"
+                    },
+                    "422": {
+                        "description": "Erro de validação!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado, tente novamente!"
+                    }
+                }
+            }
+        },
+        "/api/camera-monitoring/history": {
+            "get": {
+                "tags": [
+                    "Camera de Monitoramento"
+                ],
+                "summary": "Retorna o histórico de detecções do usuário autenticado.",
+                "operationId": "19e139dc7eb391b725bd844e450af860",
+                "responses": {
+                    "200": {
+                        "description": "Histórico retornado com sucesso!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado, tente novamente!"
+                    }
+                }
+            }
+        },
+        "/api/logs": {
+            "get": {
+                "tags": [
+                    "Gerenciamento de Logs"
+                ],
+                "summary": "Realiza o retorno dos logs cadastrados.",
+                "operationId": "39f2206fff38c20c92f59c6824c4e4ab",
+                "responses": {
+                    "200": {
+                        "description": "Logs retornados com sucesso!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado, tente novamente!"
+                    }
+                }
+            }
+        },
         "/api/pricingPlans": {
             "get": {
                 "tags": [
@@ -108,6 +254,60 @@
                     },
                     "500": {
                         "description": "Ocorreu um erro, tente novamente!"
+                    }
+                }
+            }
+        },
+        "/api/activateDeactivatePricingPlans/{id}": {
+            "put": {
+                "tags": [
+                    "Gerenciamento de Planos de Preços"
+                ],
+                "summary": "Realiza a ativação ou desativação do plano de preço selecionado",
+                "operationId": "7f2005c1509b3cb9b004616ce5ccc0f1",
+                "responses": {
+                    "200": {
+                        "description": "Atualizado com sucesso!"
+                    },
+                    "401": {
+                        "description": "Plano de preços não encontrado!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro, tente novamente!"
+                    }
+                }
+            }
+        },
+        "/api/sessions": {
+            "get": {
+                "tags": [
+                    "Gerenciamento de Sessões"
+                ],
+                "summary": "Realiza o retorno das sessões ativas.",
+                "operationId": "68e4d2c3e18de0e8fb5a1c38c1dd912d",
+                "responses": {
+                    "200": {
+                        "description": "Sessões ativas retornadas com sucesso!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado, tente novamente!"
+                    }
+                }
+            }
+        },
+        "/api/singleSession/{id}": {
+            "post": {
+                "tags": [
+                    "Gerenciamento de Sessões"
+                ],
+                "summary": "Realiza o encerramento de sessões de usuários específicos.",
+                "operationId": "cf3b498ac9da056173655590b9846b44",
+                "responses": {
+                    "200": {
+                        "description": "Sessão'es encerrada's com sucesso!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado, tente novamente!"
                     }
                 }
             }
@@ -224,6 +424,46 @@
                 }
             }
         },
+        "/api/verify-password": {
+            "post": {
+                "tags": [
+                    "Gerenciamento de Usuário"
+                ],
+                "summary": "Verifica se a senha digitada pelo usuário está correta.",
+                "operationId": "c1d8b31f867a3ea9b68b358669a982d8",
+                "responses": {
+                    "200": {
+                        "description": "Senha correta!"
+                    },
+                    "401": {
+                        "description": "Usuário não autenticado!, Senha incorreta!, Conta não encontrada!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado, tente novamente!"
+                    }
+                }
+            }
+        },
+        "/api/change-password": {
+            "put": {
+                "tags": [
+                    "Gerenciamento de Usuário"
+                ],
+                "summary": "Altera a senha do usuário autenticado.",
+                "operationId": "338dc91b082e4148a66217caadbf9e49",
+                "responses": {
+                    "200": {
+                        "description": "Senha atualizada com sucesso. Realize o login novamente!"
+                    },
+                    "401": {
+                        "description": "Usuário não autenticado!, Conta não encontrada!, Senha atual incorreta!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado, tente novamente!"
+                    }
+                }
+            }
+        },
         "/api/auth/signup": {
             "post": {
                 "tags": [
@@ -292,6 +532,23 @@
                     },
                     "403": {
                         "description": "Não é permitido excluir o usuário Administrador principal!"
+                    }
+                }
+            }
+        },
+        "/api/uploadProfileImage": {
+            "post": {
+                "tags": [
+                    "Gerenciamento de Usuário"
+                ],
+                "summary": "Realiza o upload da imagem de perfil do usuário",
+                "operationId": "9d9846920914e1bfcb8126baeba4ba84",
+                "responses": {
+                    "200": {
+                        "description": "Foto de perfil atualizada com sucesso!"
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro, tente novamente!"
                     }
                 }
             }
@@ -520,8 +777,24 @@
     },
     "tags": [
         {
+            "name": "Gerenciamento de Usuários Banidos",
+            "description": "Gerenciamento de Usuários Banidos"
+        },
+        {
+            "name": "Camera de Monitoramento",
+            "description": "Camera de Monitoramento"
+        },
+        {
+            "name": "Gerenciamento de Logs",
+            "description": "Gerenciamento de Logs"
+        },
+        {
             "name": "Gerenciamento de Planos de Preços",
             "description": "Gerenciamento de Planos de Preços"
+        },
+        {
+            "name": "Gerenciamento de Sessões",
+            "description": "Gerenciamento de Sessões"
         },
         {
             "name": "Gerenciamento de Usuário",

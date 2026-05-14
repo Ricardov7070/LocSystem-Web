@@ -100,6 +100,7 @@ class CameraMonitoringController extends Controller
      *     tags={"Camera de Monitoramento"},
      *     @OA\Response(
      *         response=200,
+    *         description="Veiculo encontrado com sucesso!"
      *     ),
      *     @OA\Response(
      *         response=500,
