@@ -9,6 +9,7 @@ import { Dialoger } from '../dialog';
 import { useRequireAuth } from '../../hooks/useRequireAuth';
 import { useAuth } from '../providers/auth';
 import CustomAlert from '../../hooks/useCustomAlert';
+import Loading from '../ui/Loading';
 
 function ProtectedContent() {
   const { isChecking, alertInfo, clearAlert } = useRequireAuth();
@@ -34,11 +35,12 @@ function ProtectedContent() {
           />
         </div>
       )}
+      {isChecking && <Loading />}
       {!isChecking && (
         <SidebarProvider>
           <AppSidebar />
           <SidebarInset>
-            <Suspense fallback={null}>
+            <Suspense fallback={<Loading />}>
               <Outlet />
             </Suspense>
           </SidebarInset>

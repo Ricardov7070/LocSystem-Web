@@ -23,7 +23,7 @@ interface Session {
   v_device_name: string | null;
   d_device_last_seen: string | null;
   v_device_country: string | null;
-  d_device_registered_at: string | null;
+  created_at: string | null;
   d_expires_at: string | null;
 }
 
@@ -62,10 +62,10 @@ function SessionsTable({ onCount, onIds }: { onCount?: (n: number) => void; onId
 
   const queryClient = useQueryClient();
 
-  const singleSessionMutation = useMutation({
+  const singleSessionMutation = useMutation({   
     mutationFn: async (id: string) => {
-      const response = await api.post(`/singleSession/${id}`, null, {
-        headers: { ids: JSON.stringify([id]) },
+      const response = await api.post(`/singleSession/${id}`, {
+        ids: [id],
       });
       return response.data;
     },
@@ -153,7 +153,7 @@ function SessionsTable({ onCount, onIds }: { onCount?: (n: number) => void; onId
       s.e_role ?? '',
       s.v_device_name ?? '',
       s.v_device_country ?? '',
-      s.d_device_registered_at ? format(new Date(s.d_device_registered_at), 'dd/MM/yyyy') : '',
+      s.created_at ? format(new Date(s.created_at), 'dd/MM/yyyy') : '',
       s.d_expires_at ? format(new Date(s.d_expires_at), 'dd/MM/yyyy') : '',
     ].some((col) => col.toLowerCase().includes(term)),
   );
@@ -167,7 +167,7 @@ function SessionsTable({ onCount, onIds }: { onCount?: (n: number) => void; onId
           case 'v_name': aVal = a.v_name; bVal = b.v_name; break;
           case 'v_device_name': aVal = a.v_device_name ?? ''; bVal = b.v_device_name ?? ''; break;
           case 'v_device_country': aVal = a.v_device_country ?? ''; bVal = b.v_device_country ?? ''; break;
-          case 'created_at': aVal = a.d_device_registered_at ? new Date(a.d_device_registered_at).getTime() : 0; bVal = b.d_device_registered_at ? new Date(b.d_device_registered_at).getTime() : 0; break;
+          case 'created_at': aVal = a.created_at ? new Date(a.created_at).getTime() : 0; bVal = b.created_at ? new Date(b.created_at).getTime() : 0; break;
           case 'd_expires_at': aVal = a.d_expires_at ? new Date(a.d_expires_at).getTime() : 0; bVal = b.d_expires_at ? new Date(b.d_expires_at).getTime() : 0; break;
           default: return 0;
         }
@@ -220,7 +220,7 @@ function SessionsTable({ onCount, onIds }: { onCount?: (n: number) => void; onId
                 Localização <SortIcon colKey="v_device_country" sortKey={sortKey} sortDir={sortDir} />
               </button>
               <button className="flex items-center justify-center gap-1 hover:text-foreground transition-colors" onClick={() => handleSort('created_at')}>
-                Criada Em: <SortIcon colKey="created_at" sortKey={sortKey} sortDir={sortDir} />
+                Sessão Criada Em: <SortIcon colKey="created_at" sortKey={sortKey} sortDir={sortDir} />
               </button>
               <button className="flex items-center justify-center gap-1 hover:text-foreground transition-colors" onClick={() => handleSort('d_expires_at')}>
                 Expira Em: <SortIcon colKey="d_expires_at" sortKey={sortKey} sortDir={sortDir} />
@@ -270,8 +270,8 @@ function SessionsTable({ onCount, onIds }: { onCount?: (n: number) => void; onId
                     {session.v_device_country ?? '—'}
                   </div>
                   <div className="text-muted-foreground text-center">
-                    {session.d_device_registered_at
-                      ? format(new Date(session.d_device_registered_at), 'dd/MM/yyyy HH:mm')
+                    {session.created_at
+                      ? format(new Date(session.created_at), 'dd/MM/yyyy HH:mm')
                       : '—'}
                   </div>
                   <div className="flex justify-center">
@@ -344,11 +344,17 @@ export default function SessionsPage() {
 
     if (!confirmed) return;
 
+    if (!sessionIds.length) return;
+
     try {
 
-      await api.post('/singleSession', null, {
-        headers: { ids: JSON.stringify(sessionIds) },
-      });
+      await Promise.all(
+        sessionIds.map((id) =>
+          api.post(`/singleSession/${id}`, {
+            ids: [id],
+          }),
+        ),
+      );
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
 
     } catch {

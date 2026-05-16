@@ -191,6 +191,14 @@ export function Dialoger() {
   }, [promise, clear]);
 
   const open = !!promise && !!title && !!props;
+  const handleOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (!nextOpen) {
+        handleCancel();
+      }
+    },
+    [handleCancel]
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -248,7 +256,7 @@ export function Dialoger() {
       )}
 
       {props.type === 'info' && (
-        <Dialog open={open}>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
           <DialogContent className={cn('max-w-4xl', props.props?.contentClassname)}>
             <DialogHeader>
               <DialogTitle>{title}</DialogTitle>
@@ -275,7 +283,7 @@ export function Dialoger() {
       )}
 
       {props.type === 'form' && (
-        <Dialog open={open}>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
           <DialogContent className={cn('max-w-2xl', props.props?.contentClassname)}>
             <DialogHeader>
               <DialogTitle>{title}</DialogTitle>

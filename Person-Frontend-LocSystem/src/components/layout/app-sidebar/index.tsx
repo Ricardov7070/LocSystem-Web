@@ -11,7 +11,6 @@ import {
   DollarSign,
   UserCheck,
   MapPin,
-  Camera,
   Megaphone,
   Shield,
   Ban,
@@ -135,13 +134,6 @@ const allNavItems = [
       },
     ],
     allowedRoles: ['ADMIN', 'OPERATOR', 'AUDITOR'],
-  },
-  {
-    title: 'Monitoramento de Câmera',
-    url: '/camera-monitoring',
-    icon: Camera,
-    allowedRoles: ['ADMIN', 'OPERATOR'],
-    // Removido target para abrir na mesma aba
   },
   {
     title: 'Sessões Ativas',

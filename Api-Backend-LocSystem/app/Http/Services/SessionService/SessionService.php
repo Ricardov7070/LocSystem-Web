@@ -31,7 +31,7 @@ class SessionService {
                 'users.i_device_id',
                 'users.v_device_country',
                 'users.d_device_last_seen',
-                'users.d_device_registered_at',
+                'sessions.created_at',
                 'sessions.d_expires_at'
             )
             ->join('sessions', 'users.i_id', '=', 'sessions.i_user_id')

@@ -148,7 +148,8 @@ class UserAuthenticationController extends Controller {
         } catch (\Throwable $th) {
 
             return response()->json([
-                'error' => 'Ocorreu um erro inesperado, tente novamente!',
+                //'error' => 'Ocorreu um erro inesperado, tente novamente!',
+                'error' => $th->getMessage()
             ], 500);
 
         }

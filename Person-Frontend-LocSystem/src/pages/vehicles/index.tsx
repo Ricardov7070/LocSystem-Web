@@ -76,9 +76,8 @@ type VehicleFormSchema = z.infer<typeof vehicleFormSchema>;
 function formatPlate(value: string): string {
   const upper = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
   if (upper.length <= 3) return upper;
-  // Mercosul: ABC1D23 — sem hífen
   if (/^[A-Z]{3}[0-9][A-Z]/.test(upper)) return upper.slice(0, 7);
-  // Formato antigo: ABC-1234
+
   const letters = upper.slice(0, 3);
   const digits = upper.slice(3).replace(/[^0-9]/g, '').slice(0, 4);
   return digits.length > 0 ? `${letters}-${digits}` : letters;
@@ -177,15 +176,19 @@ function VehicleForm({ form }: { form: UseFormReturn<VehicleFormSchema> }) {
   );
 }
 
+
 const COLS = 'grid-cols-[minmax(150px,2fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(150px,2fr)_80px]';
 const PAGE_SIZE = 10;
+
 
 function SortIcon({ colKey, sortKey, sortDir }: { colKey: string; sortKey: string | null; sortDir: 'asc' | 'desc' }) {
   if (sortKey !== colKey) return <ArrowUpDown className="size-3.5 opacity-40" />;
   return sortDir === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />;
 }
 
+
 function VehiclesTable() {
+
   const [search, setSearch] = useState('');
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [page, setPage] = useState(1);
@@ -193,6 +196,7 @@ function VehiclesTable() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [alertInfo, setAlertInfo] = useState<{ message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null);
   const queryClient = useQueryClient();
+
 
   const showAlert = (message: string, type: 'success' | 'error' | 'warning' | 'info') => {
     setAlertInfo({ message, type });
@@ -208,6 +212,7 @@ function VehiclesTable() {
     }
   }
 
+
   const { data: vehicles, isLoading, isError, error } = useQuery<Vehicle[]>({
     queryKey: ['vehicles', dateRange?.from, dateRange?.to],
     queryFn: async () => {
@@ -222,15 +227,23 @@ function VehiclesTable() {
     throwOnError: false,
   });
 
+
   useEffect(() => {
     if (!isError) return;
+
     const status = (error as any)?.response?.status;
+
     if (status === 500) {
+
       showAlert('🚫 Erro interno do servidor ao carregar veículos.', 'error');
+
     } else {
+
       showAlert('🚫 Ocorreu um erro inesperado ao conectar com a API.', 'error');
+
     }
   }, [isError, error]);
+
 
   const term = search.toLowerCase();
   const filtered = (vehicles ?? []).filter((v) =>
@@ -242,6 +255,7 @@ function VehiclesTable() {
       format(new Date(v.created_at), 'dd/MM/yyyy'),
     ].some((col) => col.toLowerCase().includes(term)),
   );
+
 
   const sorted = sortKey
     ? [...filtered].sort((a, b) => {
@@ -281,16 +295,22 @@ function VehiclesTable() {
     },
 
     onSuccess: (data) => {
-      showAlert(data?.success || 'Veículo excluído com sucesso!', 'success');
+      showAlert(data?.success, 'success');
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
     },
 
     onError: (error: any) => {
+
       if (error?.response?.data?.error) {
+
         showAlert(`🚫 ${error.response.data.error}`, 'error');
+
       } else {
+
         showAlert('🚫 Erro ao excluir veículo.', 'error');
+
       }
+
     },
 
   });
@@ -303,7 +323,6 @@ function VehiclesTable() {
   }
 
 
-  // Mutation para atualizar veículo
   const updateVehicleMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Record<string, unknown> }) => {
       const response = await api.post(`/updateVehicle/${id}`, data, {
@@ -312,6 +331,7 @@ function VehiclesTable() {
       return response.data;
     },
   });
+
 
   async function handleEdit(vehicle: Vehicle) {
     let current = {
@@ -322,9 +342,11 @@ function VehiclesTable() {
     } as VehicleFormSchema;
 
     try {
+
       const res = await api.get(`/singleVehicle/${vehicle.i_id}`, {
         headers: { 'vehicle-id': vehicle.i_id },
       });
+
       const record = res.data.vehicle ?? res.data;
       current = {
         v_plate: record?.v_plate ?? vehicle.v_plate,
@@ -333,17 +355,22 @@ function VehiclesTable() {
         i_legal_advisory_access_id: record?.i_legal_advisory_access_id?.name ?? vehicle.i_legal_advisory_access_id?.name ?? '',
       } as VehicleFormSchema;
     } catch {
-      // usa dados da tabela como fallback
+
     }
 
     await dialog.form('Atualizar Veículo', {
+
       description: 'Atualize os dados do veículo',
       schema: vehicleFormSchema,
       submitText: 'Atualizar',
       defaultValues: current,
+
       form: (form) => <VehicleForm form={form} />, 
+
       async handler({ form, data }) {
+        
         try {
+
           const raw = data.v_plate.replace(/[^A-Z0-9]/g, '');
           const isMercosul = /^[A-Z]{3}[0-9][A-Z][0-9]{2}$/.test(raw);
           const payload = {
@@ -352,44 +379,72 @@ function VehiclesTable() {
             v_plate: isMercosul ? '-' : data.v_plate,
             v_plate_mercosul: isMercosul ? data.v_plate : '-',
           };
+
           const response = await updateVehicleMutation.mutateAsync({ id: vehicle.i_id, data: payload });
-          showAlert(`✅ ${response?.success ?? 'Veículo atualizado com sucesso!'}`, 'success');
+          showAlert(`✅ ${response?.success}`, 'success');
           queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+        
           return response;
+
         } catch (error: any) {
+
           if (error?.response) {
+
             const { status, data: errData } = error.response;
+
             if (status === 422 && errData?.errors) {
+
               const errors = errData.errors as Record<string, string[]>;
               const fields = ['v_plate', 'v_model', 'v_phone', 'i_legal_advisory_access_id'] as const;
+          
               for (const field of fields) {
                 if (errors[field]) {
                   form.setError(field, { message: errors[field][0] });
                 }
               }
+
               throw new Error();
+
             } else if (status === 401) {
+
               showAlert(`⚠️ ${errData?.info}`, 'warning');
+
               throw new Error();
+
             } else if (status === 409) {
+
               showAlert(`⚠️ ${errData?.info}`, 'info');
+
               throw new Error();
+
             } else {
+
               showAlert(`🚫 ${errData?.error}`, 'error');
+
               throw new Error();
+
             }
+
           } else {
+
             showAlert('🚫 Ocorreu um erro inesperado ao conectar com a API.', 'error');
+
             throw new Error();
+
           }
+
         }
+
       },
+
     });
+
   }
 
 
   return (
     <>
+      {updateVehicleMutation.isPending && <Loading />}
       {alertInfo && (
         <div className="fixed top-4 right-4 z-[9999]">
           <CustomAlert

@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Services\SessionService\SessionService;
 use App\Http\Services\UserService\UserServiceAuthentication;
+use App\Models\User\User;
 
 
 class SessionController extends Controller {
@@ -71,23 +72,26 @@ class SessionController extends Controller {
  *     ),
  * )
  */
-    public function singleSession(Request $request): JsonResponse {
+    public function singleSession(Request $request): JsonResponse
+    {
         try {
 
-            $ids = $request->input('ids', []);
+            foreach ($request['ids'] as $id) {
+                $user = User::find($id);
 
-            foreach ($ids as $id) {
-                $this->serviceAuthentication->logout($id);    
+                if ($user) {
+                    $this->serviceAuthentication->logout($user);
+                }
             }
 
             return response()->json([
-                'success' => "Sessão'es encerrada's com sucesso!",  
+                'success' => "Sessão'es encerrada's com sucesso!",
             ], 200);
 
         } catch (\Throwable $th) {
 
             return response()->json([
-                'error' => "Ocorreu um erro inesperado, tente novamente!",
+                'error' => $th->getMessage(),
             ], 500);
 
         }
