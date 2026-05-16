@@ -25,7 +25,6 @@ export const routePermissions: Record<string, Array<'ADMIN' | 'OPERATOR' | 'AUDI
   '/pricing': ['ADMIN'],
   '/incidences': ['ADMIN', 'OPERATOR', 'AUDITOR'],
   '/incidences-retroactive': ['ADMIN', 'OPERATOR', 'AUDITOR'],
-  '/camera-monitoring': [],
   '/vehicle-announcements': ['ADMIN'],
   '/sessions': ['ADMIN'],
   '/banidos': ['ADMIN'],
