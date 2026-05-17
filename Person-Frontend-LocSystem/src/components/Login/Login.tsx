@@ -112,7 +112,13 @@ export default function Login() {
         return;
       }
 
-      if (data.success) showAlert(`✅ ${data.success}`, "success");
+      const welcomeMessage = data.success
+        ? `✅ ${data.success}`
+        : `✅ Bem-vindo(a), ${data.user ?? values.email}`;
+      sessionStorage.setItem(
+        'locsystem_login_alert',
+        JSON.stringify({ message: welcomeMessage, type: 'success' }),
+      );
 
       const token = data.token ?? data.access_token ?? data.user?.token;
       if (token) {

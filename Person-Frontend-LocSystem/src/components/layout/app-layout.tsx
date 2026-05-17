@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 
 import { AuthProvider } from '../providers/auth';
@@ -14,6 +14,26 @@ import Loading from '../ui/Loading';
 function ProtectedContent() {
   const { isChecking, alertInfo, clearAlert } = useRequireAuth();
   const { signOutAlert, clearSignOutAlert } = useAuth();
+  const [loginAlert, setLoginAlert] = useState<{ message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null);
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem('locsystem_login_alert');
+    if (!stored) return;
+
+    try {
+      const parsed = JSON.parse(stored) as { message?: string; type?: 'success' | 'error' | 'warning' | 'info' };
+      if (parsed?.message) {
+        setLoginAlert({
+          message: parsed.message,
+          type: parsed.type ?? 'success',
+        });
+      }
+    } catch {
+      // Ignora conteúdo inválido no storage
+    } finally {
+      sessionStorage.removeItem('locsystem_login_alert');
+    }
+  }, []);
 
   return (
     <>
@@ -32,6 +52,15 @@ function ProtectedContent() {
             message={signOutAlert.message}
             type={signOutAlert.type}
             onClose={clearSignOutAlert}
+          />
+        </div>
+      )}
+      {loginAlert && (
+        <div className="fixed top-4 right-4 z-[9999]">
+          <CustomAlert
+            message={loginAlert.message}
+            type={loginAlert.type}
+            onClose={() => setLoginAlert(null)}
           />
         </div>
       )}
