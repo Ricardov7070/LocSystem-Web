@@ -55,11 +55,12 @@ function ProtectedContent() {
           />
         </div>
       )}
-      {loginAlert && (
-        <div className="fixed top-4 right-4 z-[9999]">
+      {!isChecking && loginAlert && (
+        <div className="fixed top-4 right-4 z-[10000]">
           <CustomAlert
             message={loginAlert.message}
             type={loginAlert.type}
+            duration={6000}
             onClose={() => setLoginAlert(null)}
           />
         </div>
