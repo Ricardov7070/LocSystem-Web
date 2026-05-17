@@ -60,7 +60,7 @@ function ProtectedContent() {
           <CustomAlert
             message={loginAlert.message}
             type={loginAlert.type}
-            duration={6000}
+            duration={3000}
             onClose={() => setLoginAlert(null)}
           />
         </div>
