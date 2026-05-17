@@ -10,6 +10,7 @@ import { DataTableSkeleton } from '../../components/DataTable/data-table-skeleto
 import { dialog } from '../../components/dialog';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
+import Loading from '../../components/ui/Loading';
 import CustomAlert from '../../hooks/useCustomAlert';
 
 

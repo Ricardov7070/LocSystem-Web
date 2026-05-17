@@ -375,7 +375,7 @@ export default function CameraMonitoringPage() {
 
   // ─── Processamento de detecção ───────────────────────────────────────────
 
-  const processDetection = async (detection: PlateDetection, cfg: CameraConfig) => {
+  const processDetection = async (detection: PlateDetection, _cfg: CameraConfig) => {
     if (!PLATE_RE.test(detection.plate)) return;
 
     const now = Date.now();

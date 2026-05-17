@@ -12,6 +12,7 @@ import { DataTableSkeleton } from '../../components/DataTable/data-table-skeleto
 import { dialog } from '../../components/dialog';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
+import Loading from '../../components/ui/Loading';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -439,8 +440,13 @@ function PricingTable() {
           case 'created_at': aVal = new Date(a.created_at).getTime(); bVal = new Date(b.created_at).getTime(); break;
           default: return 0;
         }
-        if (typeof aVal === 'number') return sortDir === 'asc' ? aVal - bVal : bVal - aVal;
-        return sortDir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+        if (typeof aVal === 'number' && typeof bVal === 'number') {
+          return sortDir === 'asc' ? aVal - bVal : bVal - aVal;
+        }
+
+        const aStr = String(aVal);
+        const bStr = String(bVal);
+        return sortDir === 'asc' ? aStr.localeCompare(bStr) : bStr.localeCompare(aStr);
       })
     : filtered;
 
