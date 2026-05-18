@@ -133,6 +133,9 @@ class UserServiceTwoFactor {
         Cache::forget('2fa_pending:' . $preAuthToken);
 
         $expiresAt   = now()->addMinutes((int) env('TOKEN_TTL_MINUTES', 1440));
+        $user->tokens()->delete();
+        $this->modelSession->where('i_user_id', $user->i_id)->whereNull('deleted_at')->delete();
+
         $tokenResult = $user->createToken('auth_token', ['*'], $expiresAt);
         $plainTextToken     = $tokenResult->plainTextToken;
         $tokenDatabaseModel = $tokenResult->accessToken;
@@ -150,13 +153,11 @@ class UserServiceTwoFactor {
             'd_access_token_expires_at' => $expiresAt,
         ]);
 
-        $this->modelSession->updateOrCreate(
-            ['i_user_id' => $user->i_id],
-            [
-                'd_expires_at' => $expiresAt,
-                'v_token'      => $tokenHash,
-            ]
-        );
+        $this->modelSession->create([
+            'i_user_id'    => $user->i_id,
+            'd_expires_at' => $expiresAt,
+            'v_token'      => $tokenHash,
+        ]);
 
         $nameParts = explode(' ', trim($user->v_name));
         $shortName = implode(' ', array_slice($nameParts, 0, 2));

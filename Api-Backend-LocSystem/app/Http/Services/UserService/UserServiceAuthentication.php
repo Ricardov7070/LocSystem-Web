@@ -151,6 +151,9 @@ class UserServiceAuthentication {
 
         $expiresAt = now()->addMinutes((int) env('TOKEN_TTL_MINUTES', 1440));
 
+        $user->tokens()->delete();
+        $this->modelSession->where('i_user_id', $user->i_id)->whereNull('deleted_at')->delete();
+
         $tokenResult = $user->createToken('auth_token', ['*'], $expiresAt);
         $plainTextToken = $tokenResult->plainTextToken;
         $tokenDatabaseModel = $tokenResult->accessToken;
@@ -163,9 +166,9 @@ class UserServiceAuthentication {
             'd_access_token_expires_at' => $expiresAt,
         ]);
 
-        $this->modelSession->updateOrCreate(
-            ['i_user_id' => $user->i_id],
+        $this->modelSession->create(
             [
+                'i_user_id' => $user->i_id,
                 'd_expires_at'  => $expiresAt,
                 'v_ip_address'  => $ip ?: null,
                 'v_user_agent'  => $userAgent ?: null,
@@ -207,19 +210,32 @@ class UserServiceAuthentication {
 
     // Método de Logout
     public function logout(User $user): void  {     
-        $user->tokens()->delete();
+        $currentToken = $user->currentAccessToken();
+        $currentTokenHash = $currentToken?->token;
+
+        if ($currentToken) {
+            $currentToken->delete();
+        }
 
         $account = $this->modelAccount->where('i_user_id', $user->i_id)->whereNull('deleted_at')->first();
-        $session = $this->modelSession->where('i_user_id', $user->i_id)->whereNull('deleted_at')->first();
+        $sessionQuery = $this->modelSession->where('i_user_id', $user->i_id)->whereNull('deleted_at');
+
+        if ($currentTokenHash) {
+            $sessionQuery->where('v_token', $currentTokenHash);
+        }
+
+        $session = $sessionQuery->latest('i_id')->first();
 
 
         if ($account) {
 
-            $account->update([
-                'v_id_token'                => null,
-                'v_access_token'            => null,
-                'd_access_token_expires_at' => null,
-            ]);
+            if (!$currentTokenHash || $account->v_access_token === $currentTokenHash) {
+                $account->update([
+                    'v_id_token'                => null,
+                    'v_access_token'            => null,
+                    'd_access_token_expires_at' => null,
+                ]);
+            }
             
         }
 
@@ -234,6 +250,44 @@ class UserServiceAuthentication {
             'Logout',
             ['user_id' => $user->i_id, 'v_email' => $user->v_email],
             'Usuário deslogado com sucesso'
+        );
+    }
+
+
+    // Método de Logout por Sessão Específica
+    public function logoutSession(Session $session): void {
+        $user = $this->modelUser->where('i_id', $session->i_user_id)->whereNull('deleted_at')->first();
+
+        if (!$user) {
+            $session->delete();
+            return;
+        }
+
+        $currentAccount = $this->modelAccount->where('i_user_id', $user->i_id)->whereNull('deleted_at')->first();
+
+        if ($session->v_token) {
+            $user->tokens()->where('token', $session->v_token)->delete();
+        }
+
+        if ($currentAccount && $currentAccount->v_access_token === $session->v_token) {
+            $currentAccount->update([
+                'v_id_token'                => null,
+                'v_access_token'            => null,
+                'd_access_token_expires_at' => null,
+            ]);
+        }
+
+        $session->delete();
+
+        $this->logsService->createLog(
+            $user->i_id,
+            'Logout',
+            [
+                'user_id' => $user->i_id,
+                'v_email' => $user->v_email,
+                'session_id' => $session->i_id,
+            ],
+            'Sessão encerrada com sucesso'
         );
     }
 

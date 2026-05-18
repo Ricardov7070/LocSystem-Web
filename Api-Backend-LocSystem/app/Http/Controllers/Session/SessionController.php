@@ -7,7 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Services\SessionService\SessionService;
 use App\Http\Services\UserService\UserServiceAuthentication;
-use App\Models\User\User;
+use App\Models\Session\Session;
 
 
 class SessionController extends Controller {
@@ -77,10 +77,10 @@ class SessionController extends Controller {
         try {
 
             foreach ($request['ids'] as $id) {
-                $user = User::find($id);
+                $session = Session::find($id);
 
-                if ($user) {
-                    $this->serviceAuthentication->logout($user);
+                if ($session) {
+                    $this->serviceAuthentication->logoutSession($session);
                 }
             }
 

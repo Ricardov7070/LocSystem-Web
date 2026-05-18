@@ -8,7 +8,7 @@ import { Loader2, LogIn, Save } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router-dom';
-import CustomAlert from "../../hooks/useCustomAlert";
+import CustomAlert from '../../hooks/useCustomAlert';
 
 import api from '../../services/api';
 
@@ -26,31 +26,31 @@ import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
 import AuthLayout from '../layout/layout';
 import Loading from '../ui/Loading';
 
-
 const formSchema = z.object({
   email: z.string().email('E-mail inválido').max(50, 'O e-mail deve ter no máximo 50 caracteres'),
   password: z.string().min(1, 'A senha é obrigatória').max(16, 'A senha deve ter no máximo 16 caracteres'),
 });
 
-
 const resetSchema = z.object({
   password: z.string().min(8, 'A senha deve ter no mínimo 8 caracteres').max(16, 'A senha deve ter no máximo 16 caracteres'),
   confirmPassword: z.string().min(8, 'Confirme sua senha').max(16, 'A senha deve ter no máximo 16 caracteres'),
 }).refine((data) => data.password === data.confirmPassword, {
-  message: "As senhas não coincidem",
-  path: ["confirmPassword"],
+  message: 'As senhas não coincidem',
+  path: ['confirmPassword'],
 });
-
 
 type FormValues = z.infer<typeof formSchema>;
 type ResetValues = z.infer<typeof resetSchema>;
 
+interface ActiveSession {
+  i_id: string;
+  v_email: string;
+  created_at: string | null;
+}
 
 export default function Login() {
-
   const navigate = useNavigate();
   const [isResetMode, setIsResetMode] = React.useState(false);
-
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -60,7 +60,6 @@ export default function Login() {
     },
   });
 
-
   const resetForm = useForm<ResetValues>({
     resolver: zodResolver(resetSchema),
     defaultValues: {
@@ -69,42 +68,65 @@ export default function Login() {
     },
   });
 
+  const [alertInfo, setAlertInfo] = React.useState<{ message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null);
 
-  const [alertInfo, setAlertInfo] = React.useState<{ message: string; type: "success" | "error" | "warning" | "info" } | null>(null);
-
-
-  const showAlert = (message: string, type: "success" | "error" | "warning" | "info") => {
+  const showAlert = (message: string, type: 'success' | 'error' | 'warning' | 'info') => {
     setAlertInfo({ message, type });
   };
 
-
   const decodeSafe = (str: any) => {
-
     if (typeof str !== 'string') return str;
     try {
       return str.replace(/\\u([\d\w]{4})/gi, (_match, grp) => String.fromCharCode(parseInt(grp, 16)));
     } catch {
       return str;
     }
-
   };
 
+  const invalidateOtherSessions = async (email: string) => {
+    try {
+      const { data } = await api.get('/sessions');
+      const sessions = (data?.sessions ?? data?.data ?? data ?? []) as ActiveSession[];
+
+      const targetEmail = email.trim().toLowerCase();
+      const userSessions = sessions
+        .filter((session) => (session.v_email ?? '').trim().toLowerCase() === targetEmail)
+        .sort((a, b) => {
+          const aDate = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const bDate = b.created_at ? new Date(b.created_at).getTime() : 0;
+          return bDate - aDate;
+        });
+
+      const oldSessions = userSessions.slice(1);
+      if (!oldSessions.length) return;
+
+      await Promise.all(
+        oldSessions.map((session) =>
+          api.post(`/singleSession/${session.i_id}`, {
+            ids: [session.i_id],
+          }),
+        ),
+      );
+    } catch {
+      // Se a API não permitir leitura/invalidacao de sessões aqui, segue o login normalmente.
+    }
+  };
 
   const signInMutation = useMutation({
-
     mutationFn: async (values: FormValues) => {
+      // Garante que a nova autenticação não reaproveite dados locais de uma sessão anterior.
+      localStorage.removeItem('locsystem_token');
+      localStorage.removeItem('locsystem_user');
 
-      const response = await api.post("/auth/signin", {
+      const response = await api.post('/auth/signin', {
         v_email: values.email,
-        v_password: values.password
+        v_password: values.password,
       });
 
       return { data: response.data, values };
-
     },
-    
-    onSuccess: ({ data, values }) => {
 
+    onSuccess: async ({ data, values }) => {
       if (data.twoFactorRedirect) {
         sessionStorage.setItem('locsystem_preauth', data.preAuthToken);
         sessionStorage.setItem('locsystem_preauth_email', values.email);
@@ -140,24 +162,20 @@ export default function Login() {
         phone: formattedPhone,
       }));
 
-      navigate("/vehicles");
-      
+      await invalidateOtherSessions(data.email ?? values.email);
+
+      navigate('/vehicles');
     },
 
     onError: (error: any) => {
-
       if (error.response) {
-
         const { status, data } = error.response;
 
         if (status === 409) {
-
-          resetForm.reset({ password: '', confirmPassword: '' }); 
+          resetForm.reset({ password: '', confirmPassword: '' });
           setIsResetMode(true);
-          showAlert(`✏️ ${data.info}`, "info");
-
-        } else if ((status === 422) && data?.errors) {
-
+          showAlert(`✏️ ${data.info}`, 'info');
+        } else if (status === 422 && data?.errors) {
           const erros = data.errors;
 
           if (erros.v_password) {
@@ -166,94 +184,64 @@ export default function Login() {
           if (erros.v_email) {
             form.setError('email', { type: 'manual', message: decodeSafe(erros.v_email?.[0]) });
           }
-      
         } else if (status === 401) {
-         
-          showAlert(`⚠️ ${decodeSafe(data.info)}`, "warning");
-       
+          showAlert(`⚠️ ${decodeSafe(data.info)}`, 'warning');
         } else if (status === 403) {
-
-          showAlert(`⚠️ ${decodeSafe(data.info)}`, "info");
-
+          showAlert(`⚠️ ${decodeSafe(data.info)}`, 'info');
         } else {
-         
-          showAlert(`🚫 ${decodeSafe(data.error)}`, "error");
-
+          showAlert(`🚫 ${decodeSafe(data.error)}`, 'error');
         }
-
       } else {
-
-        showAlert(`🚫 Ocorreu um erro inesperado ao conectar com a API.`, "error");
-   
+        showAlert('🚫 Ocorreu um erro inesperado ao conectar com a API.', 'error');
       }
-    
-    }
-
+    },
   });
 
-
-  const errorMessage = signInMutation.isError 
-    ? decodeSafe((signInMutation.error as any).response?.data?.error || (signInMutation.error as any).response?.data?.warning || (signInMutation.error as any).response?.data?.info || signInMutation.error.message || "Erro de validação")
+  const errorMessage = signInMutation.isError
+    ? decodeSafe((signInMutation.error as any).response?.data?.error || (signInMutation.error as any).response?.data?.warning || (signInMutation.error as any).response?.data?.info || signInMutation.error.message || 'Erro de validação')
     : null;
 
   const isFormError = signInMutation.isError && ((signInMutation.error as any).response?.status === 400 || (signInMutation.error as any).response?.status === 422 || (signInMutation.error as any).response?.status === 409);
 
   const resetPasswordMutation = useMutation({
-
     mutationFn: async (values: ResetValues) => {
-
-      const response = await api.put("/auth/updatePassword", {
-        v_email: form.getValues("email"),
-        v_password: values.password
+      const response = await api.put('/auth/updatePassword', {
+        v_email: form.getValues('email'),
+        v_password: values.password,
       });
 
       return { data: response.data, values };
-
     },
 
     onSuccess: ({ data }) => {
-    
-      showAlert(`✅ ${data.success}`, "success");
-      
+      showAlert(`✅ ${data.success}`, 'success');
+
       form.setValue('password', '');
       resetForm.reset();
 
       setTimeout(() => {
         setIsResetMode(false);
       }, 1500);
-
     },
 
     onError: (error: any) => {
-
       if (error.response) {
-
         const { status, data } = error.response;
 
-        if ((status === 422) && data?.errors) {
-          
+        if (status === 422 && data?.errors) {
           const erros = data.errors;
-               
+
           if (erros.v_password) {
             form.setError('password', { type: 'manual', message: decodeSafe(erros.v_password?.[0]) });
           }
-
         } else {
-
-          showAlert(`🚫 ${decodeSafe(data.error)}`, "error");
-
+          showAlert(`🚫 ${decodeSafe(data.error)}`, 'error');
         }
-    
       } else {
-
-        showAlert(`🚫 Ocorreu um erro inesperado ao conectar com a API.`, "error");
-     
+        showAlert('🚫 Ocorreu um erro inesperado ao conectar com a API.', 'error');
       }
-   
-    }
-
+    },
   });
-
 
   return (
     <>
@@ -338,7 +326,7 @@ export default function Login() {
                     </Button>
 
                     <div className="flex items-center gap-3">
-                      <Button 
+                      <Button
                         asChild
                         variant="outline"
                         className="cursor-pointer !border-white/20 !bg-transparent !text-white hover:!bg-white/10 hover:!text-white"
@@ -347,9 +335,9 @@ export default function Login() {
                           Cadastrar
                         </Link>
                       </Button>
-                      
-                      <Button 
-                        type="submit" 
+
+                      <Button
+                        type="submit"
                         disabled={signInMutation.isPending}
                         className="cursor-pointer !bg-blue-600 !text-white hover:!bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black"
                       >

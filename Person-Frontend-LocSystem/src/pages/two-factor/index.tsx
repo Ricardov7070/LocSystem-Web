@@ -10,6 +10,12 @@ import { Card } from '../../components/ui/card';
 import AuthLayout from '../../components/layout/layout';
 import Loading from '../../components/ui/Loading';
 
+interface ActiveSession {
+  i_id: string;
+  v_email: string;
+  created_at: string | null;
+}
+
 export default function TwoFactorPage() {
   const navigate = useNavigate();
   const [code, setCode] = useState('');
@@ -27,11 +33,44 @@ export default function TwoFactorPage() {
     }
   }, [preAuthToken, navigate]);
 
+  const invalidateOtherSessions = async (userEmail: string) => {
+    try {
+      const { data } = await api.get('/sessions');
+      const sessions = (data?.sessions ?? data?.data ?? data ?? []) as ActiveSession[];
+
+      const targetEmail = userEmail.trim().toLowerCase();
+      const userSessions = sessions
+        .filter((session) => (session.v_email ?? '').trim().toLowerCase() === targetEmail)
+        .sort((a, b) => {
+          const aDate = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const bDate = b.created_at ? new Date(b.created_at).getTime() : 0;
+          return bDate - aDate;
+        });
+
+      const oldSessions = userSessions.slice(1);
+      if (!oldSessions.length) return;
+
+      await Promise.all(
+        oldSessions.map((session) =>
+          api.post(`/singleSession/${session.i_id}`, {
+            ids: [session.i_id],
+          }),
+        ),
+      );
+    } catch {
+      // Se a API nao permitir invalidacao neste ponto, mantém fluxo de login.
+    }
+  };
+
   async function handleVerify() {
     if (code.length !== 6) return;
     setIsLoading(true);
     setError('');
     try {
+      // Garante que nao haja reaproveitamento de sessao local antes da nova autenticacao.
+      localStorage.removeItem('locsystem_token');
+      localStorage.removeItem('locsystem_user');
+
       const { data } = await api.post('/auth/2fa/verify-login', { preAuthToken, code });
 
       localStorage.setItem('locsystem_token', data.access_token);
@@ -46,6 +85,8 @@ export default function TwoFactorPage() {
         phone:            formattedPhone2fa,
         twoFactorEnabled: true,
       }));
+
+      await invalidateOtherSessions(data.email ?? email);
 
       hasVerified.current = true;
       sessionStorage.removeItem('locsystem_preauth');

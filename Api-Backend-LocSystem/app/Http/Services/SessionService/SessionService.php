@@ -23,7 +23,8 @@ class SessionService {
     public function viewSessions(): Collection {
         return $this->modelUser
             ->select(
-                'users.i_id',
+                'sessions.i_id',
+                'users.i_id as i_user_id',
                 'users.v_name',
                 'users.v_email',
                 'users.e_role',
