@@ -94,7 +94,7 @@ class UserAuthenticationController extends Controller {
 
         } catch (HttpException $e) {
 
-            return response()->json(['info' => $e->getMessage()], $e->getStatusCode());
+            return $this->httpExceptionResponse($e);
 
         } catch (ValidationException $e) {
 
@@ -199,7 +199,7 @@ class UserAuthenticationController extends Controller {
 
         } catch (HttpException $e) {
 
-            return response()->json(['info' => $e->getMessage()], $e->getStatusCode());
+            return $this->httpExceptionResponse($e);
        
         } catch (ValidationException $e) {
 
@@ -296,7 +296,7 @@ class UserAuthenticationController extends Controller {
 
         } catch (\Symfony\Component\HttpKernel\Exception\HttpException $th) {
 
-            return response()->json(['info' => $th->getMessage(),], $th->getStatusCode());
+            return $this->httpExceptionResponse($th);
 
         } catch (\Throwable $th) {
 
@@ -401,7 +401,7 @@ class UserAuthenticationController extends Controller {
 
         } catch (HttpException $e) {
 
-            return response()->json(['error' => $e->getMessage()], $e->getStatusCode());
+            return $this->httpExceptionResponse($e, 'error');
 
         } catch (\Throwable $th) {
 

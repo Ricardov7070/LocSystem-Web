@@ -3,6 +3,7 @@
 use App\Http\Controllers\User\UserAuthenticationController;
 use App\Http\Controllers\User\UserRegistrationController;
 use App\Http\Controllers\User\TwoFactorController;
+use App\Http\Controllers\User\AdvisoryUserController;
 use App\Http\Controllers\Vehicle\VehicleController;
 use App\Http\Controllers\Wallet\WalletController;
 use App\Http\Controllers\PricingPlan\PricingPlanController;
@@ -10,6 +11,9 @@ use App\Http\Controllers\Banned\BannedController;
 use App\Http\Controllers\Session\SessionController;
 use App\Http\Controllers\Logs\LogsController;
 use App\Http\Controllers\CameraMonitoring\CameraMonitoringController;
+use App\Http\Controllers\LegalAdvisory\LegalAdvisoryController;
+use App\Http\Controllers\VehicleAnnouncement\VehicleAnnouncementController;
+use App\Http\Controllers\VehicleImport\VehicleImportController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -35,6 +39,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/verify-password', [UserAuthenticationController::class, 'verifyPassword']);
     Route::put('/change-password', [UserAuthenticationController::class, 'changePassword']);
 
+    // Rotas "Usuários de Assessoria"
+    Route::get('/advisory-users', [AdvisoryUserController::class, 'list']);
+    Route::get('/advisory-users/my-tenants', [AdvisoryUserController::class, 'myTenants']);
+    Route::get('/advisory-users/{id}', [AdvisoryUserController::class, 'findOne']);
+    Route::post('/advisory-users', [AdvisoryUserController::class, 'create']);
+    Route::put('/advisory-users/{id}', [AdvisoryUserController::class, 'update']);
+    Route::patch('/advisory-users/{id}/status', [AdvisoryUserController::class, 'toggleStatus']);
+    Route::patch('/advisory-users/{id}/password', [AdvisoryUserController::class, 'changePassword']);
+    Route::post('/advisory-users/{id}/reset-2fa', [AdvisoryUserController::class, 'resetTwoFactor']);
+    Route::delete('/advisory-users/{id}', [AdvisoryUserController::class, 'delete']);
+
     // Rotas "2FA"
     Route::get('/auth/2fa/status', [TwoFactorController::class, 'status']);
     Route::post('/auth/2fa/enable', [TwoFactorController::class, 'enable']);
@@ -47,6 +62,26 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/registerVehicle', [VehicleController::class, 'registerVehicle']);
     Route::put('/updateVehicle/{id}', [VehicleController::class, 'updateRecord']);
     Route::delete('/deleteVehicle/{id}', [VehicleController::class, 'deleteRecord']);
+
+    // Rotas "Veículos com Comunicados"
+    Route::post('/vehicle-announcements', [VehicleAnnouncementController::class, 'list']);
+    Route::put('/vehicle-announcements/{id}/type', [VehicleAnnouncementController::class, 'updateType']);
+    Route::delete('/vehicle-announcements/{id}', [VehicleAnnouncementController::class, 'delete']);
+
+    // Rotas "Assessorias Jurídicas"
+    Route::post('/legalAdvisories', [LegalAdvisoryController::class, 'legalAdvisories']);
+    Route::get('/legalAdvisories/options', [LegalAdvisoryController::class, 'options']);
+    Route::get('/singleLegalAdvisory/{id}', [LegalAdvisoryController::class, 'singleLegalAdvisory']);
+    Route::post('/registerLegalAdvisory', [LegalAdvisoryController::class, 'registerLegalAdvisory']);
+    Route::put('/updateLegalAdvisory/{id}', [LegalAdvisoryController::class, 'updateRecord']);
+    Route::delete('/deleteLegalAdvisory/{id}', [LegalAdvisoryController::class, 'deleteRecord']);
+
+    // Rotas "Importação de Veículos por Assessoria"
+    Route::get('/legalAdvisories/{id}/vehicle-imports', [VehicleImportController::class, 'findByLegalAdvisory']);
+    Route::post('/vehicle-imports/preview', [VehicleImportController::class, 'previewFile']);
+    Route::post('/vehicle-imports/validate', [VehicleImportController::class, 'validateImport']);
+    Route::post('/vehicle-imports/execute', [VehicleImportController::class, 'executeImport']);
+    Route::delete('/vehicle-imports/{id}', [VehicleImportController::class, 'deleteRecord']);
 
     // Rotas "Carteiras"
     Route::get('/wallets', [WalletController::class, 'wallets']);

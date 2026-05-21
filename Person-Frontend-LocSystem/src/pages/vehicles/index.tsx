@@ -29,6 +29,8 @@ import {
   FormControl,
 } from '../../components/ui/form';
 import { DateRangePicker } from '../../components/DateRangePicker';
+import { LegalAdvisoryCombobox } from '../../components/ui/legal-advisory-combobox';
+import { formatDate, formatPhone as formatSystemPhone, stripNonDigits } from '../../lib/utils';
 
 import CustomAlert from '../../hooks/useCustomAlert';
 import Loading from '../../components/ui/Loading';
@@ -37,9 +39,37 @@ import Loading from '../../components/ui/Loading';
 interface Vehicle {
   i_id: string;
   v_plate: string;
+  v_plate_mercosul?: string;
   v_model: string;
   v_phone: string;
-  i_legal_advisory_access_id: { name: number };
+  i_legal_advisory_access_id?: number | string | {
+    i_id?: number | string;
+    id?: number | string;
+    name?: string | number;
+    v_name?: string;
+  } | null;
+  legalAdvisoryAccess?: {
+    i_id?: number | string;
+    id?: number | string;
+    i_legal_advisory_id?: number | string;
+    legalAdvisory?: {
+      i_id?: number | string;
+      id?: number | string;
+      v_name?: string;
+      name?: string;
+    } | null;
+  } | null;
+  legal_advisory_access?: {
+    i_id?: number | string;
+    id?: number | string;
+    i_legal_advisory_id?: number | string;
+    legal_advisory?: {
+      i_id?: number | string;
+      id?: number | string;
+      v_name?: string;
+      name?: string;
+    } | null;
+  } | null;
   created_at: string;
 }
 
@@ -83,12 +113,74 @@ function formatPlate(value: string): string {
   return digits.length > 0 ? `${letters}-${digits}` : letters;
 }
 
-function formatPhone(value: string): string {
-  const digits = value.replace(/\D/g, '').slice(0, 11);
-  if (digits.length <= 2) return digits.length ? `(${digits}` : '';
-  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
-  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+function isMercosulPlate(value: string | null | undefined) {
+  const raw = (value ?? '').replace(/[^A-Z0-9]/g, '');
+  return /^[A-Z]{3}[0-9][A-Z][0-9]{2}$/.test(raw);
+}
+
+function getVehicleDisplayPlate(vehicle: Pick<Vehicle, 'v_plate' | 'v_plate_mercosul'>) {
+  return [vehicle.v_plate, vehicle.v_plate_mercosul].find((plate) => plate && plate !== '-') ?? '';
+}
+
+function getVehicleLegalAdvisory(vehicle: Vehicle) {
+  return vehicle.legalAdvisoryAccess?.legalAdvisory
+    ?? vehicle.legal_advisory_access?.legal_advisory
+    ?? (typeof vehicle.i_legal_advisory_access_id === 'object' ? vehicle.i_legal_advisory_access_id : null);
+}
+
+function getLegalAdvisoryOptionId(vehicle: Vehicle) {
+  const advisory = getVehicleLegalAdvisory(vehicle);
+
+  if (advisory && typeof advisory === 'object') {
+    return advisory.i_id ?? advisory.id ?? '';
+  }
+
+  return '';
+}
+
+function getLegalAdvisoryName(vehicle: Vehicle) {
+  const advisory = getVehicleLegalAdvisory(vehicle);
+
+  if (advisory && typeof advisory === 'object') {
+    return String(advisory.v_name ?? advisory.name ?? '—');
+  }
+
+  return '—';
+}
+
+function getVehiclePlateValues(vehicle: Vehicle) {
+  return [vehicle.v_plate, vehicle.v_plate_mercosul]
+    .filter((plate): plate is string => Boolean(plate && plate !== '-'))
+    .filter((plate, index, plates) => plates.indexOf(plate) === index);
+}
+
+function getVehiclePlateTypeMeta(vehicle: Pick<Vehicle, 'v_plate' | 'v_plate_mercosul'>) {
+  const displayPlate = getVehicleDisplayPlate(vehicle);
+
+  if (!displayPlate) {
+    return null;
+  }
+
+  if (isMercosulPlate(displayPlate)) {
+    return {
+      label: 'Mercosul',
+      className: 'text-xs font-medium text-blue-400',
+    };
+  }
+
+  return {
+    label: 'Padrão',
+    className: 'text-xs font-medium text-zinc-300',
+  };
+}
+
+function formatVehicleCreatedAt(value: string | null | undefined) {
+  if (!value) return '—';
+
+  const parsedDate = new Date(value);
+  if (Number.isNaN(parsedDate.getTime())) return value;
+
+  return formatDate(parsedDate);
 }
 
 function VehicleForm({ form }: { form: UseFormReturn<VehicleFormSchema> }) {
@@ -148,7 +240,7 @@ function VehicleForm({ form }: { form: UseFormReturn<VehicleFormSchema> }) {
                 placeholder="(XX) XXXXX-XXXX"
                 maxLength={16}
                 {...field}
-                onChange={(e) => field.onChange(formatPhone(e.target.value))}
+                onChange={(e) => field.onChange(formatSystemPhone(e.target.value))}
               />
             </FormControl>
             <FormMessage />
@@ -161,13 +253,12 @@ function VehicleForm({ form }: { form: UseFormReturn<VehicleFormSchema> }) {
         render={({ field }) => (
           <FormItem>
             <FormLabel>Assessoria Jurídica <span className="text-red-500">*</span></FormLabel>
-            {/* TODO: substituir por select/combobox de assessorias */}
             <FormControl>
-              <div className="flex h-9 w-full items-center rounded-md border border-input bg-muted/40 px-3 text-sm text-muted-foreground select-none cursor-not-allowed">
-                Em breve
-              </div>
+              <LegalAdvisoryCombobox
+                value={field.value ? String(field.value) : undefined}
+                onValueChange={(value) => field.onChange(Number(value))}
+              />
             </FormControl>
-            <input type="hidden" {...field} />
             <FormMessage />
           </FormItem>
         )}
@@ -248,11 +339,11 @@ function VehiclesTable() {
   const term = search.toLowerCase();
   const filtered = (vehicles ?? []).filter((v) =>
     [
-      v.v_plate,
+      getVehiclePlateValues(v).join(' '),
       v.v_model,
-      v.v_phone,
-      String(v.i_legal_advisory_access_id?.name ?? ''),
-      format(new Date(v.created_at), 'dd/MM/yyyy'),
+      formatSystemPhone(v.v_phone ?? ''),
+      getLegalAdvisoryName(v),
+      formatVehicleCreatedAt(v.created_at),
     ].some((col) => col.toLowerCase().includes(term)),
   );
 
@@ -262,10 +353,10 @@ function VehiclesTable() {
         let aVal: string | number = '';
         let bVal: string | number = '';
         switch (sortKey) {
-          case 'v_plate': aVal = a.v_plate; bVal = b.v_plate; break;
+          case 'v_plate': aVal = getVehiclePlateValues(a).join(' '); bVal = getVehiclePlateValues(b).join(' '); break;
           case 'v_model': aVal = a.v_model ?? ''; bVal = b.v_model ?? ''; break;
-          case 'v_phone': aVal = a.v_phone ?? ''; bVal = b.v_phone ?? ''; break;
-          case 'advisory': aVal = String(a.i_legal_advisory_access_id?.name ?? ''); bVal = String(b.i_legal_advisory_access_id?.name ?? ''); break;
+          case 'v_phone': aVal = formatSystemPhone(a.v_phone ?? ''); bVal = formatSystemPhone(b.v_phone ?? ''); break;
+          case 'advisory': aVal = getLegalAdvisoryName(a); bVal = getLegalAdvisoryName(b); break;
           case 'created_at': aVal = new Date(a.created_at).getTime(); bVal = new Date(b.created_at).getTime(); break;
           default: return 0;
         }
@@ -335,10 +426,10 @@ function VehiclesTable() {
 
   async function handleEdit(vehicle: Vehicle) {
     let current = {
-      v_plate: vehicle.v_plate,
+      v_plate: getVehicleDisplayPlate(vehicle),
       v_model: vehicle.v_model,
-      v_phone: vehicle.v_phone,
-      i_legal_advisory_access_id: vehicle.i_legal_advisory_access_id?.name ?? '',
+      v_phone: formatSystemPhone(vehicle.v_phone),
+      i_legal_advisory_access_id: getLegalAdvisoryOptionId(vehicle),
     } as VehicleFormSchema;
 
     try {
@@ -349,10 +440,10 @@ function VehiclesTable() {
 
       const record = res.data.vehicle ?? res.data;
       current = {
-        v_plate: record?.v_plate ?? vehicle.v_plate,
+        v_plate: getVehicleDisplayPlate(record ?? vehicle),
         v_model: record?.v_model ?? vehicle.v_model,
-        v_phone: record?.v_phone ?? vehicle.v_phone,
-        i_legal_advisory_access_id: record?.i_legal_advisory_access_id?.name ?? vehicle.i_legal_advisory_access_id?.name ?? '',
+        v_phone: formatSystemPhone(record?.v_phone ?? vehicle.v_phone),
+        i_legal_advisory_access_id: getLegalAdvisoryOptionId(record ?? vehicle) || getLegalAdvisoryOptionId(vehicle),
       } as VehicleFormSchema;
     } catch {
 
@@ -371,11 +462,10 @@ function VehiclesTable() {
         
         try {
 
-          const raw = data.v_plate.replace(/[^A-Z0-9]/g, '');
-          const isMercosul = /^[A-Z]{3}[0-9][A-Z][0-9]{2}$/.test(raw);
+          const isMercosul = isMercosulPlate(data.v_plate);
           const payload = {
             ...data,
-            v_phone: data.v_phone.replace(/\D/g, ''),
+            v_phone: stripNonDigits(data.v_phone),
             v_plate: isMercosul ? '-' : data.v_plate,
             v_plate_mercosul: isMercosul ? data.v_plate : '-',
           };
@@ -478,7 +568,7 @@ function VehiclesTable() {
         <div className="sticky top-0 z-10 border-b bg-background">
           <div className={`grid ${COLS} gap-4 p-4 font-medium text-muted-foreground text-sm`}>
             <button className="flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => handleSort('v_plate')}>
-              Placa <SortIcon colKey="v_plate" sortKey={sortKey} sortDir={sortDir} />
+              Placas <SortIcon colKey="v_plate" sortKey={sortKey} sortDir={sortDir} />
             </button>
             <button className="flex items-center justify-center gap-1 hover:text-foreground transition-colors" onClick={() => handleSort('v_model')}>
               Modelo <SortIcon colKey="v_model" sortKey={sortKey} sortDir={sortDir} />
@@ -507,18 +597,26 @@ function VehiclesTable() {
         ) : (
           <div className="divide-y">
             {paginated.map((vehicle) => (
+              (() => {
+                const plateValues = getVehiclePlateValues(vehicle);
+                const plateTypeMeta = getVehiclePlateTypeMeta(vehicle);
+
+                return (
               <div
                 key={vehicle.i_id}
                 className={`grid ${COLS} gap-4 p-4 text-sm items-center`}
               >
-                <div className="font-medium">{vehicle.v_plate}</div>
+                <div className="min-w-0">
+                  <div className="font-medium">{plateValues[0] ?? '—'}</div>
+                  {plateTypeMeta && <div className={plateTypeMeta.className}>{plateTypeMeta.label}</div>}
+                </div>
                 <div className="text-muted-foreground text-center">{vehicle.v_model ?? '—'}</div>
-                <div className="text-muted-foreground text-center">{vehicle.v_phone ?? '—'}</div>
+                <div className="text-muted-foreground text-center">{vehicle.v_phone ? formatSystemPhone(vehicle.v_phone) : '—'}</div>
                 <div className="text-muted-foreground text-center">
-                  {vehicle.i_legal_advisory_access_id?.name ?? '—'}
+                  {getLegalAdvisoryName(vehicle)}
                 </div>
                 <div className="text-muted-foreground text-center">
-                  {format(new Date(vehicle.created_at), 'dd/MM/yyyy')}
+                  {formatVehicleCreatedAt(vehicle.created_at)}
                 </div>
                 <div className="flex justify-center">
                   <DropdownMenu>
@@ -543,6 +641,8 @@ function VehiclesTable() {
                   </DropdownMenu>
                 </div>
               </div>
+                );
+              })()
             ))}
           </div>
         )}
@@ -610,13 +710,12 @@ function AddVehicle() {
 
         try {     
 
-          const raw = data.v_plate.replace(/[^A-Z0-9]/g, '');
-          const isMercosul = /^[A-Z]{3}[0-9][A-Z][0-9]{2}$/.test(raw);
+          const isMercosul = isMercosulPlate(data.v_plate);
 
 
           const payload = {
             ...data,
-            v_phone: data.v_phone.replace(/\D/g, ''),
+            v_phone: stripNonDigits(data.v_phone),
             v_plate: isMercosul ? '-' : data.v_plate,
             v_plate_mercosul: isMercosul ? data.v_plate : '-',
           };

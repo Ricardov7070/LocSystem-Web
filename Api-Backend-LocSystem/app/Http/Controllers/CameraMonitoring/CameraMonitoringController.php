@@ -162,7 +162,7 @@ class CameraMonitoringController extends Controller
             ], 201);
 
         } catch (HttpException $e) {
-            return response()->json(['info' => $e->getMessage()], $e->getStatusCode());
+            return $this->httpExceptionResponse($e);
 
         } catch (\Throwable $th) {
             return response()->json(['error' => 'Ocorreu um erro inesperado, tente novamente!'], 500);

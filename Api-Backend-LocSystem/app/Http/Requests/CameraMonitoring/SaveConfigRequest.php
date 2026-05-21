@@ -8,13 +8,15 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 
 class SaveConfigRequest extends FormRequest
 {
-    public function authorize(): bool
-    {
+    public function authorize(): bool {
+
         return true;
+        
     }
 
-    public function rules(): array
-    {
+
+    public function rules(): array {
+
         return [
             'v_host'     => 'required|string|max:255',
             'v_username' => 'required|string|max:255',
@@ -22,10 +24,12 @@ class SaveConfigRequest extends FormRequest
             'i_channel'  => 'nullable|integer|min:1|max:16',
             'b_enabled'  => 'nullable|boolean',
         ];
+
     }
 
-    public function messages(): array
-    {
+
+    public function messages(): array {
+
         return [
             'v_host.required'     => 'O host é obrigatório.',
             'v_host.string'       => 'O host deve ser um texto.',
@@ -41,7 +45,9 @@ class SaveConfigRequest extends FormRequest
             'i_channel.max'       => 'O canal deve ser no máximo 16.',
             'b_enabled.boolean'   => 'O campo "habilitado" deve ser verdadeiro ou falso.',
         ];
+
     }
+
 
     protected function failedValidation(Validator $validator): never {
 

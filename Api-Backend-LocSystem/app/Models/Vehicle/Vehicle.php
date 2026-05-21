@@ -33,8 +33,17 @@ class Vehicle extends Model
         'b_is_private_vehicle' => 'boolean',
     ];
 
+    protected $appends = [
+        'legal_advisory_name',
+    ];
+
     public function legalAdvisoryAccess()
     {
         return $this->belongsTo(LegalAdvisoryAccess::class, 'i_legal_advisory_access_id', 'i_id');
+    }
+
+    public function getLegalAdvisoryNameAttribute(): ?string
+    {
+        return $this->legalAdvisoryAccess?->legalAdvisory?->v_name;
     }
 }

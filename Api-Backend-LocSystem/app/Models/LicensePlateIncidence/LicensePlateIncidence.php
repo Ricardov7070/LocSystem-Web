@@ -2,6 +2,7 @@
 
 namespace App\Models\LicensePlateIncidence;
 
+use App\Models\Vehicle\Vehicle;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -32,4 +33,9 @@ class LicensePlateIncidence extends Model
         'b_positive'   => 'boolean',
         'f_confidence' => 'float',
     ];
+
+    public function vehicle()
+    {
+        return $this->belongsTo(Vehicle::class, 'i_vehicle_id', 'i_id');
+    }
 }

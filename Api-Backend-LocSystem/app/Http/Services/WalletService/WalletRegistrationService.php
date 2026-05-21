@@ -3,6 +3,7 @@
 namespace App\Http\Services\WalletService;
 
 use App\Models\Wallet\Wallet;
+use App\Support\ApiCacheKey;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
@@ -23,7 +24,7 @@ class WalletRegistrationService {
 
     // Método para visualizar as carteiras cadastradas
     public function viewWallets(): Collection {
-        return Cache::remember('wallets_list', 30, function () {
+        return Cache::store('redis')->remember(ApiCacheKey::forUser('wallets_list'), 30, function () {
             return $this->modelWallet->whereNull('deleted_at')->get();
         });
     }

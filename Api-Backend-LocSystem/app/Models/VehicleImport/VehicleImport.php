@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
+use App\Models\User\User;
+use App\Models\LegalAdvisory\LegalAdvisory;
+use App\Models\Vehicle\Vehicle;
 
 class VehicleImport extends Model
 {
@@ -25,4 +28,19 @@ class VehicleImport extends Model
     protected $casts = [
         'e_status' => 'string',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'i_user_id', 'i_id');
+    }
+
+    public function legalAdvisory()
+    {
+        return $this->belongsTo(LegalAdvisory::class, 'i_legal_advisory_id', 'i_id');
+    }
+
+    public function vehicles()
+    {
+        return $this->hasMany(Vehicle::class, 'i_vehicle_import_id', 'i_id');
+    }
 }

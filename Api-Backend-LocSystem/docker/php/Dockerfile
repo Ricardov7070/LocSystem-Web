@@ -6,6 +6,9 @@ RUN apt-get update && apt-get install -y \
     curl \
     unzip \
     git \
+    libfreetype6-dev \
+    libjpeg62-turbo-dev \
+    libpng-dev \
     libzip-dev \
     libonig-dev \
     libcurl4-openssl-dev \
@@ -15,7 +18,11 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean
 
 # Instalando extensões PHP adicionais
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg
+
+# Instalando extensões PHP adicionais
 RUN docker-php-ext-install \
+    gd \
     zip \
     mbstring \
     curl \

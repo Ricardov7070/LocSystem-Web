@@ -7,6 +7,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
+use App\Models\LegalAdvisoryAccess\LegalAdvisoryAccess;
 
 class User extends Authenticatable
 {
@@ -54,4 +55,14 @@ class User extends Authenticatable
         'b_mustChangePassword' => 'boolean',
         'b_twoFactorEnabled' => 'boolean',
     ];
+
+    public function legalAdvisoryAccesses()
+    {
+        return $this->hasMany(LegalAdvisoryAccess::class, 'i_user_id', 'i_id');
+    }
+
+    public function operator()
+    {
+        return $this->belongsTo(self::class, 'i_operator_id', 'i_id');
+    }
 }

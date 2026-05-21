@@ -2,6 +2,7 @@
 
 namespace App\Http\Services\CameraMonitoringService;
 
+use App\Http\Services\VehicleAnnouncementService\VehicleAnnouncementService;
 use App\Models\CameraConfig\CameraConfig;
 use App\Models\LicensePlateIncidence\LicensePlateIncidence;
 use App\Models\Vehicle\Vehicle;
@@ -16,24 +17,26 @@ class CameraMonitoringService
     protected $modelIncidence;
     protected $modelVehicle;
     protected $logsService;
+    protected $vehicleAnnouncementService;
 
     // Método Construtor
     public function __construct(
         CameraConfig $modelCameraConfig,
         LicensePlateIncidence $modelIncidence,
         Vehicle $modelVehicle,
-        LogsService $logsService
+        LogsService $logsService,
+        VehicleAnnouncementService $vehicleAnnouncementService
     ) {
         $this->modelCameraConfig = $modelCameraConfig;
         $this->modelIncidence    = $modelIncidence;
         $this->modelVehicle      = $modelVehicle;
         $this->logsService       = $logsService;
+        $this->vehicleAnnouncementService = $vehicleAnnouncementService;
     }
 
 
     // Método para obter a configuração da câmera do usuário
-    public function getConfig(int $userId): array
-    {
+    public function getConfig(int $userId): array {
         $config = $this->modelCameraConfig
             ->where('i_user_id', $userId)
             ->whereNull('deleted_at')
@@ -52,8 +55,7 @@ class CameraMonitoringService
 
 
     // Método para salvar a configuração da câmera do usuário
-    public function saveConfig(array $data, int $userId): array
-    {
+    public function saveConfig(array $data, int $userId): array {
         return DB::transaction(function () use ($data, $userId) {
             $config = $this->modelCameraConfig
                 ->where('i_user_id', $userId)
@@ -92,18 +94,10 @@ class CameraMonitoringService
 
 
     // Método para buscar veículo por placa (considerando placa tradicional e mercosul)
-    public function searchVehicleByPlate(string $plate, int $userId): array
-    {
-        // Normalizar placa (remover hífen se existir)
-        $plate = strtoupper(preg_replace('/[^A-Z0-9]/i', '', $plate));
+    public function searchVehicleByPlate(string $plate, int $userId): array {
+        $normalizedPlate = $this->normalizePlate($plate);
 
-        $vehicle = $this->modelVehicle
-            ->where(function ($q) use ($plate) {
-                $q->where('v_plate', $plate)
-                  ->orWhere('v_plate_mercosul', $plate);
-            })
-            ->where('i_user_id', $userId)
-            ->whereNull('deleted_at')
+        $vehicle = $this->baseVehiclePlateQuery($normalizedPlate, $userId)
             ->with([
                 'legalAdvisoryAccess.legalAdvisory.wallet',
             ])
@@ -135,9 +129,8 @@ class CameraMonitoringService
 
 
     // Método para obter a configuração da câmera do usuário autenticado.
-    public function saveIncidence(array $data, int $userId): array
-    {
-        $plate = strtoupper(preg_replace('/[^A-Z0-9]/i', '', $data['plate'] ?? ''));
+    public function saveIncidence(array $data, int $userId): array {
+        $plate = $this->normalizePlate($data['plate'] ?? '');
 
         if (empty($plate)) {
             throw new HttpException(401, 'Placa inválida.');
@@ -145,15 +138,7 @@ class CameraMonitoringService
 
         return DB::transaction(function () use ($data, $plate, $userId) {
 
-            // Verificar se existe veículo cadastrado para este usuário
-            $vehicle = $this->modelVehicle
-                ->where(function ($q) use ($plate) {
-                    $q->where('v_plate', $plate)
-                      ->orWhere('v_plate_mercosul', $plate);
-                })
-                ->where('i_user_id', $userId)
-                ->whereNull('deleted_at')
-                ->first();
+                        $vehicle = $this->baseVehiclePlateQuery($plate, $userId)->first();
 
             $imagePath = null;
             if (!empty($data['image'])) {
@@ -165,6 +150,7 @@ class CameraMonitoringService
 
             $incidence = $this->modelIncidence->create([
                 'v_plate'          => $plate,
+                'v_plate_mercosul' => $vehicle?->v_plate_mercosul && $vehicle->v_plate_mercosul !== '-' ? $vehicle->v_plate_mercosul : null,
                 'i_vehicle_id'     => $vehicle?->i_id,
                 'i_user_id'        => $userId,
                 'f_latitude'       => $data['latitude']  ?? null,
@@ -186,14 +172,18 @@ class CameraMonitoringService
                 'Incidência registrada via câmera externa'
             );
 
+            if ($vehicle !== null) {
+                $this->vehicleAnnouncementService->upsertFromIncidence($incidence, $vehicle, $userId);
+            }
+
             return $incidence->toArray();
+
         });
     }
 
 
     //Método para obter o histórico de detecções do usuário autenticado.
-    public function getDetectionHistory(int $userId, int $limit = 50, int $offset = 0): array
-    {
+    public function getDetectionHistory(int $userId, int $limit = 50, int $offset = 0): array {
         $query = $this->modelIncidence
             ->where('e_capture_method', 'EXTERNAL_CAMERA')
             ->where('i_user_id', $userId)
@@ -238,5 +228,21 @@ class CameraMonitoringService
             'total'   => $total,
             'hasMore' => ($offset + $limit) < $total,
         ];
+    }
+
+    protected function normalizePlate(?string $plate): string
+    {
+        return strtoupper((string) preg_replace('/[^A-Z0-9]/i', '', $plate ?? ''));
+    }
+
+    protected function baseVehiclePlateQuery(string $normalizedPlate, int $userId)
+    {
+        return $this->modelVehicle
+            ->where('i_user_id', $userId)
+            ->whereNull('deleted_at')
+            ->where(function ($query) use ($normalizedPlate) {
+                $query->whereRaw("REPLACE(v_plate, '-', '') = ?", [$normalizedPlate])
+                    ->orWhereRaw("REPLACE(COALESCE(v_plate_mercosul, ''), '-', '') = ?", [$normalizedPlate]);
+            });
     }
 }

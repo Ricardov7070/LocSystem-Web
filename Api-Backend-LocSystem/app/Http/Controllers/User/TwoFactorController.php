@@ -12,6 +12,7 @@ class TwoFactorController extends Controller {
 
     protected $serviceTwoFactor;
 
+    // Método Construtor
     public function __construct(UserServiceTwoFactor $serviceTwoFactor) {
         $this->serviceTwoFactor = $serviceTwoFactor;
     }
@@ -35,7 +36,7 @@ class TwoFactorController extends Controller {
             return response()->json($data, 200);
 
         } catch (HttpException $e) {
-            return response()->json(['error' => $e->getMessage()], $e->getStatusCode());
+            return $this->httpExceptionResponse($e, 'error');
         } catch (\Throwable $th) {
             return response()->json(['error' => 'Ocorreu um erro inesperado, tente novamente!'], 500);
         }
@@ -52,7 +53,7 @@ class TwoFactorController extends Controller {
             return response()->json(['success' => 'Autenticação em duas etapas ativada com sucesso!'], 200);
 
         } catch (HttpException $e) {
-            return response()->json(['error' => $e->getMessage()], $e->getStatusCode());
+            return $this->httpExceptionResponse($e, 'error');
         } catch (\Throwable $th) {
             return response()->json(['error' => 'Ocorreu um erro inesperado, tente novamente!'], 500);
         }
@@ -69,7 +70,7 @@ class TwoFactorController extends Controller {
             return response()->json(['success' => 'Autenticação em duas etapas desativada com sucesso!'], 200);
 
         } catch (HttpException $e) {
-            return response()->json(['error' => $e->getMessage()], $e->getStatusCode());
+            return $this->httpExceptionResponse($e, 'error');
         } catch (\Throwable $th) {
             return response()->json(['error' => 'Ocorreu um erro inesperado, tente novamente!'], 500);
         }
@@ -100,7 +101,7 @@ class TwoFactorController extends Controller {
             ], 200);
 
         } catch (HttpException $e) {
-            return response()->json(['error' => $e->getMessage()], $e->getStatusCode());
+            return $this->httpExceptionResponse($e, 'error');
         } catch (\Throwable $th) {
             // return response()->json(['error' => 'Ocorreu um erro inesperado, tente novamente!'], 500);
             return response()->json(['error' => $th->getMessage()], 500);

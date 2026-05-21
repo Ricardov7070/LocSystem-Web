@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Check, ChevronsUpDown, X } from 'lucide-react';
+import api from '../../services/api';
 import { cn } from '../../lib/utils';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
@@ -33,8 +35,18 @@ export function LegalAdvisoryMultiSelectCombobox({
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // TODO: Buscar assessorias via API quando endpoint estiver disponível
-  const legalAdvisories: { id: string; name: string; wallet: { name: string } | null }[] = [];
+  const { data: legalAdvisories = [] } = useQuery({
+    queryKey: ['legal-advisories-options-multiselect'],
+    queryFn: async () => {
+      const response = await api.get('/legalAdvisories/options');
+      const items = response.data.legalAdvisory ?? response.data.data ?? [];
+      return (items as any[]).map((item) => ({
+        id: String(item.i_id),
+        name: item.v_name,
+        wallet: item.wallet ? { name: item.wallet.v_name } : null,
+      }));
+    },
+  });
 
   const selectedAdvisories = legalAdvisories.filter((advisory) =>
     value.includes(advisory.id)

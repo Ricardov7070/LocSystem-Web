@@ -2,9 +2,11 @@
 
 namespace App\Exceptions;
 
+use App\Support\ApiErrorStatus;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Throwable;
 use Illuminate\Auth\AuthenticationException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class Handler extends ExceptionHandler
 {
@@ -31,6 +33,16 @@ class Handler extends ExceptionHandler
     {
         $this->reportable(function (Throwable $e) {
             //
+        });
+
+        $this->renderable(function (HttpException $exception, $request) {
+            if (!$request->expectsJson() && !$request->is('api/*')) {
+                return null;
+            }
+
+            return response()->json([
+                'info' => $exception->getMessage(),
+            ], ApiErrorStatus::normalize($exception->getStatusCode()));
         });
     }
 }

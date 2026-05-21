@@ -3,6 +3,7 @@
 namespace App\Http\Services\PricingPlanService;
 
 use App\Models\PricingPlan\PricingPlan;
+use App\Support\ApiCacheKey;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
@@ -23,7 +24,7 @@ class PricingPlanRegistrationService {
 
     // Método para visualizar os planos de preços cadastrados
     public function viewPricingPlans(): Collection {
-        return Cache::remember('pricing_plans_list', 30, function () {
+        return Cache::store('redis')->remember(ApiCacheKey::forUser('pricing_plans_list'), 30, function () {
             return $this->modelPricingPlan->whereNull('deleted_at')->get();
         });
     }

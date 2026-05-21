@@ -271,7 +271,12 @@ export function Dialoger() {
                   {props.info}
                   <DialogFooter>
                     {props.footer}
-                    <Button onClick={() => handleAction()}>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="cursor-pointer border border-zinc-300 dark:!border-white/20 dark:!bg-transparent dark:!text-white dark:hover:!bg-white/10 dark:hover:!text-white"
+                      onClick={() => handleAction()}
+                    >
                       {props.closeText || 'Fechar'}
                     </Button>
                   </DialogFooter>

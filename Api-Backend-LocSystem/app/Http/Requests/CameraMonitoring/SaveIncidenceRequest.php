@@ -8,13 +8,15 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 
 class SaveIncidenceRequest extends FormRequest
 {
-    public function authorize(): bool
-    {
+    public function authorize(): bool {
+
         return true;
+
     }
 
-    public function rules(): array
-    {
+
+    public function rules(): array {
+
         return [
             'plate'      => 'required|string|max:20',
             'latitude'   => 'nullable|numeric',
@@ -22,10 +24,12 @@ class SaveIncidenceRequest extends FormRequest
             'confidence' => 'nullable|numeric|min:0|max:1',
             'image'      => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
         ];
+
     }
 
-    public function messages(): array
-    {
+
+    public function messages(): array {
+
         return [
             'plate.required'      => 'A placa é obrigatória.',
             'plate.string'        => 'A placa deve ser um texto.',
@@ -39,7 +43,9 @@ class SaveIncidenceRequest extends FormRequest
             'image.mimes'         => 'A imagem deve ser do tipo jpg, jpeg ou png.',
             'image.max'           => 'A imagem deve ter no máximo 5MB.',
         ];
+        
     }
+
 
     protected function failedValidation(Validator $validator): never {
 

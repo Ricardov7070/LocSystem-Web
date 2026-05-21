@@ -3,6 +3,7 @@
 namespace App\Http\Services\LogsService;
 
 use App\Models\UserLog\UserLog;
+use App\Support\ApiCacheKey;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -19,7 +20,7 @@ class LogsService {
 
     // Método para visualizar todos os logs cadastrados
     public function viewLogs(): Collection {
-        return Cache::remember('logs_list', 30, function () {
+        return Cache::store('redis')->remember(ApiCacheKey::forUser('logs_list'), 30, function () {
             return $this->modelLog->whereNull('deleted_at')->get();
         });
     }

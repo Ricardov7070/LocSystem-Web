@@ -3,31 +3,37 @@
 namespace App\Http\Services\VehicleService;
 
 use App\Models\Vehicle\Vehicle;
+use App\Models\LegalAdvisoryAccess\LegalAdvisoryAccess;
+use App\Support\ApiCacheKey;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use App\Http\Services\LogsService\LogsService;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 
 class VehicleRegistrationService {
 
     protected $modelVehicle;
+    protected $modelLegalAdvisoryAccess;
     protected $logsService;
 
     // Método Construtor
-    public function __construct(Vehicle $modelVehicle, LogsService $logsService) {
+    public function __construct(Vehicle $modelVehicle, LegalAdvisoryAccess $modelLegalAdvisoryAccess, LogsService $logsService) {
         $this->modelVehicle = $modelVehicle;
+        $this->modelLegalAdvisoryAccess = $modelLegalAdvisoryAccess;
         $this->logsService = $logsService;
     }
 
 
     // Método para visualizar os veículos cadastrados
     public function viewVehicles($request): Collection {
-        $cacheKey = 'vehicles_list_' . md5(json_encode($request->only(['data_inicial', 'data_final'])));
+        $cacheKey = ApiCacheKey::forUser('vehicles_list', $request->only(['data_inicial', 'data_final']));
 
-        return Cache::remember($cacheKey, 30, function () use ($request) {
-            
+        return Cache::store('redis')->remember($cacheKey, 30, function () use ($request) {
+
             return $this->modelVehicle::query()
+                ->with(['legalAdvisoryAccess.legalAdvisory'])
                 ->whereNull('deleted_at')
                 ->when($request->input('data_inicial'), function ($query, $dataInicial) {
                     return $query->whereDate('created_at', '>=', $dataInicial);
@@ -54,6 +60,7 @@ class VehicleRegistrationService {
     // Método para cadastrar um novo veículo
     public function createVehicle($request, $i_user_id): array  {
         $vehicle = DB::transaction(function () use ($request, $i_user_id) {
+            $accessId = $this->resolveLegalAdvisoryAccessId((int) $request->input('i_legal_advisory_access_id'), (int) $i_user_id);
 
             $vehicle = $this->modelVehicle::create([
                 'v_plate'                    => $request->input('v_plate'),
@@ -61,7 +68,7 @@ class VehicleRegistrationService {
                 'v_model'                    => $request->input('v_model'),
                 'v_phone'                    => $request->input('v_phone'),
                 'i_user_id'                  => $i_user_id,
-                'i_legal_advisory_access_id' => $request->input('i_legal_advisory_access_id'), 
+                'i_legal_advisory_access_id' => $accessId,
             ]);
 
             return $vehicle->toArray();
@@ -84,6 +91,7 @@ class VehicleRegistrationService {
         $vehicle = DB::transaction(function () use ($request, $vehicleId, $i_user_id) {
 
             $vehicle = $this->modelVehicle->findOrFail($vehicleId);
+            $accessId = $this->resolveLegalAdvisoryAccessId((int) $request->input('i_legal_advisory_access_id'), (int) $i_user_id);
 
             $vehicle->update([
                 'v_plate'                    => $request->input('v_plate'),
@@ -91,7 +99,7 @@ class VehicleRegistrationService {
                 'v_model'                    => $request->input('v_model'),
                 'v_phone'                    => $request->input('v_phone'),
                 'i_user_id'                  => $i_user_id,
-                'i_legal_advisory_access_id' => $request->input('i_legal_advisory_access_id'), 
+                'i_legal_advisory_access_id' => $accessId,
             ]);
 
             return $vehicle->refresh()->toArray();
@@ -133,6 +141,39 @@ class VehicleRegistrationService {
         }
 
         return [];
+    }
+
+    protected function resolveLegalAdvisoryAccessId(int $incomingId, int $userId): int
+    {
+        $directAccess = $this->modelLegalAdvisoryAccess::query()
+            ->where('i_id', $incomingId)
+            ->whereNull('deleted_at')
+            ->first();
+
+        if ($directAccess) {
+            return (int) $directAccess->i_id;
+        }
+
+        $userAccess = $this->modelLegalAdvisoryAccess::query()
+            ->where('i_legal_advisory_id', $incomingId)
+            ->where('i_user_id', $userId)
+            ->whereNull('deleted_at')
+            ->first();
+
+        if ($userAccess) {
+            return (int) $userAccess->i_id;
+        }
+
+        $fallbackAccess = $this->modelLegalAdvisoryAccess::query()
+            ->where('i_legal_advisory_id', $incomingId)
+            ->whereNull('deleted_at')
+            ->first();
+
+        if (!$fallbackAccess) {
+            throw new HttpException(409, 'Assessoria juridica sem acesso vinculado para cadastro de veiculo.');
+        }
+
+        return (int) $fallbackAccess->i_id;
     }
 
 }

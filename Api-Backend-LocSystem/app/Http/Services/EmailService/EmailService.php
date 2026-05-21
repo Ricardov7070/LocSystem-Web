@@ -10,6 +10,7 @@ class EmailService
     protected $mail;
     protected $logsService;
 
+    // Método Construtor
     public function __construct(LogsService $logsService) {
 
         $this->logsService = $logsService;
@@ -21,6 +22,7 @@ class EmailService
     }
 
     
+    // Método para configurar as propriedades do PHPMailer, definindo o host, autenticação, credenciais e outras configurações necessárias para o envio de e-mails utilizando o protocolo SMTP.
     private function configureMail(): void {
 
         $this->mail->isSMTP();                                   
@@ -34,6 +36,7 @@ class EmailService
     }
 
 
+    // Método para enviar um e-mail, configurando os destinatários, assunto, corpo do e-mail e outras propriedades relevantes, e registrando um log da ação de envio de e-mail com as informações correspondentes.
     public function sendEmail($to, $subject, $body, $from): void {     
         
         $this->mail->setFrom($from ?? env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME'));

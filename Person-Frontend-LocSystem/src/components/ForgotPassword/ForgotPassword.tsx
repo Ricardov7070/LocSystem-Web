@@ -130,7 +130,7 @@ export default function ForgotPassword() {
     : null;
 
 
-  const isFormError = recoverPasswordMutation.isError && ((recoverPasswordMutation.error as any).response?.status === 400 || (recoverPasswordMutation.error as any).response?.status === 422);
+  const isFormError = recoverPasswordMutation.isError && ((recoverPasswordMutation.error as any).response?.status === 422);
 
 
   return (

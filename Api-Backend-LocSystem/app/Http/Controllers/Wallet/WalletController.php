@@ -136,7 +136,7 @@ class WalletController extends Controller {
 
         } catch (HttpException $e) {
 
-            return response()->json(['info' => $e->getMessage()], $e->getStatusCode());
+            return $this->httpExceptionResponse($e);
 
         } catch (ValidationException $e) {
 
@@ -198,7 +198,7 @@ class WalletController extends Controller {
 
         } catch (HttpException $e) {
 
-            return response()->json(['info' => $e->getMessage()], $e->getStatusCode());
+            return $this->httpExceptionResponse($e);
             
         } catch (ValidationException $e) {
             
@@ -251,7 +251,7 @@ class WalletController extends Controller {
 
         } catch (HttpException $e) {
    
-            return response()->json(['info' => $e->getMessage()], $e->getStatusCode());
+            return $this->httpExceptionResponse($e);
 
         } catch (\Throwable $th) {
   

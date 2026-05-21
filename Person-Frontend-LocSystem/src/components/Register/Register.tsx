@@ -175,7 +175,7 @@ export default function Register() {
     : null;
 
 
-  const isFormError = signUpMutation.isError && ((signUpMutation.error as any).response?.status === 400 || (signUpMutation.error as any).response?.status === 422);
+  const isFormError = signUpMutation.isError && ((signUpMutation.error as any).response?.status === 422);
 
 
   return (

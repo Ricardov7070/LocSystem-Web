@@ -66,7 +66,7 @@ class UserRegistrationController extends Controller {
 
         } catch (HttpException $e) {
 
-            return response()->json(['info' => $e->getMessage()], $e->getStatusCode());
+            return $this->httpExceptionResponse($e);
 
         } catch (ValidationException $e) {
 
@@ -131,7 +131,7 @@ class UserRegistrationController extends Controller {
 
         } catch (HttpException $e) {
 
-            return response()->json(['info' => $e->getMessage()], $e->getStatusCode());
+            return $this->httpExceptionResponse($e);
             
         } catch (ValidationException $e) {
             
@@ -178,7 +178,7 @@ class UserRegistrationController extends Controller {
         try {
 
             if ((int) $request->id === 1) {
-                throw new HttpException(403, 'Não é permitido excluir o usuário Administrador principal!');
+                throw new HttpException(409, 'Não é permitido excluir o usuário Administrador principal!');
             }
 
             $this->serviceValidation->searchUser($request->id);
@@ -195,7 +195,7 @@ class UserRegistrationController extends Controller {
 
         } catch (HttpException $e) {
    
-            return response()->json(['info' => $e->getMessage()], $e->getStatusCode());
+            return $this->httpExceptionResponse($e);
 
         } catch (\Throwable $th) {
   

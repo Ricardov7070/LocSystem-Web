@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Wallet\Wallet;
 use App\Models\User\User;
+use App\Models\LegalAdvisoryAccess\LegalAdvisoryAccess;
+use App\Models\VehicleImport\VehicleImport;
 
 class LegalAdvisory extends Model
 {
@@ -32,5 +34,15 @@ class LegalAdvisory extends Model
     public function wallet()
     {
         return $this->belongsTo(Wallet::class, 'i_wallet_id', 'i_id');
+    }
+
+    public function accesses()
+    {
+        return $this->hasMany(LegalAdvisoryAccess::class, 'i_legal_advisory_id', 'i_id');
+    }
+
+    public function imports()
+    {
+        return $this->hasMany(VehicleImport::class, 'i_legal_advisory_id', 'i_id');
     }
 }

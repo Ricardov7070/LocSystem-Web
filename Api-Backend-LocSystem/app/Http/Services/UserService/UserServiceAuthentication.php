@@ -88,15 +88,15 @@ class UserServiceAuthentication {
         }
 
         if ($user->v_banned) {
-            throw new HttpException(403, 'Usuário Banido, entre em contato com o administrador do sistema!');
+            throw new HttpException(401, 'Usuário Banido, entre em contato com o administrador do sistema!');
         }
         
         if ($user->e_approval_status !== 'APPROVED') {
-            throw new HttpException(403, 'Usuário pendente de aprovação!');
+            throw new HttpException(401, 'Usuário pendente de aprovação!');
         }
 
         if ($user->e_subscriptionStatus !== 'ACTIVE') {
-            throw new HttpException(403, 'Assinatura do usuário expirada, entre em contato com o administrador do sistema!');
+            throw new HttpException(401, 'Assinatura do usuário expirada, entre em contato com o administrador do sistema!');
         }
 
         $account = $this->modelAccount->where('i_user_id', $user->i_id)
@@ -214,7 +214,7 @@ class UserServiceAuthentication {
         $currentTokenHash = $currentToken?->token;
 
         if ($currentToken) {
-            $currentToken->delete();
+            $user->tokens()->where('id', $currentToken->id)->delete();
         }
 
         $account = $this->modelAccount->where('i_user_id', $user->i_id)->whereNull('deleted_at')->first();

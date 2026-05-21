@@ -135,6 +135,141 @@
                 }
             }
         },
+        "/api/legalAdvisories": {
+            "post": {
+                "tags": [
+                    "Gerenciamento de Assessorias Jurídicas"
+                ],
+                "summary": "Lista as assessorias jurídicas cadastradas.",
+                "operationId": "f6d5a8b5931aeef3dde4b148f4a82ab8",
+                "responses": {
+                    "200": {
+                        "description": "Assessorias retornadas com sucesso."
+                    },
+                    "401": {
+                        "description": "Autenticação necessária para acessar a rota."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao consultar as assessorias."
+                    }
+                }
+            }
+        },
+        "/api/legalAdvisories/options": {
+            "get": {
+                "tags": [
+                    "Gerenciamento de Assessorias Jurídicas"
+                ],
+                "summary": "Retorna opções simplificadas de assessorias jurídicas.",
+                "operationId": "2b428d439da8f33a84cb68410ce43dba",
+                "responses": {
+                    "200": {
+                        "description": "Opções retornadas com sucesso."
+                    },
+                    "401": {
+                        "description": "Autenticação necessária para acessar a rota."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao consultar as opções de assessorias."
+                    }
+                }
+            }
+        },
+        "/api/singleLegalAdvisory/{id}": {
+            "get": {
+                "tags": [
+                    "Gerenciamento de Assessorias Jurídicas"
+                ],
+                "summary": "Retorna os detalhes de uma assessoria jurídica específica.",
+                "operationId": "1224f43dbc8bbc89c7a952d5dbc98956",
+                "responses": {
+                    "200": {
+                        "description": "Assessoria retornada com sucesso."
+                    },
+                    "401": {
+                        "description": "Autenticação necessária ou assessoria não encontrada."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao consultar a assessoria."
+                    }
+                }
+            }
+        },
+        "/api/registerLegalAdvisory": {
+            "post": {
+                "tags": [
+                    "Gerenciamento de Assessorias Jurídicas"
+                ],
+                "summary": "Cadastra uma nova assessoria jurídica.",
+                "operationId": "676edf93b974a9cccbbbcf0d99eccfb7",
+                "responses": {
+                    "201": {
+                        "description": "Registro realizado com sucesso."
+                    },
+                    "401": {
+                        "description": "Autenticação necessária ou carteira informada não encontrada."
+                    },
+                    "409": {
+                        "description": "Já existe uma assessoria jurídica com os dados informados."
+                    },
+                    "422": {
+                        "description": "Erro de validação nos dados enviados."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao registrar a assessoria."
+                    }
+                }
+            }
+        },
+        "/api/updateLegalAdvisory/{id}": {
+            "put": {
+                "tags": [
+                    "Gerenciamento de Assessorias Jurídicas"
+                ],
+                "summary": "Atualiza uma assessoria jurídica existente.",
+                "operationId": "2e2a009cb0894ccfd63c247503ddfb67",
+                "responses": {
+                    "200": {
+                        "description": "Atualização realizada com sucesso."
+                    },
+                    "401": {
+                        "description": "Autenticação necessária, assessoria não encontrada ou carteira inválida."
+                    },
+                    "409": {
+                        "description": "Já existe outra assessoria com o mesmo nome e documento."
+                    },
+                    "422": {
+                        "description": "Erro de validação nos dados enviados."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao atualizar a assessoria."
+                    }
+                }
+            }
+        },
+        "/api/deleteLegalAdvisory/{id}": {
+            "delete": {
+                "tags": [
+                    "Gerenciamento de Assessorias Jurídicas"
+                ],
+                "summary": "Remove uma assessoria jurídica.",
+                "operationId": "7703e9f53b1a1f9d1074d43a9cc74077",
+                "responses": {
+                    "200": {
+                        "description": "Assessoria excluída com sucesso."
+                    },
+                    "401": {
+                        "description": "Autenticação necessária ou assessoria não encontrada."
+                    },
+                    "409": {
+                        "description": "Não é possível excluir a assessoria porque existem veículos associados."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao excluir a assessoria."
+                    }
+                }
+            }
+        },
         "/api/logs": {
             "get": {
                 "tags": [
@@ -659,6 +794,181 @@
                 }
             }
         },
+        "/api/vehicle-announcements": {
+            "post": {
+                "tags": [
+                    "Gerenciamento de Comunicados de Veículos"
+                ],
+                "summary": "Retorna a listagem de comunicados de veículos cadastrados.",
+                "operationId": "33643dac239fb250fe9a7f9aa274a7cb",
+                "responses": {
+                    "200": {
+                        "description": "Comunicados retornados com sucesso, permitindo consulta com filtros de busca, tipo e período."
+                    },
+                    "401": {
+                        "description": "Usuário não autenticado ou sem permissão para acessar o gerenciamento de comunicados de veículos."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao consultar os comunicados de veículos."
+                    }
+                }
+            }
+        },
+        "/api/vehicle-announcements/{id}/type": {
+            "put": {
+                "tags": [
+                    "Gerenciamento de Comunicados de Veículos"
+                ],
+                "summary": "Atualiza o tipo de um comunicado de veículo específico.",
+                "operationId": "26af556d8993d23e49e1c8275b79c349",
+                "responses": {
+                    "200": {
+                        "description": "Tipo do comunicado atualizado com sucesso."
+                    },
+                    "401": {
+                        "description": "Usuário não autenticado, sem permissão administrativa ou comunicado não encontrado."
+                    },
+                    "422": {
+                        "description": "Erro de validação nos dados enviados para atualização do tipo do comunicado."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao atualizar o tipo do comunicado."
+                    }
+                }
+            }
+        },
+        "/api/vehicle-announcements/{id}": {
+            "delete": {
+                "tags": [
+                    "Gerenciamento de Comunicados de Veículos"
+                ],
+                "summary": "Remove um comunicado de veículo do sistema.",
+                "operationId": "4762c9b9b2fdbb4f382480e7d434da8c",
+                "responses": {
+                    "200": {
+                        "description": "Comunicado removido com sucesso."
+                    },
+                    "401": {
+                        "description": "Usuário não autenticado, sem permissão administrativa ou comunicado não encontrado."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao remover o comunicado."
+                    }
+                }
+            }
+        },
+        "/api/legalAdvisories/{id}/vehicle-imports": {
+            "get": {
+                "tags": [
+                    "Importação de Veículos"
+                ],
+                "summary": "Lista os históricos de importação de uma assessoria jurídica.",
+                "operationId": "05534645c12830935d418c5c1d47f767",
+                "responses": {
+                    "200": {
+                        "description": "Importações retornadas com sucesso."
+                    },
+                    "401": {
+                        "description": "Autenticação necessária para acessar a rota."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao consultar as importações."
+                    }
+                }
+            }
+        },
+        "/api/vehicle-imports/preview": {
+            "post": {
+                "tags": [
+                    "Importação de Veículos"
+                ],
+                "summary": "Lê e pré-visualiza um arquivo de importação de veículos.",
+                "operationId": "a5021f3fa524751533109e3dd6b813a4",
+                "responses": {
+                    "200": {
+                        "description": "Pré-visualização gerada com sucesso."
+                    },
+                    "401": {
+                        "description": "Autenticação necessária para acessar a rota."
+                    },
+                    "422": {
+                        "description": "Arquivo inválido, formato não suportado ou erro de processamento da prévia."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao gerar a pré-visualização."
+                    }
+                }
+            }
+        },
+        "/api/vehicle-imports/validate": {
+            "post": {
+                "tags": [
+                    "Importação de Veículos"
+                ],
+                "summary": "Valida o conteúdo de uma importação de veículos.",
+                "operationId": "8f5f14a3a116af1153bbc00a7df4807d",
+                "responses": {
+                    "200": {
+                        "description": "Validação concluída com sucesso."
+                    },
+                    "401": {
+                        "description": "Autenticação necessária ou usuário sem permissão para importar na assessoria informada."
+                    },
+                    "422": {
+                        "description": "Erro de validação do request, mapeamento inválido ou assessoria informada inválida."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao validar a importação."
+                    }
+                }
+            }
+        },
+        "/api/vehicle-imports/execute": {
+            "post": {
+                "tags": [
+                    "Importação de Veículos"
+                ],
+                "summary": "Executa a importação de veículos para uma assessoria jurídica.",
+                "operationId": "d59c1a1332c86e42d7361d27f7b28d81",
+                "responses": {
+                    "200": {
+                        "description": "Importação executada com sucesso."
+                    },
+                    "401": {
+                        "description": "Autenticação necessária ou usuário sem permissão para importar na assessoria informada."
+                    },
+                    "422": {
+                        "description": "Erro de validação do request, mapeamento inválido ou assessoria sem configuração válida para importação."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao executar a importação."
+                    }
+                }
+            }
+        },
+        "/api/vehicle-imports/{id}": {
+            "delete": {
+                "tags": [
+                    "Importação de Veículos"
+                ],
+                "summary": "Remove um histórico de importação de veículos.",
+                "operationId": "987b84f87cf9177f9adfc0f879d2cb63",
+                "responses": {
+                    "200": {
+                        "description": "Importação removida com sucesso."
+                    },
+                    "401": {
+                        "description": "Autenticação necessária para acessar a rota."
+                    },
+                    "422": {
+                        "description": "Importação não encontrada."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao remover a importação."
+                    }
+                }
+            }
+        },
         "/api/wallets": {
             "get": {
                 "tags": [
@@ -785,6 +1095,10 @@
             "description": "Camera de Monitoramento"
         },
         {
+            "name": "Gerenciamento de Assessorias Jurídicas",
+            "description": "Gerenciamento de Assessorias Jurídicas"
+        },
+        {
             "name": "Gerenciamento de Logs",
             "description": "Gerenciamento de Logs"
         },
@@ -803,6 +1117,14 @@
         {
             "name": "Gerenciamento de Veículos",
             "description": "Gerenciamento de Veículos"
+        },
+        {
+            "name": "Gerenciamento de Comunicados de Veículos",
+            "description": "Gerenciamento de Comunicados de Veículos"
+        },
+        {
+            "name": "Importação de Veículos",
+            "description": "Importação de Veículos"
         },
         {
             "name": "Gerenciamento de Carteiras",

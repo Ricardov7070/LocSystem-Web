@@ -5,6 +5,8 @@ namespace App\Http\Services\BannedService;
 use App\Models\User\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
+use App\Support\ApiCacheKey;
 use App\Http\Services\LogsService\LogsService;
 
 
@@ -22,10 +24,12 @@ class BannedService {
 
     // Método para Visualizar os Usuários Banidos
     public function viewBanneds(): Collection {
-        return $this->modelUser
-            ->where('b_banned', true)
-            ->whereNull('deleted_at')
-            ->get();
+        return Cache::store('redis')->remember(ApiCacheKey::forUser('banned_users_list'), 30, function () {
+            return $this->modelUser
+                ->where('b_banned', true)
+                ->whereNull('deleted_at')
+                ->get();
+        });
     }   
 
 

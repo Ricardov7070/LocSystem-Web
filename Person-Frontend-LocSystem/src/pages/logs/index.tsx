@@ -66,6 +66,7 @@ const FIELD_LABELS: Record<string, string> = {
   plan_id:              'ID do Plano',
   pricing_plan:         'Plano de Preço',
   pricing_plan_id:      'ID do Plano de Preço',
+  wallet_id:            'ID da Carteira',
   // booleanos
   is_active:            'Ativo',
   active:               'Ativo',
@@ -79,10 +80,14 @@ const FIELD_LABELS: Record<string, string> = {
   deleted_at:           'Excluído em',
   // veículo
   plate:                'Placa',
+  plate_mercosul:       'Placa Mercosul',
   model:                'Modelo',
   brand:                'Marca',
   color:                'Cor',
   year:                 'Ano',
+  legal_advisory_name:  'Nome da Assessoria Jurídica',
+  legal_advisory_access:'Acesso da Assessoria Jurídica',
+  legal_advisory_access_id: 'ID do Acesso da Assessoria Jurídica',
   // limites
   user_limit:           'Limite de Usuários',
   limit:                'Limite',
@@ -90,6 +95,14 @@ const FIELD_LABELS: Record<string, string> = {
 
 function stripPrefix(key: string): string {
   return key.replace(/^[viedbf]_/, '');
+}
+
+function normalizeLabelKey(key: string): string {
+  return stripPrefix(key)
+    .trim()
+    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+    .replace(/[\s-]+/g, '_')
+    .toLowerCase();
 }
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}T[\d:.]+Z?$/;
@@ -104,8 +117,9 @@ function formatValue(value: unknown): string {
 }
 
 function labelFor(key: string): string {
-  const stripped = stripPrefix(key);
-  return FIELD_LABELS[stripped] ?? stripped.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  const normalized = normalizeLabelKey(key);
+
+  return FIELD_LABELS[normalized] ?? key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function parseDetails(raw: Record<string, unknown> | string | null): Record<string, unknown> | null {

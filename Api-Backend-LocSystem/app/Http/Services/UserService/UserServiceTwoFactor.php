@@ -45,7 +45,7 @@ class UserServiceTwoFactor {
         }
 
         if ($user->b_twoFactorEnabled) {
-            throw new HttpException(422, 'A autenticação de dois fatores já está ativa. Para reconfigurar, desative-a primeiro.');
+            throw new HttpException(409, 'A autenticação de dois fatores já está ativa. Para reconfigurar, desative-a primeiro.');
         }
 
         $secret      = $this->google2fa->generateSecretKey();
@@ -68,14 +68,14 @@ class UserServiceTwoFactor {
             ->first();
 
         if (!$twoFactor) {
-            throw new HttpException(422, 'Autenticação em duas etapas não iniciada. Gere o QR Code primeiro.');
+            throw new HttpException(409, 'Autenticação em duas etapas não iniciada. Gere o QR Code primeiro.');
         }
 
         $secret = decrypt($twoFactor->v_secret);
         $valid  = $this->google2fa->verifyKey($secret, $code, 8);
 
         if (!$valid) {
-            throw new HttpException(422, 'Código inválido. Tente novamente.');
+            throw new HttpException(401, 'Código inválido. Tente novamente.');
         }
 
         $user->update(['b_twoFactorEnabled' => true]);
@@ -120,14 +120,14 @@ class UserServiceTwoFactor {
             ->first();
 
         if (!$twoFactor) {
-            throw new HttpException(422, 'Configuração 2FA não encontrada.');
+            throw new HttpException(409, 'Configuração 2FA não encontrada.');
         }
 
         $secret = decrypt($twoFactor->v_secret);
         $valid  = $this->google2fa->verifyKey($secret, $code, 8);
 
         if (!$valid) {
-            throw new HttpException(422, 'Código inválido. Tente novamente.');
+            throw new HttpException(401, 'Código inválido. Tente novamente.');
         }
 
         Cache::forget('2fa_pending:' . $preAuthToken);

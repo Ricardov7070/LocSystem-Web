@@ -186,8 +186,6 @@ export default function Login() {
           }
         } else if (status === 401) {
           showAlert(`⚠️ ${decodeSafe(data.info)}`, 'warning');
-        } else if (status === 403) {
-          showAlert(`⚠️ ${decodeSafe(data.info)}`, 'info');
         } else {
           showAlert(`🚫 ${decodeSafe(data.error)}`, 'error');
         }
@@ -201,7 +199,7 @@ export default function Login() {
     ? decodeSafe((signInMutation.error as any).response?.data?.error || (signInMutation.error as any).response?.data?.warning || (signInMutation.error as any).response?.data?.info || signInMutation.error.message || 'Erro de validação')
     : null;
 
-  const isFormError = signInMutation.isError && ((signInMutation.error as any).response?.status === 400 || (signInMutation.error as any).response?.status === 422 || (signInMutation.error as any).response?.status === 409);
+  const isFormError = signInMutation.isError && ((signInMutation.error as any).response?.status === 422 || (signInMutation.error as any).response?.status === 409);
 
   const resetPasswordMutation = useMutation({
     mutationFn: async (values: ResetValues) => {
