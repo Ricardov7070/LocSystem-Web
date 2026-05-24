@@ -2,6 +2,7 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   CarFront,
   Wallet,
@@ -33,6 +34,7 @@ import { NavUser } from './nav-user';
 
 import { TenantSwitcher } from './tenant-switcher';
 import { useAuth } from '../../../components/providers/auth';
+import api from '../../../services/api';
 
 const roleAliases: Record<string, 'ADMIN' | 'OPERATOR' | 'AUDITOR'> = {
   ADMIN: 'ADMIN',
@@ -192,9 +194,20 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
   const canAccessRetroIncidences = (
     ['ADMIN', 'AUDITOR', 'OPERATOR'] 
   ).includes(normalizedRole);
+  const { data: unreadRetroCount = 0 } = useQuery<number>({
+    queryKey: ['retroactive-incidences-count', user.id],
+    queryFn: async () => {
+      const response = await api.get('/retroactive-incidences/count', {
+        params: {
+          only_unread: 'true',
+        },
+      });
 
-  // TODO: Buscar contagem via API quando endpoint estiver disponível
-  const unreadRetroCount = 0;
+      return Number(response.data.count ?? 0);
+    },
+    enabled: canAccessRetroIncidences && Boolean(user.id),
+    staleTime: 15000,
+  });
 
   const accessibleItems = allNavItems.filter((item) =>
     item.allowedRoles.includes(normalizedRole)

@@ -1,6 +1,29 @@
-import { useState } from 'react';
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  Cctv,
+  ExternalLink,
+  MoreHorizontal,
+  Trash2,
+} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { type DateRange } from 'react-day-picker';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import api from '../../services/api';
 import { Topbar } from '../../components/layout/app-topbar';
+import { DataTableEmptyState } from '../../components/DataTable/data-table-empty-state';
+import { DataTableSkeleton } from '../../components/DataTable/data-table-skeleton';
+import { DateRangePicker } from '../../components/DateRangePicker';
+import { dialog } from '../../components/dialog';
+import { Button } from '../../components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../../components/ui/dropdown-menu';
 import { Input } from '../../components/ui/input';
 import {
   Select,
@@ -9,11 +32,433 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../components/ui/select';
-import { DateRangePicker } from '../../components/DateRangePicker';
+import Loading from '../../components/ui/Loading';
+import { useAuth } from '../../components/providers/auth';
+import CustomAlert from '../../hooks/useCustomAlert';
+import { cn } from '../../lib/utils';
+import {
+  buildIncidenceParams,
+  formatTableDateTime,
+  getCaptureMethodLabel,
+  getDisplayUserName,
+  getHistoryGridColumns,
+  getRoleColor,
+  getRoleLabel,
+  IncidenceDetailsContent,
+  PAGE_SIZE,
+  resolveUserRole,
+  type CaptureMethod,
+  type IncidenceRecord,
+} from './shared';
+
+type SortKey =
+  | 'plate'
+  | 'responsible'
+  | 'typeAccess'
+  | 'legalAdvisory'
+  | 'wallet'
+  | 'createdAt'
+  | 'positive'
+  | 'captureMethod'
+  | 'confidence';
+
+function SortIcon({
+  colKey,
+  sortKey,
+  sortDir,
+}: {
+  colKey: SortKey;
+  sortKey: SortKey | null;
+  sortDir: 'asc' | 'desc';
+}) {
+  if (sortKey !== colKey) return <ArrowUpDown className="size-3.5 opacity-40" />;
+  return sortDir === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />;
+}
+
+function IncidencesTable() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const [search, setSearch] = useState('');
+  const [positive, setPositive] = useState<'all' | 'true' | 'false'>('all');
+  const [captureMethod, setCaptureMethod] = useState<'all' | CaptureMethod>('all');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [page, setPage] = useState(1);
+  const [sortKey, setSortKey] = useState<SortKey | null>('createdAt');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [alertInfo, setAlertInfo] = useState<{ message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null);
+
+  const { data: incidences = [], isLoading, isError, error } = useQuery<IncidenceRecord[]>({
+    queryKey: ['incidences-history', search, positive, captureMethod, dateRange?.from?.toISOString(), dateRange?.to?.toISOString()],
+    queryFn: async () => {
+      const response = await api.get('/incidences-history', {
+        params: buildIncidenceParams({ search, positive, captureMethod, dateRange }),
+      });
+
+      return (response.data.incidences ?? response.data.data ?? []) as IncidenceRecord[];
+    },
+    throwOnError: false,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await api.delete(`/incidences-history/${id}`);
+      return response.data;
+    },
+  });
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, positive, captureMethod, dateRange?.from, dateRange?.to]);
+
+  useEffect(() => {
+    if (!isError) return;
+
+    setAlertInfo({
+      message:
+        (error as any)?.response?.data?.info ??
+        (error as any)?.response?.data?.error ??
+        'Erro ao carregar incidências.',
+      type: 'error',
+    });
+  }, [isError, error]);
+
+  async function refreshIncidences() {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['incidences-history'] }),
+      queryClient.invalidateQueries({ queryKey: ['incidences-history-header-count'] }),
+      queryClient.invalidateQueries({ queryKey: ['retroactive-incidences'] }),
+      queryClient.invalidateQueries({ queryKey: ['retroactive-incidences-count'] }),
+      queryClient.invalidateQueries({ queryKey: ['retroactive-incidences-header-count'] }),
+    ]);
+  }
+
+  function handleSort(column: SortKey) {
+    if (sortKey === column) {
+      setSortDir((current) => (current === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+
+    setSortKey(column);
+    setSortDir(column === 'createdAt' ? 'desc' : 'asc');
+  }
+
+  const sortedIncidences = useMemo(() => {
+    const items = [...incidences];
+
+    if (!sortKey) {
+      return items;
+    }
+
+    items.sort((left, right) => {
+      const leftUser = getDisplayUserName(user.role, left);
+      const rightUser = getDisplayUserName(user.role, right);
+      const leftRole = resolveUserRole(left);
+      const rightRole = resolveUserRole(right);
+      const leftAdvisory = left.vehicle?.managedBy?.legalAdvisory?.name ?? '';
+      const rightAdvisory = right.vehicle?.managedBy?.legalAdvisory?.name ?? '';
+      const leftWallet = left.vehicle?.managedBy?.wallet?.name ?? '';
+      const rightWallet = right.vehicle?.managedBy?.wallet?.name ?? '';
+
+      let result = 0;
+
+      switch (sortKey) {
+        case 'plate':
+          result = left.plate.localeCompare(right.plate, 'pt-BR');
+          break;
+        case 'responsible':
+          result = leftUser.userName.localeCompare(rightUser.userName, 'pt-BR');
+          break;
+        case 'typeAccess':
+          result = getRoleLabel(leftRole).localeCompare(getRoleLabel(rightRole), 'pt-BR');
+          break;
+        case 'legalAdvisory':
+          result = leftAdvisory.localeCompare(rightAdvisory, 'pt-BR');
+          break;
+        case 'wallet':
+          result = leftWallet.localeCompare(rightWallet, 'pt-BR');
+          break;
+        case 'createdAt':
+          result = new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+          break;
+        case 'positive':
+          result = Number(left.positive) - Number(right.positive);
+          break;
+        case 'captureMethod':
+          result = getCaptureMethodLabel(left.captureMethod).localeCompare(getCaptureMethodLabel(right.captureMethod), 'pt-BR');
+          break;
+        case 'confidence':
+          result = (left.confidence ?? -1) - (right.confidence ?? -1);
+          break;
+      }
+
+      return sortDir === 'asc' ? result : result * -1;
+    });
+
+    return items;
+  }, [incidences, sortDir, sortKey, user.role]);
+
+  const totalPages = Math.max(1, Math.ceil(sortedIncidences.length / PAGE_SIZE));
+  const paginatedIncidences = sortedIncidences.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const showTypeOfAccessColumn = user.role !== 'AUDITOR';
+  const showConfidenceColumn = user.role === 'ADMIN';
+  const gridTemplateColumns = getHistoryGridColumns(user.role);
+
+  async function handleShowDetails(incidence: IncidenceRecord) {
+    await dialog.info(`Incidência de ${incidence.plate}`, {
+      contentClassname: 'max-w-3xl w-full',
+      info: <IncidenceDetailsContent incidence={incidence} currentUserRole={user.role} />,
+    });
+  }
+
+  async function handleDelete(incidence: IncidenceRecord) {
+    const confirmed = await dialog.confirm(`Deseja remover a incidência ${incidence.plate}?`);
+
+    if (!confirmed) return;
+
+    try {
+      await deleteMutation.mutateAsync(incidence.id);
+      await refreshIncidences();
+      setAlertInfo({ message: `Incidência ${incidence.plate} removida com sucesso.`, type: 'success' });
+    } catch (mutationError: any) {
+      setAlertInfo({
+        message:
+          mutationError?.response?.data?.info ??
+          mutationError?.response?.data?.error ??
+          'Não foi possível remover a incidência.',
+        type: 'error',
+      });
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      {alertInfo ? <CustomAlert message={alertInfo.message} type={alertInfo.type} onClose={() => setAlertInfo(null)} /> : null}
+      {deleteMutation.isPending ? <Loading /> : null}
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            placeholder="Pesquisar por placa..."
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            className="w-64"
+          />
+
+          <Select value={positive} onValueChange={(value) => setPositive(value as 'all' | 'true' | 'false')}>
+            <SelectTrigger className="w-auto min-w-[12rem]">
+              <SelectValue placeholder="Resultado" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os resultados</SelectItem>
+              <SelectItem value="true">Positivo</SelectItem>
+              <SelectItem value="false">Negativo</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={captureMethod} onValueChange={(value) => setCaptureMethod(value as 'all' | CaptureMethod)}>
+            <SelectTrigger className="w-auto min-w-[14rem]">
+              <SelectValue placeholder="Método de captura" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os métodos</SelectItem>
+              <SelectItem value="MANUAL">Manual</SelectItem>
+              <SelectItem value="CAMERA">Câmera</SelectItem>
+              <SelectItem value="EXTERNAL_CAMERA">Câmera Externa</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <DateRangePicker
+          date={dateRange}
+          onDateChange={(range) => setDateRange(range)}
+          placeholder="Selecione as datas"
+          triggerSize="sm"
+          triggerClassName="w-56 sm:w-60"
+          align="end"
+        />
+      </div>
+
+      {isLoading ? (
+        <DataTableSkeleton columnCount={showConfidenceColumn ? 10 : 9} rowCount={6} searchableColumnCount={3} showViewOptions={false} />
+      ) : sortedIncidences.length === 0 ? (
+        <div className="rounded-lg border bg-background">
+          <DataTableEmptyState
+            title="Nenhuma incidência encontrada"
+            description={search ? 'Nenhuma incidência corresponde aos filtros aplicados.' : 'Você ainda não possui incidências cadastradas.'}
+            minHeightClassName="min-h-[420px]"
+          />
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="overflow-auto rounded-lg border bg-background">
+            <div className="min-w-[1360px]">
+              <div className="sticky top-0 z-10 border-b bg-background">
+                <div className="grid gap-3 p-3 text-sm font-medium text-muted-foreground" style={{ gridTemplateColumns }}>
+                  <button type="button" className="flex items-center gap-1 text-left" onClick={() => handleSort('plate')}>
+                    Placa
+                    <SortIcon colKey="plate" sortKey={sortKey} sortDir={sortDir} />
+                  </button>
+                  <button type="button" className="flex items-center gap-1 text-left" onClick={() => handleSort('responsible')}>
+                    Responsável
+                    <SortIcon colKey="responsible" sortKey={sortKey} sortDir={sortDir} />
+                  </button>
+                  {showTypeOfAccessColumn ? (
+                    <button type="button" className="flex items-center gap-1 text-left" onClick={() => handleSort('typeAccess')}>
+                      Tipo de Acesso
+                      <SortIcon colKey="typeAccess" sortKey={sortKey} sortDir={sortDir} />
+                    </button>
+                  ) : null}
+                  <button type="button" className="flex items-center gap-1 text-left" onClick={() => handleSort('legalAdvisory')}>
+                    Assessoria
+                    <SortIcon colKey="legalAdvisory" sortKey={sortKey} sortDir={sortDir} />
+                  </button>
+                  <button type="button" className="flex items-center gap-1 text-left" onClick={() => handleSort('wallet')}>
+                    Carteira
+                    <SortIcon colKey="wallet" sortKey={sortKey} sortDir={sortDir} />
+                  </button>
+                  <button type="button" className="flex items-center gap-1 text-left" onClick={() => handleSort('createdAt')}>
+                    Criado em
+                    <SortIcon colKey="createdAt" sortKey={sortKey} sortDir={sortDir} />
+                  </button>
+                  <button type="button" className="flex items-center gap-1 text-left" onClick={() => handleSort('positive')}>
+                    Comparação
+                    <SortIcon colKey="positive" sortKey={sortKey} sortDir={sortDir} />
+                  </button>
+                  <button type="button" className="flex items-center gap-1 text-left" onClick={() => handleSort('captureMethod')}>
+                    Método
+                    <SortIcon colKey="captureMethod" sortKey={sortKey} sortDir={sortDir} />
+                  </button>
+                  {showConfidenceColumn ? (
+                    <button type="button" className="flex items-center gap-1 text-left" onClick={() => handleSort('confidence')}>
+                      Confiança
+                      <SortIcon colKey="confidence" sortKey={sortKey} sortDir={sortDir} />
+                    </button>
+                  ) : null}
+                  <div>Ações</div>
+                </div>
+              </div>
+
+              <div>
+                {paginatedIncidences.map((incidence) => {
+                  const userInfo = getDisplayUserName(user.role, incidence);
+                  const userRole = resolveUserRole(incidence);
+
+                  return (
+                    <div
+                      key={incidence.id}
+                      className="grid items-center gap-3 border-b p-3 text-sm last:border-b-0 hover:bg-muted/50"
+                      style={{ gridTemplateColumns }}
+                    >
+                      <button
+                        type="button"
+                        className="flex items-center gap-1.5 text-left font-medium transition-colors hover:text-primary"
+                        onClick={() => handleShowDetails(incidence)}
+                      >
+                        <span>{incidence.plate}</span>
+                        <ExternalLink className="size-3.5" />
+                      </button>
+
+                      <div>
+                        {userInfo.isOlheiro ? (
+                          <div className="flex flex-col">
+                            <span className="font-medium">{userInfo.olheiroName}</span>
+                            <span className="text-xs text-muted-foreground">Responsável: {userInfo.operatorName}</span>
+                          </div>
+                        ) : (
+                          userInfo.userName
+                        )}
+                      </div>
+
+                      {showTypeOfAccessColumn ? (
+                        <div>
+                          {userRole ? (
+                            <span className={cn('rounded-full px-2 py-1 text-xs font-medium', getRoleColor(userRole))}>
+                              {getRoleLabel(userRole)}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </div>
+                      ) : null}
+
+                      <div>{incidence.vehicle?.managedBy?.legalAdvisory?.name ?? '—'}</div>
+                      <div>{incidence.vehicle?.managedBy?.wallet?.name ?? '—'}</div>
+                      <div>{formatTableDateTime(incidence.createdAt)}</div>
+                      <div>
+                        <span className={incidence.positive ? 'font-medium text-green-600' : 'font-medium text-orange-600'}>
+                          {incidence.positive ? 'Positivo' : 'Negativo'}
+                        </span>
+                      </div>
+                      <div>
+                        {incidence.captureMethod === 'EXTERNAL_CAMERA' ? (
+                          <div className="flex items-center gap-1.5">
+                            <Cctv className="size-4" />
+                            <span>Câmera Externa</span>
+                          </div>
+                        ) : (
+                          getCaptureMethodLabel(incidence.captureMethod)
+                        )}
+                      </div>
+                      {showConfidenceColumn ? (
+                        <div>
+                          {typeof incidence.confidence === 'number' ? (
+                            <span className="font-medium">{Math.round(incidence.confidence * 100)}%</span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </div>
+                      ) : null}
+                      <div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button aria-label="Abrir menu" variant="ghost" className="flex size-8 p-0 data-[state=open]:bg-muted">
+                              <MoreHorizontal className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-40">
+                            <DropdownMenuItem onSelect={() => handleDelete(incidence)}>
+                              <Trash2 className="mr-2 size-4" />
+                              Remover
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-muted-foreground">
+              Exibindo {paginatedIncidences.length} de {sortedIncidences.length} incidências
+            </p>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((current) => Math.max(1, current - 1))}>
+                Anterior
+              </Button>
+              <span className="text-sm text-muted-foreground">Página {page} de {totalPages}</span>
+              <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((current) => Math.min(totalPages, current + 1))}>
+                Próxima
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function IncidencesPage() {
-  const [captureMethod, setCaptureMethod] = useState('all');
-  const [positive, setPositive] = useState('all');
+  const { data: totalCount = 0 } = useQuery<number>({
+    queryKey: ['incidences-history-header-count'],
+    queryFn: async () => {
+      const response = await api.get('/incidences-history/count');
+      return Number(response.data.count ?? 0);
+    },
+    staleTime: 15000,
+  });
 
   return (
     <>
@@ -22,61 +467,17 @@ export default function IncidencesPage() {
       <header className="container mx-auto mb-3 flex items-center justify-between px-10 py-4">
         <div>
           <h1 className="mb-1 text-xl font-semibold">Incidências</h1>
-          <p className="text-muted-foreground">Gerenciamento de Incidências</p>
+          <p className="text-muted-foreground">
+            Gerenciamento de Incidências
+            <span className="ml-2 text-sm font-medium text-blue-600">
+              ({totalCount} incidência{totalCount !== 1 ? 's' : ''} encontrada{totalCount !== 1 ? 's' : ''})
+            </span>
+          </p>
         </div>
       </header>
 
       <main className="container mx-auto mb-10 px-10">
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <Input placeholder="Pesquisar por placa..." className="w-64" />
-
-              <Select value={positive} onValueChange={setPositive}>
-                <SelectTrigger className="w-auto min-w-[12rem]">
-                  <SelectValue placeholder="Resultado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os resultados</SelectItem>
-                  <SelectItem value="true">Positiva</SelectItem>
-                  <SelectItem value="false">Negativa</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={captureMethod} onValueChange={setCaptureMethod}>
-                <SelectTrigger className="w-auto min-w-[14rem]">
-                  <SelectValue placeholder="Método de captura" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os métodos</SelectItem>
-                  <SelectItem value="MANUAL">Manual</SelectItem>
-                  <SelectItem value="CAMERA">Câmera</SelectItem>
-                  <SelectItem value="EXTERNAL_CAMERA">Câmera Externa</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <DateRangePicker placeholder="Selecione as datas" triggerSize="sm" triggerClassName="w-56 sm:w-60" align="end" />
-          </div>
-
-          <div className="overflow-auto rounded-lg border bg-background" style={{ height: '600px' }}>
-            <div className="sticky top-0 z-10 border-b bg-background">
-              <div className="grid grid-cols-[minmax(120px,1fr)_minmax(150px,2fr)_minmax(150px,2fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(140px,1.5fr)_minmax(100px,1fr)_80px] gap-4 p-4 font-medium text-muted-foreground text-sm">
-                <div>Placa</div>
-                <div>Localizador</div>
-                <div>Assessoria</div>
-                <div>Resultado</div>
-                <div>Método</div>
-                <div>Data</div>
-                <div>Imagem</div>
-                <div>Ações</div>
-              </div>
-            </div>
-            <div className="flex items-center justify-center py-16 text-muted-foreground">
-              Nenhuma incidência encontrada
-            </div>
-          </div>
-        </div>
+        <IncidencesTable />
       </main>
     </>
   );

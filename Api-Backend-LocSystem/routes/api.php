@@ -11,6 +11,8 @@ use App\Http\Controllers\Banned\BannedController;
 use App\Http\Controllers\Session\SessionController;
 use App\Http\Controllers\Logs\LogsController;
 use App\Http\Controllers\CameraMonitoring\CameraMonitoringController;
+use App\Http\Controllers\DatabaseSync\DatabaseSyncController;
+use App\Http\Controllers\Incidence\IncidenceController;
 use App\Http\Controllers\LegalAdvisory\LegalAdvisoryController;
 use App\Http\Controllers\VehicleAnnouncement\VehicleAnnouncementController;
 use App\Http\Controllers\VehicleImport\VehicleImportController;
@@ -27,6 +29,21 @@ Route::post('/auth/2fa/verify-login', [TwoFactorController::class, 'verifyLogin'
 
 // Rotas "Logs"
 Route::get('/logs', [LogsController::class, 'logs']);
+
+// Rotas "Sincronização entre Bancos" sem autenticação
+Route::get('/database-sync/profiles', [DatabaseSyncController::class, 'listProfiles']);
+Route::get('/database-sync/profiles/{profileId}', [DatabaseSyncController::class, 'showProfile']);
+Route::post('/database-sync/profiles', [DatabaseSyncController::class, 'createProfile']);
+Route::put('/database-sync/profiles/{profileId}', [DatabaseSyncController::class, 'updateProfile']);
+Route::delete('/database-sync/profiles/{profileId}', [DatabaseSyncController::class, 'deleteProfile']);
+Route::get('/database-sync/profiles/{profileId}/table-mappings', [DatabaseSyncController::class, 'listTableMappings']);
+Route::post('/database-sync/profiles/{profileId}/table-mappings', [DatabaseSyncController::class, 'createTableMapping']);
+Route::post('/database-sync/profiles/{profileId}/table-mappings/bulk', [DatabaseSyncController::class, 'bulkUpsertTableMappings']);
+Route::put('/database-sync/table-mappings/{mappingId}', [DatabaseSyncController::class, 'updateTableMapping']);
+Route::delete('/database-sync/table-mappings/{mappingId}', [DatabaseSyncController::class, 'deleteTableMapping']);
+Route::get('/database-sync/profiles/{profileId}/schema', [DatabaseSyncController::class, 'inspectSchema']);
+Route::get('/database-sync/profiles/{profileId}/status', [DatabaseSyncController::class, 'executionStatus']);
+Route::post('/database-sync/profiles/{profileId}/execute', [DatabaseSyncController::class, 'execute']);
 
 // Rotas que nescessitam de autenticação
 Route::middleware('auth:sanctum')->group(function () {
@@ -112,4 +129,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/camera-monitoring/search/{plate}', [CameraMonitoringController::class, 'searchByPlate']);
     Route::post('/camera-monitoring/incidence', [CameraMonitoringController::class, 'saveIncidence']);
     Route::get('/camera-monitoring/history', [CameraMonitoringController::class, 'getHistory']);
+
+    // Rotas "Incidências"
+    Route::get('/incidences-history', [IncidenceController::class, 'history']);
+    Route::get('/incidences-history/count', [IncidenceController::class, 'historyCount']);
+    Route::get('/incidences-history/{id}', [IncidenceController::class, 'historyShow']);
+    Route::delete('/incidences-history/{id}', [IncidenceController::class, 'historyDelete']);
+
+    // Rotas "Incidências Retroativas"
+    Route::get('/retroactive-incidences', [IncidenceController::class, 'retroactive']);
+    Route::get('/retroactive-incidences/count', [IncidenceController::class, 'retroactiveCount']);
+    Route::get('/retroactive-incidences/{id}', [IncidenceController::class, 'retroactiveShow']);
+    Route::post('/retroactive-incidences/{id}/read', [IncidenceController::class, 'retroactiveMarkAsRead']);
+    Route::delete('/retroactive-incidences/{id}', [IncidenceController::class, 'retroactiveDelete']);
 });

@@ -2,6 +2,7 @@
 
 namespace App\Http\Services\VehicleImportService;
 
+use App\Http\Services\IncidenceService\IncidenceService;
 use App\Http\Services\LogsService\LogsService;
 use App\Models\LegalAdvisory\LegalAdvisory;
 use App\Models\LegalAdvisoryAccess\LegalAdvisoryAccess;
@@ -36,6 +37,7 @@ class VehicleImportService
     protected $modelLegalAdvisory;
     protected $modelLegalAdvisoryAccess;
     protected $logsService;
+    protected $incidenceService;
 
     // Método Construtor
     public function __construct(
@@ -43,13 +45,15 @@ class VehicleImportService
         Vehicle $modelVehicle,
         LegalAdvisory $modelLegalAdvisory,
         LegalAdvisoryAccess $modelLegalAdvisoryAccess,
-        LogsService $logsService
+        LogsService $logsService,
+        IncidenceService $incidenceService
     ) {
         $this->modelVehicleImport = $modelVehicleImport;
         $this->modelVehicle = $modelVehicle;
         $this->modelLegalAdvisory = $modelLegalAdvisory;
         $this->modelLegalAdvisoryAccess = $modelLegalAdvisoryAccess;
         $this->logsService = $logsService;
+        $this->incidenceService = $incidenceService;
     }
 
 
@@ -383,6 +387,8 @@ class VehicleImportService
                             'b_is_private_vehicle' => false,
                         ]);
 
+                        $this->incidenceService->generateRetroactiveIncidencesForVehicle((int) $existingVehicle->i_id, 'vehicle_import_update', true);
+
                         $updateCount++;
                         $results[] = [
                             'rowNumber' => $rowNumber,
@@ -403,7 +409,7 @@ class VehicleImportService
                     continue;
                 }
 
-                $this->modelVehicle::create([
+                $createdVehicle = $this->modelVehicle::create([
                     'v_plate' => $persistedPlate,
                     'v_plate_mercosul' => $persistedMerc,
                     'v_model' => $resolvedModel,
@@ -413,6 +419,8 @@ class VehicleImportService
                     'i_user_id' => $userId,
                     'b_is_private_vehicle' => $userRole === 'OPERATOR',
                 ]);
+
+                $this->incidenceService->generateRetroactiveIncidencesForVehicle((int) $createdVehicle->i_id, 'vehicle_import_create');
 
                 $successCount++;
                 $results[] = [

@@ -2,6 +2,7 @@
 
 namespace App\Http\Services\VehicleService;
 
+use App\Http\Services\IncidenceService\IncidenceService;
 use App\Models\Vehicle\Vehicle;
 use App\Models\LegalAdvisoryAccess\LegalAdvisoryAccess;
 use App\Support\ApiCacheKey;
@@ -17,12 +18,14 @@ class VehicleRegistrationService {
     protected $modelVehicle;
     protected $modelLegalAdvisoryAccess;
     protected $logsService;
+    protected $incidenceService;
 
     // Método Construtor
-    public function __construct(Vehicle $modelVehicle, LegalAdvisoryAccess $modelLegalAdvisoryAccess, LogsService $logsService) {
+    public function __construct(Vehicle $modelVehicle, LegalAdvisoryAccess $modelLegalAdvisoryAccess, LogsService $logsService, IncidenceService $incidenceService) {
         $this->modelVehicle = $modelVehicle;
         $this->modelLegalAdvisoryAccess = $modelLegalAdvisoryAccess;
         $this->logsService = $logsService;
+        $this->incidenceService = $incidenceService;
     }
 
 
@@ -71,6 +74,8 @@ class VehicleRegistrationService {
                 'i_legal_advisory_access_id' => $accessId,
             ]);
 
+            $this->incidenceService->generateRetroactiveIncidencesForVehicle((int) $vehicle->i_id, 'vehicle_registration');
+
             return $vehicle->toArray();
 
         });
@@ -101,6 +106,8 @@ class VehicleRegistrationService {
                 'i_user_id'                  => $i_user_id,
                 'i_legal_advisory_access_id' => $accessId,
             ]);
+
+            $this->incidenceService->generateRetroactiveIncidencesForVehicle((int) $vehicle->i_id, 'vehicle_update', true);
 
             return $vehicle->refresh()->toArray();
 

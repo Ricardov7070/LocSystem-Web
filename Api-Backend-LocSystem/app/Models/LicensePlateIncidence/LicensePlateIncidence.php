@@ -2,7 +2,9 @@
 
 namespace App\Models\LicensePlateIncidence;
 
+use App\Models\User\User;
 use App\Models\Vehicle\Vehicle;
+use App\Models\RetroactiveIncidenty\RetroactiveIncidenty;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -37,5 +39,15 @@ class LicensePlateIncidence extends Model
     public function vehicle()
     {
         return $this->belongsTo(Vehicle::class, 'i_vehicle_id', 'i_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'i_user_id', 'i_id');
+    }
+
+    public function retroactiveIncidences()
+    {
+        return $this->hasMany(RetroactiveIncidenty::class, 'v_incident_id', 'i_id');
     }
 }

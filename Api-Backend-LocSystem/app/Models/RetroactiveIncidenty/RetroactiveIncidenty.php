@@ -2,6 +2,8 @@
 
 namespace App\Models\RetroactiveIncidenty;
 
+use App\Models\LicensePlateIncidence\LicensePlateIncidence;
+use App\Models\Vehicle\Vehicle;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -22,4 +24,19 @@ class RetroactiveIncidenty extends Model
         'b_is_read',
         'd_read_at',
     ];
+
+    protected $casts = [
+        'b_is_read' => 'boolean',
+        'd_read_at' => 'datetime',
+    ];
+
+    public function incident()
+    {
+        return $this->belongsTo(LicensePlateIncidence::class, 'v_incident_id', 'i_id');
+    }
+
+    public function vehicle()
+    {
+        return $this->belongsTo(Vehicle::class, 'v_vehicle_id', 'i_id');
+    }
 }
