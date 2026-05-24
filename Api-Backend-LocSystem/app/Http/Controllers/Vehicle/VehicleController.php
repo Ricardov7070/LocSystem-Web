@@ -58,6 +58,27 @@ class VehicleController extends Controller {
         }
     }
 
+    public function vehiclesCount(Request $request): JsonResponse {
+        try {
+
+            $count = $this->serviceRegistration->countVehicles($request);
+
+            return response()->json([
+                'success' => 'Contagem de veículos retornada com sucesso!',
+                'count' => $count,
+            ], 200);
+
+        } catch (
+            \Throwable $th
+        ) {
+
+            return response()->json([
+                'error' => 'Ocorreu um erro inesperado, tente novamente!',
+            ], 500);
+
+        }
+    }
+
 
 /**
  * @OA\Get(

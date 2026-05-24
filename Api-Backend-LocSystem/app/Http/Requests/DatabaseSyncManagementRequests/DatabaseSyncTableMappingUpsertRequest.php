@@ -28,10 +28,12 @@ class DatabaseSyncTableMappingUpsertRequest extends FormRequest
             'conflict_target_columns' => ['nullable', 'array', 'min:1'],
             'conflict_target_columns.*' => ['required', 'string', 'max:255'],
             'column_mappings' => ['required', 'array', 'min:1'],
-            'column_mappings.*.mode' => ['nullable', 'string', Rule::in(['direct', 'relation'])],
+            'column_mappings.*.mode' => ['nullable', 'string', Rule::in(['direct', 'relation', 'polymorphic_relation'])],
             'column_mappings.*.source_column' => ['required', 'string', 'max:255'],
             'column_mappings.*.destination_column' => ['required', 'string', 'max:255'],
             'column_mappings.*.reference_source_table' => ['nullable', 'string', 'max:255'],
+            'column_mappings.*.source_type_column' => ['nullable', 'string', 'max:255'],
+            'column_mappings.*.reference_source_table_by_type' => ['nullable', 'array'],
         ];
     }
 
@@ -42,7 +44,7 @@ class DatabaseSyncTableMappingUpsertRequest extends FormRequest
             'v_destination_table.required' => 'A tabela de destino é obrigatória.',
             'column_mappings.required' => 'Informe ao menos um mapeamento de colunas.',
             'v_conflict_strategy.in' => 'A estratégia de conflito precisa ser insert, skip ou upsert.',
-            'column_mappings.*.mode.in' => 'O modo do mapeamento precisa ser direct ou relation.',
+            'column_mappings.*.mode.in' => 'O modo do mapeamento precisa ser direct, relation ou polymorphic_relation.',
             'column_mappings.*.source_column.required' => 'Toda linha do mapeamento precisa informar a coluna de origem.',
             'column_mappings.*.destination_column.required' => 'Toda linha do mapeamento precisa informar a coluna de destino.',
         ];

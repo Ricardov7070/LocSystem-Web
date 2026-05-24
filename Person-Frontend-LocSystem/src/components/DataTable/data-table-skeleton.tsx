@@ -56,7 +56,13 @@ export function DataTableSkeleton(props: DataTableSkeletonProps) {
           <Skeleton className="ml-auto hidden h-7 w-[4.5rem] lg:flex" />
         ) : null}
       </div>
-      <div className="rounded-md border">
+      <div className="relative rounded-md border">
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+          <div className="flex items-center gap-2 rounded-full border bg-background/95 px-4 py-2 text-sm font-medium text-muted-foreground shadow-sm backdrop-blur-sm">
+            <span className="inline-block size-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            <span>Carregando registros...</span>
+          </div>
+        </div>
         <Table>
           <TableHeader>
             {Array.from({ length: 1 }).map((_, i) => (

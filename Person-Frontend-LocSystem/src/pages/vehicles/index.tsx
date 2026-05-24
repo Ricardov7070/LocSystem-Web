@@ -5,7 +5,7 @@ import { Plus, MoreHorizontal, Pencil, Trash2, ArrowUp, ArrowDown, ArrowUpDown }
 import { UseFormReturn } from 'react-hook-form';
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
-import { format } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import { type DateRange } from 'react-day-picker';
 
 import api from '../../services/api';
@@ -271,6 +271,15 @@ function VehicleForm({ form }: { form: UseFormReturn<VehicleFormSchema> }) {
 const COLS = 'grid-cols-[minmax(150px,2fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(150px,2fr)_80px]';
 const PAGE_SIZE = 10;
 
+function buildDefaultVehicleDateRange(): DateRange {
+  const now = new Date();
+
+  return {
+    from: subDays(now, 30),
+    to: now,
+  };
+}
+
 
 function SortIcon({ colKey, sortKey, sortDir }: { colKey: string; sortKey: string | null; sortDir: 'asc' | 'desc' }) {
   if (sortKey !== colKey) return <ArrowUpDown className="size-3.5 opacity-40" />;
@@ -281,7 +290,7 @@ function SortIcon({ colKey, sortKey, sortDir }: { colKey: string; sortKey: strin
 function VehiclesTable() {
 
   const [search, setSearch] = useState('');
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(() => buildDefaultVehicleDateRange());
   const [page, setPage] = useState(1);
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
@@ -313,7 +322,16 @@ function VehiclesTable() {
         body.data_final = format(dateRange.to, 'yyyy-MM-dd');
       }
       const response = await api.post('/vehicles', body);
-      return response.data.vehicle;
+      const payload = response.data.vehicles
+        ?? response.data.vehicle
+        ?? response.data.data
+        ?? [];
+
+      if (Array.isArray(payload)) {
+        return payload as Vehicle[];
+      }
+
+      return payload ? [payload as Vehicle] : [];
     },
     throwOnError: false,
   });
@@ -323,14 +341,17 @@ function VehiclesTable() {
     if (!isError) return;
 
     const status = (error as any)?.response?.status;
+    const apiMessage = (error as any)?.response?.data?.error
+      ?? (error as any)?.response?.data?.info
+      ?? (error as any)?.response?.data?.message;
 
     if (status === 500) {
 
-      showAlert('🚫 Erro interno do servidor ao carregar veículos.', 'error');
+      showAlert(`🚫 ${apiMessage ?? 'Erro interno do servidor ao carregar veículos.'}`, 'error');
 
     } else {
 
-      showAlert('🚫 Ocorreu um erro inesperado ao conectar com a API.', 'error');
+      showAlert(`🚫 ${apiMessage ?? 'Ocorreu um erro inesperado ao conectar com a API.'}`, 'error');
 
     }
   }, [isError, error]);
@@ -388,6 +409,7 @@ function VehiclesTable() {
     onSuccess: (data) => {
       showAlert(data?.success, 'success');
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      queryClient.invalidateQueries({ queryKey: ['vehicles-header-count'] });
     },
 
     onError: (error: any) => {
@@ -473,6 +495,7 @@ function VehiclesTable() {
           const response = await updateVehicleMutation.mutateAsync({ id: vehicle.i_id, data: payload });
           showAlert(`✅ ${response?.success}`, 'success');
           queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+          queryClient.invalidateQueries({ queryKey: ['vehicles-header-count'] });
         
           return response;
 
@@ -555,7 +578,7 @@ function VehiclesTable() {
         <DateRangePicker
           date={dateRange}
           onDateChange={(range) => {
-            setDateRange(range);
+            setDateRange(range ?? buildDefaultVehicleDateRange());
           }}
           placeholder="Selecione as datas"
           triggerSize="sm"
@@ -563,6 +586,9 @@ function VehiclesTable() {
           align="end"
         />
       </div>
+      <p className="text-xs text-muted-foreground">
+        A carga inicial usa os ultimos 30 dias para evitar buscar toda a base de veiculos de uma vez.
+      </p>
 
       <div className="overflow-auto rounded-lg border bg-background">
         <div className="sticky top-0 z-10 border-b bg-background">
@@ -778,6 +804,7 @@ function AddVehicle() {
 
       setAlertInfo({ message: `✅ ${data?.success ?? 'Veículo cadastrado com sucesso!'}`, type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      queryClient.invalidateQueries({ queryKey: ['vehicles-header-count'] });
     
     }
 
@@ -805,6 +832,15 @@ function AddVehicle() {
 
 
 export default function VehiclesPage() {
+  const { data: totalCount = 0 } = useQuery<number>({
+    queryKey: ['vehicles-header-count'],
+    queryFn: async () => {
+      const response = await api.get('/vehicles/count');
+      return Number(response.data.count ?? 0);
+    },
+    staleTime: 15000,
+  });
+
   return (
     <>
       <Topbar breadcrumbs={[{ label: 'Veículos' }]} />
@@ -812,7 +848,12 @@ export default function VehiclesPage() {
       <header className="mb-3 flex w-full items-center justify-between gap-4 px-6 py-4 md:px-8 lg:px-10">
         <div>
           <h1 className="mb-1 text-xl font-semibold">Veículos</h1>
-          <p className="text-muted-foreground">Gerenciamento de Veículos</p>
+          <p className="text-muted-foreground">
+            Gerenciamento de Veículos
+            <span className="ml-2 text-sm font-medium text-blue-600">
+              ({totalCount} veículo{totalCount !== 1 ? 's' : ''} encontrado{totalCount !== 1 ? 's' : ''})
+            </span>
+          </p>
         </div>
         <div>
           <AddVehicle />

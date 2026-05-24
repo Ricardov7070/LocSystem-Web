@@ -30,10 +30,12 @@ class DatabaseSyncBulkTableMappingsRequest extends FormRequest
             'table_mappings.*.conflict_target_columns' => ['nullable', 'array', 'min:1'],
             'table_mappings.*.conflict_target_columns.*' => ['required', 'string', 'max:255'],
             'table_mappings.*.column_mappings' => ['required', 'array', 'min:1'],
-            'table_mappings.*.column_mappings.*.mode' => ['nullable', 'string', Rule::in(['direct', 'relation'])],
+            'table_mappings.*.column_mappings.*.mode' => ['nullable', 'string', Rule::in(['direct', 'relation', 'polymorphic_relation'])],
             'table_mappings.*.column_mappings.*.source_column' => ['required', 'string', 'max:255'],
             'table_mappings.*.column_mappings.*.destination_column' => ['required', 'string', 'max:255'],
             'table_mappings.*.column_mappings.*.reference_source_table' => ['nullable', 'string', 'max:255'],
+            'table_mappings.*.column_mappings.*.source_type_column' => ['nullable', 'string', 'max:255'],
+            'table_mappings.*.column_mappings.*.reference_source_table_by_type' => ['nullable', 'array'],
         ];
     }
 

@@ -23,6 +23,9 @@ class DatabaseSyncService
     private const EXECUTION_LOCK_PREFIX = 'database_sync_execution_lock:';
     private const LARGE_RELATION_TABLE_THRESHOLD = 50000;
     private const RELATION_LOOKUP_CACHE_LIMIT = 50000;
+    private const STATUS_PROGRESS_EVERY = 5000;
+    private const SOURCE_READ_CHUNK_SIZE = 1000;
+    private const RELATION_PREFETCH_CHUNK_SIZE = 1000;
     private const TEMP_RELATION_TABLE = 'tmp_database_sync_resolved_ids';
 
     public function __construct(
@@ -279,12 +282,16 @@ class DatabaseSyncService
             }
 
             foreach ($mappings as $index => $mapping) {
+                $sourceTableTotalRows = $sourceConnection->table($mapping->v_source_table)->count();
+
                 $this->putExecutionStatus($profile, [
                     'status' => 'running',
                     'current_table' => [
                         'source_table' => $mapping->v_source_table,
                         'destination_table' => $mapping->v_destination_table,
                         'step' => $index + 1,
+                        'processed_rows' => 0,
+                        'total_rows' => $sourceTableTotalRows,
                     ],
                     'processed_tables' => $index,
                     'total_tables' => $totalTables,
@@ -299,6 +306,11 @@ class DatabaseSyncService
                     $resolvedIdsBySourceTable,
                     $referenceUsage,
                     $externalRelationTables,
+                    $profile,
+                    $index,
+                    $totalTables,
+                    $summary,
+                    $sourceTableTotalRows,
                 );
 
                 $summary[] = [
@@ -314,6 +326,8 @@ class DatabaseSyncService
                         'source_table' => $mapping->v_source_table,
                         'destination_table' => $mapping->v_destination_table,
                         'step' => $index + 1,
+                        'processed_rows' => $inserted,
+                        'total_rows' => $sourceTableTotalRows,
                     ],
                     'processed_tables' => $index + 1,
                     'total_tables' => $totalTables,
@@ -376,73 +390,209 @@ class DatabaseSyncService
         array &$resolvedIdsBySourceTable,
         array $referenceUsage,
         array $externalRelationTables,
+        DatabaseSyncProfile $profile,
+        int $mappingIndex,
+        int $totalTables,
+        array $summary,
+        int $sourceTableTotalRows,
     ): int {
         $insertedRows = 0;
-        $relationLookupCache = [];
+        $sourceConnection
+            ->table($mapping->v_source_table)
+            ->orderBy($mapping->v_source_primary_key ?: '1')
+            ->chunk(self::SOURCE_READ_CHUNK_SIZE, function ($rows) use (
+                $destinationConnection,
+                $mapping,
+                &$resolvedIdsBySourceTable,
+                $referenceUsage,
+                $externalRelationTables,
+                $profile,
+                $mappingIndex,
+                $totalTables,
+                $summary,
+                $sourceTableTotalRows,
+                &$insertedRows,
+            ) {
+                $sourceRows = [];
 
-        foreach ($sourceConnection->table($mapping->v_source_table)->cursor() as $row) {
-            $sourceRow = (array) $row;
-            $payload = $this->payloadBuilder->build(
-                $sourceRow,
-                $mapping->j_column_mappings ?? [],
-                $resolvedIdsBySourceTable,
-                function (string $referenceSourceTable, string $value) use (
-                    &$resolvedIdsBySourceTable,
-                    &$relationLookupCache,
+                foreach ($rows as $row) {
+                    $sourceRows[] = (array) $row;
+                }
+
+                $relationLookupCache = $this->buildRelationLookupCache(
                     $destinationConnection,
+                    $mapping,
+                    $resolvedIdsBySourceTable,
                     $externalRelationTables,
-                ) {
-                    if (!in_array($referenceSourceTable, $externalRelationTables, true)) {
-                        return $resolvedIdsBySourceTable[$referenceSourceTable][$value] ?? null;
-                    }
+                    $sourceRows,
+                );
 
-                    if (isset($relationLookupCache[$referenceSourceTable][$value])) {
-                        return $relationLookupCache[$referenceSourceTable][$value];
-                    }
+                foreach ($sourceRows as $sourceRow) {
+                    $payload = $this->payloadBuilder->build(
+                        $sourceRow,
+                        $mapping->j_column_mappings ?? [],
+                        $resolvedIdsBySourceTable,
+                        function (string $referenceSourceTable, string $value) use (
+                            &$resolvedIdsBySourceTable,
+                            &$relationLookupCache,
+                            $destinationConnection,
+                            $externalRelationTables,
+                        ) {
+                            if (!in_array($referenceSourceTable, $externalRelationTables, true)) {
+                                return $resolvedIdsBySourceTable[$referenceSourceTable][$value] ?? null;
+                            }
 
-                    $resolvedId = $this->findResolvedIdInTemporaryStore(
-                        $destinationConnection,
-                        $referenceSourceTable,
-                        $value,
+                            if (isset($relationLookupCache[$referenceSourceTable][$value])) {
+                                return $relationLookupCache[$referenceSourceTable][$value];
+                            }
+
+                            $resolvedId = $this->findResolvedIdInTemporaryStore(
+                                $destinationConnection,
+                                $referenceSourceTable,
+                                $value,
+                            );
+
+                            if ($resolvedId !== null) {
+                                $relationLookupCache[$referenceSourceTable][$value] = $resolvedId;
+
+                                if (count($relationLookupCache[$referenceSourceTable]) > self::RELATION_LOOKUP_CACHE_LIMIT) {
+                                    $relationLookupCache[$referenceSourceTable] = [];
+                                }
+                            }
+
+                            return $resolvedId;
+                        },
                     );
 
-                    if ($resolvedId !== null) {
-                        $relationLookupCache[$referenceSourceTable][$value] = $resolvedId;
+                    $destinationPrimaryValue = $this->persistDestinationRow(
+                        $destinationConnection,
+                        $mapping,
+                        $payload,
+                    );
 
-                        if (count($relationLookupCache[$referenceSourceTable]) > self::RELATION_LOOKUP_CACHE_LIMIT) {
-                            $relationLookupCache[$referenceSourceTable] = [];
+                    if (!empty($mapping->v_source_primary_key)) {
+                        $sourcePrimaryValue = Arr::get($sourceRow, $mapping->v_source_primary_key);
+                        if ($sourcePrimaryValue !== null && $sourcePrimaryValue !== '') {
+                            $this->storeResolvedId(
+                                $destinationConnection,
+                                $resolvedIdsBySourceTable,
+                                $mapping->v_source_table,
+                                (string) $sourcePrimaryValue,
+                                $destinationPrimaryValue,
+                                $referenceUsage,
+                                $externalRelationTables,
+                            );
                         }
                     }
 
-                    return $resolvedId;
-                },
-            );
+                    $insertedRows++;
 
-            $destinationPrimaryValue = $this->persistDestinationRow(
-                $destinationConnection,
-                $mapping,
-                $payload,
-            );
-
-            if (!empty($mapping->v_source_primary_key)) {
-                $sourcePrimaryValue = Arr::get($sourceRow, $mapping->v_source_primary_key);
-                if ($sourcePrimaryValue !== null && $sourcePrimaryValue !== '') {
-                    $this->storeResolvedId(
-                        $destinationConnection,
-                        $resolvedIdsBySourceTable,
-                        $mapping->v_source_table,
-                        (string) $sourcePrimaryValue,
-                        $destinationPrimaryValue,
-                        $referenceUsage,
-                        $externalRelationTables,
-                    );
+                    if ($insertedRows % self::STATUS_PROGRESS_EVERY === 0) {
+                        $this->putExecutionStatus($profile, [
+                            'status' => 'running',
+                            'current_table' => [
+                                'source_table' => $mapping->v_source_table,
+                                'destination_table' => $mapping->v_destination_table,
+                                'step' => $mappingIndex + 1,
+                                'processed_rows' => $insertedRows,
+                                'total_rows' => $sourceTableTotalRows,
+                            ],
+                            'processed_tables' => $mappingIndex,
+                            'total_tables' => $totalTables,
+                            'summary' => $summary,
+                            'error' => null,
+                        ]);
+                    }
                 }
-            }
-
-            $insertedRows++;
-        }
+            });
 
         return $insertedRows;
+    }
+
+    private function buildRelationLookupCache(
+        Connection $destinationConnection,
+        DatabaseSyncTableMapping $mapping,
+        array $resolvedIdsBySourceTable,
+        array $externalRelationTables,
+        array $sourceRows,
+    ): array {
+        $relationLookupCache = [];
+        $sourcePrimaryValuesByTable = [];
+
+        foreach ($mapping->j_column_mappings ?? [] as $columnMapping) {
+            $mode = $columnMapping['mode'] ?? 'direct';
+            if (!in_array($mode, ['relation', 'polymorphic_relation'], true)) {
+                continue;
+            }
+
+            $sourceColumn = (string) ($columnMapping['source_column'] ?? '');
+
+            if ($sourceColumn === '') {
+                continue;
+            }
+
+            foreach ($this->extractReferencedSourceTables($columnMapping) as $referenceSourceTable) {
+                if (!in_array($referenceSourceTable, $externalRelationTables, true)) {
+                    $relationLookupCache[$referenceSourceTable] = $resolvedIdsBySourceTable[$referenceSourceTable] ?? [];
+                    continue;
+                }
+
+                foreach ($sourceRows as $sourceRow) {
+                    if ($mode === 'polymorphic_relation') {
+                        $sourceTypeColumn = (string) ($columnMapping['source_type_column'] ?? '');
+                        $sourceTypeValue = (string) Arr::get($sourceRow, $sourceTypeColumn, '');
+                        $selectedReferenceTable = (string) (($columnMapping['reference_source_table_by_type'] ?? [])[$sourceTypeValue] ?? '');
+
+                        if ($selectedReferenceTable !== $referenceSourceTable) {
+                            continue;
+                        }
+                    }
+
+                    $value = (string) Arr::get($sourceRow, $sourceColumn, '');
+                    if ($value !== '') {
+                        $sourcePrimaryValuesByTable[$referenceSourceTable][$value] = $value;
+                    }
+                }
+            }
+        }
+
+        foreach ($sourcePrimaryValuesByTable as $referenceSourceTable => $sourcePrimaryValues) {
+            if ($sourcePrimaryValues === []) {
+                $relationLookupCache[$referenceSourceTable] = [];
+                continue;
+            }
+
+            $relationLookupCache[$referenceSourceTable] = $this->loadResolvedIdsFromTemporaryStore(
+                $destinationConnection,
+                $referenceSourceTable,
+                array_values($sourcePrimaryValues),
+            );
+        }
+
+        return $relationLookupCache;
+    }
+
+    private function loadResolvedIdsFromTemporaryStore(
+        Connection $destinationConnection,
+        string $sourceTable,
+        array $sourcePrimaryValues,
+    ): array {
+        $resolvedIds = [];
+
+        foreach (array_chunk($sourcePrimaryValues, self::RELATION_PREFETCH_CHUNK_SIZE) as $chunk) {
+            $rows = $destinationConnection
+                ->table(self::TEMP_RELATION_TABLE)
+                ->select(['v_source_primary_value', 'v_destination_primary_value'])
+                ->where('v_source_table', $sourceTable)
+                ->whereIn('v_source_primary_value', $chunk)
+                ->get();
+
+            foreach ($rows as $row) {
+                $resolvedIds[(string) $row->v_source_primary_value] = $row->v_destination_primary_value;
+            }
+        }
+
+        return $resolvedIds;
     }
 
     private function buildReferenceUsage(array $mappings): array
@@ -451,19 +601,20 @@ class DatabaseSyncService
 
         foreach ($mappings as $index => $mapping) {
             foreach ($mapping->j_column_mappings ?? [] as $columnMapping) {
-                if (($columnMapping['mode'] ?? 'direct') !== 'relation') {
+                if (!in_array(($columnMapping['mode'] ?? 'direct'), ['relation', 'polymorphic_relation'], true)) {
                     continue;
                 }
 
-                $referenceSourceTable = (string) ($columnMapping['reference_source_table'] ?? '');
-                if ($referenceSourceTable === '') {
-                    continue;
-                }
+                foreach ($this->extractReferencedSourceTables($columnMapping) as $referenceSourceTable) {
+                    if ($referenceSourceTable === '') {
+                        continue;
+                    }
 
-                $referenceUsage[$referenceSourceTable] = max(
-                    $referenceUsage[$referenceSourceTable] ?? -1,
-                    $index,
-                );
+                    $referenceUsage[$referenceSourceTable] = max(
+                        $referenceUsage[$referenceSourceTable] ?? -1,
+                        $index,
+                    );
+                }
             }
         }
 
@@ -738,25 +889,52 @@ class DatabaseSyncService
 
         foreach ($mappings as $mapping) {
             foreach ($mapping->j_column_mappings ?? [] as $columnMapping) {
-                if (($columnMapping['mode'] ?? 'direct') !== 'relation') {
+                if (!in_array(($columnMapping['mode'] ?? 'direct'), ['relation', 'polymorphic_relation'], true)) {
                     continue;
                 }
 
-                $referenceSourceTable = (string) ($columnMapping['reference_source_table'] ?? '');
-                if ($referenceSourceTable === '' || !isset($mappingBySourceTable[$referenceSourceTable])) {
-                    throw new HttpException(422, "O mapeamento da tabela {$mapping->v_source_table} referencia a tabela {$referenceSourceTable}, mas ela não foi cadastrada no perfil.");
-                }
+                foreach ($this->extractReferencedSourceTables($columnMapping) as $referenceSourceTable) {
+                    if ($referenceSourceTable === '' || !isset($mappingBySourceTable[$referenceSourceTable])) {
+                        throw new HttpException(422, "O mapeamento da tabela {$mapping->v_source_table} referencia a tabela {$referenceSourceTable}, mas ela não foi cadastrada no perfil.");
+                    }
 
-                $referencedMapping = $mappingBySourceTable[$referenceSourceTable];
-                if (empty($referencedMapping->v_source_primary_key)) {
-                    throw new HttpException(422, "A tabela {$referenceSourceTable} precisa informar source_primary_key para resolver relacionamentos.");
-                }
+                    $referencedMapping = $mappingBySourceTable[$referenceSourceTable];
+                    if (empty($referencedMapping->v_source_primary_key)) {
+                        throw new HttpException(422, "A tabela {$referenceSourceTable} precisa informar source_primary_key para resolver relacionamentos.");
+                    }
 
-                if ((int) $referencedMapping->i_sync_order > (int) $mapping->i_sync_order) {
-                    throw new HttpException(422, "A tabela {$referenceSourceTable} precisa ser sincronizada antes de {$mapping->v_source_table} para preservar os relacionamentos.");
+                    if ((int) $referencedMapping->i_sync_order > (int) $mapping->i_sync_order) {
+                        throw new HttpException(422, "A tabela {$referenceSourceTable} precisa ser sincronizada antes de {$mapping->v_source_table} para preservar os relacionamentos.");
+                    }
                 }
             }
         }
+    }
+
+    private function extractReferencedSourceTables(array $columnMapping): array
+    {
+        $mode = $columnMapping['mode'] ?? 'direct';
+
+        if ($mode === 'relation') {
+            $referenceSourceTable = (string) ($columnMapping['reference_source_table'] ?? '');
+
+            return $referenceSourceTable === '' ? [] : [$referenceSourceTable];
+        }
+
+        if ($mode === 'polymorphic_relation') {
+            $referenceSourceTables = $columnMapping['reference_source_table_by_type'] ?? [];
+
+            if (!is_array($referenceSourceTables)) {
+                return [];
+            }
+
+            return array_values(array_unique(array_filter(array_map(
+                static fn ($table) => is_string($table) ? $table : '',
+                $referenceSourceTables,
+            ))));
+        }
+
+        return [];
     }
 
     private function describeTables(string $connectionName): array
@@ -975,6 +1153,16 @@ class DatabaseSyncService
         foreach ($data['column_mappings'] as $columnMapping) {
             if (($columnMapping['mode'] ?? 'direct') === 'relation' && empty($columnMapping['reference_source_table'])) {
                 throw new HttpException(422, 'Todo mapeamento relacional precisa informar reference_source_table.');
+            }
+
+            if (($columnMapping['mode'] ?? 'direct') === 'polymorphic_relation') {
+                if (empty($columnMapping['source_type_column'])) {
+                    throw new HttpException(422, 'Todo mapeamento polimórfico precisa informar source_type_column.');
+                }
+
+                if (empty($columnMapping['reference_source_table_by_type']) || !is_array($columnMapping['reference_source_table_by_type'])) {
+                    throw new HttpException(422, 'Todo mapeamento polimórfico precisa informar reference_source_table_by_type.');
+                }
             }
         }
 

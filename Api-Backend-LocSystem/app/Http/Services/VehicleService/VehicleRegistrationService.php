@@ -9,11 +9,15 @@ use App\Support\ApiCacheKey;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Carbon;
 use App\Http\Services\LogsService\LogsService;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 
 class VehicleRegistrationService {
+
+    private const DEFAULT_LIST_DAYS = 30;
+    private const MAX_LIST_LIMIT = 500;
 
     protected $modelVehicle;
     protected $modelLegalAdvisoryAccess;
@@ -31,22 +35,72 @@ class VehicleRegistrationService {
 
     // Método para visualizar os veículos cadastrados
     public function viewVehicles($request): Collection {
-        $cacheKey = ApiCacheKey::forUser('vehicles_list', $request->only(['data_inicial', 'data_final']));
+        $filters = $request->only(['data_inicial', 'data_final']);
+        $limit = $this->resolveListLimit((int) $request->input('limit', self::MAX_LIST_LIMIT));
 
-        return Cache::store('redis')->remember($cacheKey, 30, function () use ($request) {
+        $filters = $this->resolveVehicleListFilters($filters);
 
-            return $this->modelVehicle::query()
-                ->with(['legalAdvisoryAccess.legalAdvisory'])
-                ->whereNull('deleted_at')
-                ->when($request->input('data_inicial'), function ($query, $dataInicial) {
-                    return $query->whereDate('created_at', '>=', $dataInicial);
-                })
-                ->when($request->input('data_final'), function ($query, $dataFinal) {
-                    return $query->whereDate('created_at', '<=', $dataFinal);
-                })
+        $cacheKey = ApiCacheKey::forUser('vehicles_list', [
+            ...$filters,
+            'limit' => $limit,
+        ]);
+
+        return Cache::store('redis')->remember($cacheKey, 30, function () use ($filters, $limit) {
+
+            return $this->buildVehicleListQuery($filters)
+                ->select([
+                    'i_id',
+                    'v_plate',
+                    'v_plate_mercosul',
+                    'v_model',
+                    'v_phone',
+                    'i_legal_advisory_access_id',
+                    'created_at',
+                ])
+                ->orderByDesc('created_at')
+                ->limit($limit)
                 ->get();
 
         });
+    }
+
+    public function countVehicles($request): int
+    {
+        return (int) $this->buildVehicleListQuery(
+            $this->resolveVehicleListFilters($request->only(['data_inicial', 'data_final']))
+        )->count();
+    }
+
+    protected function resolveListLimit(int $incomingLimit): int
+    {
+        if ($incomingLimit <= 0) {
+            return self::MAX_LIST_LIMIT;
+        }
+
+        return min($incomingLimit, self::MAX_LIST_LIMIT);
+    }
+
+    protected function resolveVehicleListFilters(array $filters): array
+    {
+        if (empty($filters['data_inicial']) && empty($filters['data_final'])) {
+            $filters['data_inicial'] = Carbon::now()->subDays(self::DEFAULT_LIST_DAYS)->toDateString();
+            $filters['data_final'] = Carbon::now()->toDateString();
+        }
+
+        return $filters;
+    }
+
+    protected function buildVehicleListQuery(array $filters)
+    {
+        return $this->modelVehicle::query()
+            ->with(['legalAdvisoryAccess.legalAdvisory'])
+            ->whereNull('deleted_at')
+            ->when($filters['data_inicial'] ?? null, function ($query, $dataInicial) {
+                return $query->whereDate('created_at', '>=', $dataInicial);
+            })
+            ->when($filters['data_final'] ?? null, function ($query, $dataFinal) {
+                return $query->whereDate('created_at', '<=', $dataFinal);
+            });
     }
 
 

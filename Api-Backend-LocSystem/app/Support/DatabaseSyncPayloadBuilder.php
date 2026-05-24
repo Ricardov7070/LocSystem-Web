@@ -48,6 +48,45 @@ class DatabaseSyncPayloadBuilder
                 continue;
             }
 
+            if ($mode === 'polymorphic_relation') {
+                if ($value === null || $value === '') {
+                    $payload[$destinationColumn] = null;
+                    continue;
+                }
+
+                $sourceTypeColumn = (string) ($mapping['source_type_column'] ?? '');
+                if ($sourceTypeColumn === '') {
+                    throw new RuntimeException("O mapeamento polimórfico da coluna {$destinationColumn} precisa informar source_type_column.");
+                }
+
+                $sourceTypeValue = $sourceRow[$sourceTypeColumn] ?? null;
+                if ($sourceTypeValue === null || $sourceTypeValue === '') {
+                    $payload[$destinationColumn] = null;
+                    continue;
+                }
+
+                $referenceSourceTableByType = $mapping['reference_source_table_by_type'] ?? [];
+                if (!is_array($referenceSourceTableByType) || $referenceSourceTableByType === []) {
+                    throw new RuntimeException("O mapeamento polimórfico da coluna {$destinationColumn} precisa informar reference_source_table_by_type.");
+                }
+
+                $referenceSourceTable = (string) ($referenceSourceTableByType[(string) $sourceTypeValue] ?? '');
+                if ($referenceSourceTable === '') {
+                    $payload[$destinationColumn] = null;
+                    continue;
+                }
+
+                $resolvedId = $relationResolver !== null
+                    ? $relationResolver($referenceSourceTable, (string) $value)
+                    : ($resolvedIdsBySourceTable[$referenceSourceTable][(string) $value] ?? null);
+                if ($resolvedId === null) {
+                    throw new RuntimeException("Não foi possível resolver o relacionamento polimórfico da tabela {$referenceSourceTable} para o valor {$value} com tipo {$sourceTypeValue}.");
+                }
+
+                $payload[$destinationColumn] = $resolvedId;
+                continue;
+            }
+
             $payload[$destinationColumn] = $value;
         }
 
