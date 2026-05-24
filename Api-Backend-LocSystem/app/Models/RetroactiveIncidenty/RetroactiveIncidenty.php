@@ -2,6 +2,7 @@
 
 namespace App\Models\RetroactiveIncidenty;
 
+use App\Models\LegalAdvisory\LegalAdvisory;
 use App\Models\LicensePlateIncidence\LicensePlateIncidence;
 use App\Models\Vehicle\Vehicle;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -38,5 +39,10 @@ class RetroactiveIncidenty extends Model
     public function vehicle()
     {
         return $this->belongsTo(Vehicle::class, 'v_vehicle_id', 'i_id');
+    }
+
+    public function legalAdvisoryOwner()
+    {
+        return $this->belongsTo(LegalAdvisory::class, 'v_owner_id', 'i_id');
     }
 }

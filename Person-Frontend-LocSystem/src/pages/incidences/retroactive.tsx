@@ -52,6 +52,14 @@ import {
 
 type SortKey = 'plate' | 'responsible' | 'typeAccess' | 'legalAdvisory' | 'wallet' | 'captureMethod' | 'confidence' | 'createdAt';
 
+function buildDefaultIncidenceDateRange(): DateRange {
+  const now = new Date();
+  const from = new Date(now);
+  from.setDate(from.getDate() - 30);
+
+  return { from, to: now };
+}
+
 function SortIcon({
   colKey,
   sortKey,
@@ -71,7 +79,7 @@ function RetroactiveIncidencesTable() {
   const [search, setSearch] = useState('');
   const [captureMethod, setCaptureMethod] = useState<'all' | CaptureMethod>('all');
   const [showOnlyUnread, setShowOnlyUnread] = useState(false);
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(() => buildDefaultIncidenceDateRange());
   const [page, setPage] = useState(1);
   const [sortKey, setSortKey] = useState<SortKey | null>('createdAt');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
@@ -207,7 +215,7 @@ function RetroactiveIncidencesTable() {
     }
 
     await dialog.info(`Incidência de ${incidence.plate}`, {
-      contentClassname: 'max-w-3xl w-full',
+      contentClassname: 'max-w-5xl w-full',
       info: <IncidenceDetailsContent incidence={incidence} currentUserRole={user.role} dateLabel="Data e Horário de Registro" />,
     });
   }
@@ -265,13 +273,17 @@ function RetroactiveIncidencesTable() {
 
         <DateRangePicker
           date={dateRange}
-          onDateChange={(range) => setDateRange(range)}
+          onDateChange={(range) => setDateRange(range ?? buildDefaultIncidenceDateRange())}
           placeholder="Selecione as datas"
           triggerSize="sm"
           triggerClassName="w-56 sm:w-60"
           align="end"
         />
       </div>
+
+      <p className="text-xs text-muted-foreground">
+        A carga inicial exibe apenas as incidências retroativas dos ultimos 30 dias. Use os filtros para ampliar ou refinar a consulta.
+      </p>
 
       {isLoading ? (
         <DataTableSkeleton columnCount={showConfidenceColumn ? 8 : 7} rowCount={6} searchableColumnCount={3} showViewOptions={false} />
@@ -293,35 +305,35 @@ function RetroactiveIncidencesTable() {
                     Placa
                     <SortIcon colKey="plate" sortKey={sortKey} sortDir={sortDir} />
                   </button>
-                  <button type="button" className="flex items-center gap-1 text-left" onClick={() => handleSort('responsible')}>
+                  <button type="button" className="flex items-center justify-center gap-1 text-center" onClick={() => handleSort('responsible')}>
                     Responsável
                     <SortIcon colKey="responsible" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                   {showTypeOfAccessColumn ? (
-                    <button type="button" className="flex items-center gap-1 text-left" onClick={() => handleSort('typeAccess')}>
+                    <button type="button" className="flex items-center justify-center gap-1 text-center" onClick={() => handleSort('typeAccess')}>
                       Tipo de Acesso
                       <SortIcon colKey="typeAccess" sortKey={sortKey} sortDir={sortDir} />
                     </button>
                   ) : null}
-                  <button type="button" className="flex items-center gap-1 text-left" onClick={() => handleSort('legalAdvisory')}>
+                  <button type="button" className="flex items-center justify-center gap-1 text-center" onClick={() => handleSort('legalAdvisory')}>
                     Assessoria
                     <SortIcon colKey="legalAdvisory" sortKey={sortKey} sortDir={sortDir} />
                   </button>
-                  <button type="button" className="flex items-center gap-1 text-left" onClick={() => handleSort('wallet')}>
+                  <button type="button" className="flex items-center justify-center gap-1 text-center" onClick={() => handleSort('wallet')}>
                     Carteira
                     <SortIcon colKey="wallet" sortKey={sortKey} sortDir={sortDir} />
                   </button>
-                  <button type="button" className="flex items-center gap-1 text-left" onClick={() => handleSort('captureMethod')}>
+                  <button type="button" className="flex items-center justify-center gap-1 text-center" onClick={() => handleSort('captureMethod')}>
                     Método
                     <SortIcon colKey="captureMethod" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                   {showConfidenceColumn ? (
-                    <button type="button" className="flex items-center gap-1 text-left" onClick={() => handleSort('confidence')}>
+                    <button type="button" className="flex items-center justify-center gap-1 text-center" onClick={() => handleSort('confidence')}>
                       Confiança
                       <SortIcon colKey="confidence" sortKey={sortKey} sortDir={sortDir} />
                     </button>
                   ) : null}
-                  <div>Ações</div>
+                  <div className="text-center">Ações</div>
                 </div>
               </div>
 
@@ -347,9 +359,9 @@ function RetroactiveIncidencesTable() {
                         <ExternalLink className="size-3.5" />
                       </button>
 
-                      <div>
+                      <div className="text-center">
                         {userInfo.isOlheiro ? (
-                          <div className="flex flex-col">
+                          <div className="flex flex-col items-center">
                             <span className="font-medium">{userInfo.olheiroName}</span>
                             <span className="text-xs text-muted-foreground">Responsável: {userInfo.operatorName}</span>
                           </div>
@@ -359,7 +371,7 @@ function RetroactiveIncidencesTable() {
                       </div>
 
                       {showTypeOfAccessColumn ? (
-                        <div>
+                        <div className="text-center">
                           {userRole ? (
                             <span className={cn('rounded-full px-2 py-1 text-xs font-medium', getRoleColor(userRole))}>
                               {getRoleLabel(userRole)}
@@ -370,11 +382,11 @@ function RetroactiveIncidencesTable() {
                         </div>
                       ) : null}
 
-                      <div>{incidence.vehicle?.managedBy?.legalAdvisory?.name ?? '—'}</div>
-                      <div>{incidence.vehicle?.managedBy?.wallet?.name ?? '—'}</div>
-                      <div>
+                      <div className="text-center">{incidence.vehicle?.managedBy?.legalAdvisory?.name ?? '—'}</div>
+                      <div className="text-center">{incidence.vehicle?.managedBy?.wallet?.name ?? '—'}</div>
+                      <div className="text-center">
                         {incidence.captureMethod === 'EXTERNAL_CAMERA' ? (
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center justify-center gap-1.5">
                             <Cctv className="size-4" />
                             <span>Câmera Externa</span>
                           </div>
@@ -383,7 +395,7 @@ function RetroactiveIncidencesTable() {
                         )}
                       </div>
                       {showConfidenceColumn ? (
-                        <div>
+                        <div className="text-center">
                           {typeof incidence.confidence === 'number' ? (
                             <span className="font-medium">{Math.round(incidence.confidence * 100)}%</span>
                           ) : (
@@ -391,7 +403,7 @@ function RetroactiveIncidencesTable() {
                           )}
                         </div>
                       ) : null}
-                      <div>
+                      <div className="flex justify-center">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button aria-label="Abrir menu" variant="ghost" className="flex size-8 p-0 data-[state=open]:bg-muted">
@@ -399,7 +411,10 @@ function RetroactiveIncidencesTable() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-40">
-                            <DropdownMenuItem onSelect={() => handleDelete(incidence)}>
+                            <DropdownMenuItem
+                              className="!text-red-500 hover:!bg-red-50 hover:!text-red-500 focus:!bg-red-50 focus:!text-red-500 data-[highlighted]:!bg-red-50 data-[highlighted]:!text-red-500 [&>svg]:!text-red-500"
+                              onSelect={() => handleDelete(incidence)}
+                            >
                               <Trash2 className="mr-2 size-4" />
                               Remover
                             </DropdownMenuItem>
@@ -451,7 +466,7 @@ export default function IncidencesRetroactivePage() {
         <div>
           <h1 className="mb-1 text-xl font-semibold">Incidências Retroativas</h1>
           <p className="text-muted-foreground">
-            Gerenciamento de Incidências retroativas
+            Gerenciamento de Incidências
             <span className="ml-2 text-sm font-medium text-blue-600">
               ({totalCount} incidência{totalCount !== 1 ? 's' : ''} retroativa{totalCount !== 1 ? 's' : ''})
             </span>

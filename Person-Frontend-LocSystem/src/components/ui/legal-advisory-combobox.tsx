@@ -58,21 +58,21 @@ export function LegalAdvisoryCombobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="h-auto min-h-10 w-full justify-between py-2"
+          className="h-auto min-h-10 w-full items-start justify-between gap-2 whitespace-normal py-2"
         >
           {selectedAdvisory ? (
-            <div className="flex flex-col items-start">
-              <span>{selectedAdvisory.name}</span>
+            <div className="min-w-0 flex-1 whitespace-normal text-left">
+              <div className="whitespace-normal break-words text-sm font-medium leading-5">{selectedAdvisory.name}</div>
               {selectedAdvisory.wallet && (
-                <span className="text-xs text-muted-foreground">
+                <div className="whitespace-normal break-words text-xs text-muted-foreground">
                   Carteira: {selectedAdvisory.wallet.name}
-                </span>
+                </div>
               )}
             </div>
           ) : (
-            placeholder
+            <span className="min-w-0 flex-1 truncate text-left">{placeholder}</span>
           )}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronsUpDown className="mt-0.5 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0" align="start">
@@ -89,6 +89,7 @@ export function LegalAdvisoryCombobox({
                 <CommandItem
                   key={advisory.id}
                   value={advisory.name}
+                  className="items-start"
                   onSelect={() => {
                     onValueChange(advisory.id);
                     setOpen(false);
@@ -100,16 +101,16 @@ export function LegalAdvisoryCombobox({
                       value === advisory.id ? 'opacity-100' : 'opacity-0'
                     )}
                   />
-                  <div className="flex flex-col">
-                    <span>{advisory.name}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="break-words text-sm leading-5">{advisory.name}</div>
                     {advisory.wallet ? (
-                      <span className="text-xs text-muted-foreground">
+                      <div className="break-words text-xs text-muted-foreground">
                         Carteira: {advisory.wallet.name}
-                      </span>
+                      </div>
                     ) : (
-                      <span className="text-xs text-muted-foreground">
+                      <div className="break-words text-xs text-muted-foreground">
                         Sem carteira definida
-                      </span>
+                      </div>
                     )}
                   </div>
                 </CommandItem>

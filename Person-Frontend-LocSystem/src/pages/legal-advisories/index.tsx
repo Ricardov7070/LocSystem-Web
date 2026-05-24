@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { endOfDay, format, startOfDay } from 'date-fns';
+import { endOfDay, format, startOfDay, subDays } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { UseFormReturn } from 'react-hook-form';
@@ -189,10 +189,19 @@ function formatTableDateTime(value: string | null | undefined) {
   return format(parsedDate, 'dd/MM/yyyy HH:mm');
 }
 
+function buildDefaultLegalAdvisoryDateRange(): DateRange {
+  const now = new Date();
+
+  return {
+    from: subDays(now, 30),
+    to: now,
+  };
+}
+
 function LegalAdvisoriesTable() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(() => buildDefaultLegalAdvisoryDateRange());
   const [page, setPage] = useState(1);
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
@@ -487,13 +496,17 @@ function LegalAdvisoriesTable() {
             />
             <DateRangePicker
               date={dateRange}
-              onDateChange={setDateRange}
+              onDateChange={(range) => setDateRange(range ?? buildDefaultLegalAdvisoryDateRange())}
               placeholder="Filtrar por Ultima Atualizacao"
               triggerSize="sm"
               triggerClassName="w-56 sm:w-60"
               align="end"
             />
           </div>
+
+          <p className="text-xs text-muted-foreground">
+            A carga inicial exibe as assessorias criadas nos ultimos 30 dias. Use os filtros para refinar ou ampliar a consulta.
+          </p>
 
           <div className="overflow-auto rounded-lg border bg-background">
             <div className="sticky top-0 z-10 border-b bg-background">

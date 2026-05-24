@@ -9,13 +9,15 @@ use Illuminate\Validation\Rule;
 
 class DatabaseSyncBulkTableMappingsRequest extends FormRequest
 {
-    public function authorize(): bool
-    {
+    public function authorize(): bool {
+
         return true;
+
     }
 
-    public function rules(): array
-    {
+
+    public function rules(): array{
+
         return [
             'replace_existing' => ['nullable', 'boolean'],
             'table_mappings' => ['required', 'array', 'min:1'],
@@ -37,12 +39,15 @@ class DatabaseSyncBulkTableMappingsRequest extends FormRequest
             'table_mappings.*.column_mappings.*.source_type_column' => ['nullable', 'string', 'max:255'],
             'table_mappings.*.column_mappings.*.reference_source_table_by_type' => ['nullable', 'array'],
         ];
+
     }
 
-    protected function failedValidation(Validator $validator): never
-    {
+
+    protected function failedValidation(Validator $validator): never {
+
         throw new HttpResponseException(response()->json([
             'errors' => $validator->errors(),
         ], 422));
+        
     }
 }

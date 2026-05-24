@@ -196,11 +196,13 @@ function getRoleColor(role: UserRole | undefined) {
 }
 
 function buildAnnouncementBody(dateRange: DateRange | undefined) {
-  const body: Record<string, string> = {};
+  const body: Record<string, string | number> = {};
 
   if (dateRange?.from && dateRange?.to) {
     body.data_inicial = format(dateRange.from, 'yyyy-MM-dd');
     body.data_final = format(dateRange.to, 'yyyy-MM-dd');
+  } else {
+    body.limit = 30;
   }
 
   return body;
@@ -376,23 +378,29 @@ function VehicleAnnouncementsTable() {
           {hasImage || hasLocation ? (
             <div className={`grid gap-4 ${hasImage && hasLocation ? 'lg:grid-cols-2' : 'grid-cols-1'}`}>
               {hasImage ? (
-                <div className="w-full">
-                  <img
-                    src={record.incidence?.v_image ?? ''}
-                    alt={`Incidência da placa ${getDisplayPlate(record)}`}
-                    className="h-80 w-full rounded-md border object-contain"
-                  />
+                <div className="space-y-2">
+                  <div className="text-xs font-medium text-muted-foreground">Imagem da placa</div>
+                  <div className="flex h-80 items-center justify-center overflow-hidden rounded-md border bg-muted/20 p-2">
+                    <img
+                      src={record.incidence?.v_image ?? ''}
+                      alt={`Incidência da placa ${getDisplayPlate(record)}`}
+                      className="h-full w-full rounded-md object-contain"
+                    />
+                  </div>
                 </div>
               ) : null}
 
               {hasLocation ? (
-                <div className="w-full">
-                  <iframe
-                    src={`https://www.google.com/maps?q=${record.incidence?.f_latitude},${record.incidence?.f_longitude}&output=embed`}
-                    className="h-80 w-full rounded-md border"
-                    allowFullScreen
-                    loading="lazy"
-                  ></iframe>
+                <div className="space-y-2">
+                  <div className="text-xs font-medium text-muted-foreground">Localização do veículo</div>
+                  <div className="h-80 overflow-hidden rounded-md border">
+                    <iframe
+                      src={`https://www.google.com/maps?q=${record.incidence?.f_latitude},${record.incidence?.f_longitude}&output=embed`}
+                      className="h-full w-full rounded-md"
+                      allowFullScreen
+                      loading="lazy"
+                    ></iframe>
+                  </div>
                 </div>
               ) : null}
             </div>
@@ -575,6 +583,10 @@ function VehicleAnnouncementsTable() {
               align="end"
             />
           </div>
+
+          <p className="text-xs text-muted-foreground">
+            A carga inicial exibe apenas os 30 comunicados mais recentes. Use os filtros para refinar ou ampliar a consulta.
+          </p>
 
           <div className="overflow-auto rounded-lg border bg-background">
             <div className="sticky top-0 z-10 border-b bg-background">

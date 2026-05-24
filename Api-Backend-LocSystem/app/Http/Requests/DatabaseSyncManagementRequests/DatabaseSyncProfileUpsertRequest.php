@@ -9,13 +9,15 @@ use Illuminate\Validation\Rule;
 
 class DatabaseSyncProfileUpsertRequest extends FormRequest
 {
-    public function authorize(): bool
-    {
+    public function authorize(): bool {
+
         return true;
+
     }
 
-    public function rules(): array
-    {
+
+    public function rules(): array {
+
         $destinationRequired = Rule::requiredIf(fn () => !$this->boolean('b_use_default_destination', true));
 
         return [
@@ -36,10 +38,12 @@ class DatabaseSyncProfileUpsertRequest extends FormRequest
             'destination.username' => [$destinationRequired, 'string', 'max:255'],
             'destination.password' => [$this->isMethod('post') ? $destinationRequired : 'nullable', 'string'],
         ];
+
     }
 
-    public function messages(): array
-    {
+
+    public function messages(): array {
+
         return [
             'v_name.required' => 'O nome do perfil é obrigatório.',
             'source.required' => 'A configuração do banco remetente é obrigatória.',
@@ -47,12 +51,15 @@ class DatabaseSyncProfileUpsertRequest extends FormRequest
             'destination.required' => 'A configuração do banco destinatário é obrigatória quando a conexão padrão não for utilizada.',
             'destination.driver.in' => 'O driver do banco destinatário precisa ser mysql, pgsql ou sqlsrv.',
         ];
+
     }
 
-    protected function failedValidation(Validator $validator): never
-    {
+
+    protected function failedValidation(Validator $validator): never {
+
         throw new HttpResponseException(response()->json([
             'errors' => $validator->errors(),
         ], 422));
+        
     }
 }

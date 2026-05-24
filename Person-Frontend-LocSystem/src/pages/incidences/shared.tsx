@@ -274,110 +274,129 @@ export function IncidenceDetailsContent({
   const operatorPhone = responsibleOperator?.phone?.trim() || null;
   const showConfidence = currentUserRole === 'ADMIN';
   const canViewLocation = currentUserRole !== 'AUDITOR';
+  const hasImage = Boolean(incidence.image);
+  const hasLocation =
+    canViewLocation &&
+    incidence.latitude !== null &&
+    incidence.latitude !== 0 &&
+    incidence.longitude !== null &&
+    incidence.longitude !== 0;
 
   return (
     <div className="space-y-6">
       <div className="rounded-lg bg-muted/30 p-6">
-        <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-          <div className="flex flex-col space-y-1">
-            <span className="text-xs font-medium text-muted-foreground">Placa</span>
-            <span className="text-sm font-semibold">{incidence.plate}</span>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="space-y-1">
+            <div className="text-xs font-medium text-muted-foreground">Placa</div>
+            <div className="text-sm font-semibold">{incidence.plate}</div>
+            {incidence.plateMercosul ? <div className="text-xs text-muted-foreground">Alternativa: {incidence.plateMercosul}</div> : null}
           </div>
 
-          <div className="flex flex-col space-y-1">
-            <span className="text-xs font-medium text-muted-foreground">Usuário</span>
+          <div className="space-y-1">
+            <div className="text-xs font-medium text-muted-foreground">Usuário</div>
             {userInfo.isOlheiro ? (
               <div className="flex flex-col">
-                <span className="text-sm font-semibold">{userInfo.olheiroName}</span>
-                <span className="text-xs text-muted-foreground">Responsável: {userInfo.operatorName}</span>
+                <div className="text-sm font-semibold">{userInfo.olheiroName}</div>
+                <div className="text-xs text-muted-foreground">Responsável: {userInfo.operatorName}</div>
               </div>
             ) : (
-              <span className="text-sm font-semibold">{userInfo.userName}</span>
+              <div className="text-sm font-semibold">{userInfo.userName}</div>
             )}
           </div>
 
-          <div className="flex flex-col space-y-1">
-            <span className="text-xs font-medium text-muted-foreground">Método</span>
+          <div className="space-y-1">
+            <div className="text-xs font-medium text-muted-foreground">Método</div>
             {incidence.captureMethod === 'EXTERNAL_CAMERA' ? (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2 text-sm font-semibold">
                 <Cctv className="size-4" />
-                <span className="text-sm font-semibold">Câmera Externa</span>
+                <span>Câmera Externa</span>
               </div>
             ) : (
-              <span className="text-sm font-semibold">{getCaptureMethodLabel(incidence.captureMethod)}</span>
+              <div className="text-sm font-semibold">{getCaptureMethodLabel(incidence.captureMethod)}</div>
             )}
           </div>
 
-          <div className="flex flex-col space-y-1">
-            <span className="text-xs font-medium text-muted-foreground">Resultado</span>
-            <span className={incidence.positive ? 'text-sm font-semibold text-green-600' : 'text-sm font-semibold text-orange-600'}>
+          <div className="space-y-1">
+            <div className="text-xs font-medium text-muted-foreground">Resultado</div>
+            <div className={incidence.positive ? 'text-sm font-semibold text-green-600' : 'text-sm font-semibold text-orange-600'}>
               {incidence.positive ? 'Positivo' : 'Negativo'}
-            </span>
+            </div>
           </div>
 
           {showConfidence ? (
-            <div className="flex flex-col space-y-1">
-              <span className="text-xs font-medium text-muted-foreground">Confiança OCR</span>
-              <span className="text-sm font-semibold">
+            <div className="space-y-1">
+              <div className="text-xs font-medium text-muted-foreground">Confiança OCR</div>
+              <div className="text-sm font-semibold">
                 {typeof incidence.confidence === 'number' ? `${Math.round(incidence.confidence * 100)}%` : 'Não disponível'}
-              </span>
+              </div>
             </div>
           ) : null}
 
-          <div className="flex flex-col space-y-1">
-            <span className="text-xs font-medium text-muted-foreground">{dateLabel}</span>
-            <span className="text-sm font-semibold">{formatTableDateTime(incidence.createdAt)}</span>
+          <div className="space-y-1">
+            <div className="text-xs font-medium text-muted-foreground">{dateLabel}</div>
+            <div className="text-sm font-semibold">{formatTableDateTime(incidence.createdAt)}</div>
           </div>
 
           {['ADMIN', 'AUDITOR'].includes(currentUserRole) ? (
-            <div className="flex flex-col space-y-1">
-              <span className="text-xs font-medium text-muted-foreground">Contato do Localizador</span>
-              <span className="text-sm font-semibold">{operatorPhone || 'Não informado'}</span>
+            <div className="space-y-1">
+              <div className="text-xs font-medium text-muted-foreground">Contato do Localizador</div>
+              <div className="text-sm font-semibold">{operatorPhone || 'Não informado'}</div>
             </div>
           ) : null}
 
           {incidence.vehicle ? (
             <>
-              <div className="flex flex-col space-y-1">
-                <span className="text-xs font-medium text-muted-foreground">Assessoria</span>
-                <span className="text-sm font-semibold">{incidence.vehicle.managedBy?.legalAdvisory?.name ?? '—'}</span>
+              <div className="space-y-1">
+                <div className="text-xs font-medium text-muted-foreground">Assessoria</div>
+                <div className="text-sm font-semibold">{incidence.vehicle.managedBy?.legalAdvisory?.name ?? '—'}</div>
               </div>
 
-              <div className="flex flex-col space-y-1">
-                <span className="text-xs font-medium text-muted-foreground">Carteira</span>
-                <span className="text-sm font-semibold">{incidence.vehicle.managedBy?.wallet?.name ?? '—'}</span>
+              <div className="space-y-1">
+                <div className="text-xs font-medium text-muted-foreground">Carteira</div>
+                <div className="text-sm font-semibold">{incidence.vehicle.managedBy?.wallet?.name ?? '—'}</div>
               </div>
             </>
+          ) : null}
+
+          {hasLocation && incidence.location ? (
+            <div className="space-y-1 md:col-span-2 xl:col-span-3">
+              <div className="text-xs font-medium text-muted-foreground">Endereço da ocorrência</div>
+              <div className="text-sm font-semibold">{incidence.location}</div>
+            </div>
           ) : null}
         </div>
       </div>
 
-      <div className="flex flex-col gap-4 pt-2 lg:flex-row lg:items-start">
-        {incidence.image ? (
-          <div className="flex flex-1 justify-center overflow-hidden">
-            <img
-              src={incidence.image}
-              alt={`Imagem da placa ${incidence.plate}`}
-              className="h-80 w-80 rounded-md border object-contain"
-            />
-          </div>
-        ) : null}
+      {hasImage || hasLocation ? (
+        <div className={`grid gap-4 ${hasImage && hasLocation ? 'lg:grid-cols-2' : 'grid-cols-1'}`}>
+          {hasImage ? (
+            <div className="space-y-2">
+              <div className="text-xs font-medium text-muted-foreground">Imagem da placa</div>
+              <div className="flex h-80 items-center justify-center overflow-hidden rounded-md border bg-muted/20 p-2">
+                <img
+                  src={incidence.image ?? ''}
+                  alt={`Imagem da placa ${incidence.plate}`}
+                  className="h-full w-full rounded-md object-contain"
+                />
+              </div>
+            </div>
+          ) : null}
 
-        {canViewLocation &&
-        incidence.latitude !== null &&
-        incidence.latitude !== 0 &&
-        incidence.longitude !== null &&
-        incidence.longitude !== 0 ? (
-          <div className="flex flex-1 justify-center">
-            <iframe
-              src={`https://www.google.com/maps?q=${incidence.latitude},${incidence.longitude}&output=embed`}
-              className="h-80 w-full max-w-md rounded-md border"
-              allowFullScreen
-              loading="lazy"
-            ></iframe>
-          </div>
-        ) : null}
-      </div>
+          {hasLocation ? (
+            <div className="space-y-2">
+              <div className="text-xs font-medium text-muted-foreground">Localização do veículo</div>
+              <div className="h-80 overflow-hidden rounded-md border">
+                <iframe
+                  src={`https://www.google.com/maps?q=${incidence.latitude},${incidence.longitude}&output=embed`}
+                  className="h-full w-full rounded-md"
+                  allowFullScreen
+                  loading="lazy"
+                ></iframe>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

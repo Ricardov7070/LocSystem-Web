@@ -28,7 +28,13 @@ const PAGE_SIZE = 10;
 const FIELD_LABELS: Record<string, string> = {
   // identificadores
   user_id:              'ID do Usuário',
+  user_name:            'Nome do Usuário',
   id:                   'ID',
+  vehicle_id:           'ID do Veículo',
+  legal_advisory_id:    'ID da Assessoria Jurídica',
+  operator_id:          'ID do Operador',
+  county_id:            'ID do Município',
+  file_path:            'Arquivo',
   // contato
   email:                'E-mail',
   phone:                'Telefone',
@@ -93,6 +99,25 @@ const FIELD_LABELS: Record<string, string> = {
   limit:                'Limite',
 };
 
+const VALUE_LABELS: Record<string, string> = {
+  admin: 'Administrador',
+  auditor: 'Assessoria',
+  operator: 'Localizador',
+  olheiro: 'Olheiro',
+  linked_user: 'Vinculado',
+  active: 'Ativo',
+  inactive: 'Inativo',
+  blocked: 'Bloqueado',
+  unblocked: 'Desbloqueado',
+  enabled: 'Habilitado',
+  disabled: 'Desabilitado',
+  true: 'Sim',
+  false: 'Não',
+  camera: 'Câmera',
+  external_camera: 'Câmera Externa',
+  manual: 'Manual',
+};
+
 function stripPrefix(key: string): string {
   return key.replace(/^[viedbf]_/, '');
 }
@@ -107,11 +132,31 @@ function normalizeLabelKey(key: string): string {
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}T[\d:.]+Z?$/;
 
+function normalizeValueKey(value: string): string {
+  return value
+    .trim()
+    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+    .replace(/[\s-]+/g, '_')
+    .toLowerCase();
+}
+
+function translateStringValue(value: string): string {
+  const normalized = normalizeValueKey(value);
+  return VALUE_LABELS[normalized] ?? value;
+}
+
 function formatValue(value: unknown): string {
   if (value === null || value === undefined) return '—';
   if (typeof value === 'boolean') return value ? 'Sim' : 'Não';
   if (typeof value === 'string' && ISO_DATE_RE.test(value)) {
     try { return format(new Date(value), 'dd/MM/yyyy HH:mm'); } catch { /* fall through */ }
+  }
+  if (typeof value === 'string') return translateStringValue(value);
+  if (Array.isArray(value)) return value.map((item) => formatValue(item)).join(', ');
+  if (typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>);
+    if (entries.length === 0) return '—';
+    return entries.map(([key, item]) => `${labelFor(key)}: ${formatValue(item)}`).join(' | ');
   }
   return String(value);
 }

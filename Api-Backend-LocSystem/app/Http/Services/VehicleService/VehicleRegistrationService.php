@@ -6,6 +6,7 @@ use App\Http\Services\IncidenceService\IncidenceService;
 use App\Models\Vehicle\Vehicle;
 use App\Models\LegalAdvisoryAccess\LegalAdvisoryAccess;
 use App\Support\ApiCacheKey;
+use App\Support\PlateFormatter;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
@@ -118,10 +119,11 @@ class VehicleRegistrationService {
     public function createVehicle($request, $i_user_id): array  {
         $vehicle = DB::transaction(function () use ($request, $i_user_id) {
             $accessId = $this->resolveLegalAdvisoryAccessId((int) $request->input('i_legal_advisory_access_id'), (int) $i_user_id);
+            $platePair = $this->resolveVehiclePlatePair((string) $request->input('v_plate'));
 
             $vehicle = $this->modelVehicle::create([
-                'v_plate'                    => $request->input('v_plate'),
-                'v_plate_mercosul'           => $request->input('v_plate_mercosul'),
+                'v_plate'                    => $platePair['v_plate'],
+                'v_plate_mercosul'           => $platePair['v_plate_mercosul'],
                 'v_model'                    => $request->input('v_model'),
                 'v_phone'                    => $request->input('v_phone'),
                 'i_user_id'                  => $i_user_id,
@@ -151,10 +153,11 @@ class VehicleRegistrationService {
 
             $vehicle = $this->modelVehicle->findOrFail($vehicleId);
             $accessId = $this->resolveLegalAdvisoryAccessId((int) $request->input('i_legal_advisory_access_id'), (int) $i_user_id);
+            $platePair = $this->resolveVehiclePlatePair((string) $request->input('v_plate'));
 
             $vehicle->update([
-                'v_plate'                    => $request->input('v_plate'),
-                'v_plate_mercosul'           => $request->input('v_plate_mercosul'),
+                'v_plate'                    => $platePair['v_plate'],
+                'v_plate_mercosul'           => $platePair['v_plate_mercosul'],
                 'v_model'                    => $request->input('v_model'),
                 'v_phone'                    => $request->input('v_phone'),
                 'i_user_id'                  => $i_user_id,
@@ -235,6 +238,17 @@ class VehicleRegistrationService {
         }
 
         return (int) $fallbackAccess->i_id;
+    }
+
+    protected function resolveVehiclePlatePair(string $incomingPlate): array
+    {
+        $platePair = PlateFormatter::resolveStoragePair($incomingPlate);
+
+        if (!$platePair) {
+            throw new HttpException(422, 'Placa inválida. Use o formato ABC-1234 ou ABC1D23.');
+        }
+
+        return $platePair;
     }
 
 }

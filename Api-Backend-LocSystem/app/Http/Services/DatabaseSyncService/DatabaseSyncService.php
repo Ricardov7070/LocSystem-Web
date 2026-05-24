@@ -28,13 +28,14 @@ class DatabaseSyncService
     private const RELATION_PREFETCH_CHUNK_SIZE = 1000;
     private const TEMP_RELATION_TABLE = 'tmp_database_sync_resolved_ids';
 
+    //TODO: refactorizar para extrair responsabilidades em classes menores
     public function __construct(
         private readonly DatabaseSyncPayloadBuilder $payloadBuilder,
     ) {
     }
 
-    public function listProfiles(): array
-    {
+    
+    public function listProfiles(): array {      
         return DatabaseSyncProfile::query()
             ->withCount('tableMappings')
             ->orderBy('v_name')
@@ -43,22 +44,22 @@ class DatabaseSyncService
             ->all();
     }
 
-    public function findProfile(int $profileId): array
-    {
+
+    public function findProfile(int $profileId): array {
         $profile = $this->findProfileModel($profileId);
 
         return $this->serializeProfile($profile->load('tableMappings'), true);
     }
 
-    public function createProfile(array $data, ?int $userId): array
-    {
+
+    public function createProfile(array $data, ?int $userId): array {
         $profile = DatabaseSyncProfile::query()->create($this->normalizeProfilePayload($data, $userId));
 
         return $this->serializeProfile($profile, true);
     }
 
-    public function updateProfile(int $profileId, array $data): array
-    {
+
+    public function updateProfile(int $profileId, array $data): array {
         $profile = $this->findProfileModel($profileId);
         $payload = $this->normalizeProfilePayload($data, $profile->i_created_by_user_id, $profile);
         $profile->fill($payload);
@@ -67,14 +68,14 @@ class DatabaseSyncService
         return $this->serializeProfile($profile, true);
     }
 
-    public function deleteProfile(int $profileId): void
-    {
+
+    public function deleteProfile(int $profileId): void {
         $profile = $this->findProfileModel($profileId);
         $profile->delete();
     }
 
-    public function listTableMappings(int $profileId): array
-    {
+
+    public function listTableMappings(int $profileId): array {
         $profile = $this->findProfileModel($profileId);
 
         return $profile->tableMappings()
@@ -83,16 +84,16 @@ class DatabaseSyncService
             ->all();
     }
 
-    public function createTableMapping(int $profileId, array $data): array
-    {
+
+    public function createTableMapping(int $profileId, array $data): array {
         $profile = $this->findProfileModel($profileId);
         $mapping = $profile->tableMappings()->create($this->normalizeTableMappingPayload($data));
 
         return $this->serializeTableMapping($mapping);
     }
 
-    public function bulkUpsertTableMappings(int $profileId, array $data): array
-    {
+
+    public function bulkUpsertTableMappings(int $profileId, array $data): array {
         $profile = $this->findProfileModel($profileId);
         $replaceExisting = (bool) ($data['replace_existing'] ?? false);
         $tableMappings = $data['table_mappings'] ?? [];
@@ -110,8 +111,8 @@ class DatabaseSyncService
         return $this->listTableMappings($profileId);
     }
 
-    public function updateTableMapping(int $mappingId, array $data): array
-    {
+
+    public function updateTableMapping(int $mappingId, array $data): array {
         $mapping = $this->findMappingModel($mappingId);
         $mapping->fill($this->normalizeTableMappingPayload($data));
         $mapping->save();
@@ -119,14 +120,14 @@ class DatabaseSyncService
         return $this->serializeTableMapping($mapping);
     }
 
-    public function deleteTableMapping(int $mappingId): void
-    {
+
+    public function deleteTableMapping(int $mappingId): void {
         $mapping = $this->findMappingModel($mappingId);
         $mapping->delete();
     }
 
-    public function inspectSchema(int $profileId): array
-    {
+
+    public function inspectSchema(int $profileId): array {
         $profile = $this->findProfileModel($profileId);
         $sourceConnectionName = $this->configureSourceConnection($profile);
         $destinationConnectionName = $this->resolveDestinationConnectionName($profile);
@@ -147,8 +148,8 @@ class DatabaseSyncService
         ];
     }
 
-    public function getExecutionStatus(int $profileId): array
-    {
+
+    public function getExecutionStatus(int $profileId): array {
         $profile = $this->findProfileModel($profileId);
         $status = Cache::get($this->statusCacheKey($profileId));
 
@@ -174,8 +175,8 @@ class DatabaseSyncService
         return $status;
     }
 
-    public function startExecution(int $profileId): array
-    {
+
+    public function startExecution(int $profileId): array {
         $profile = $this->findProfileModel($profileId)->load('tableMappings');
 
         if ($profile->tableMappings->isEmpty()) {
@@ -230,8 +231,8 @@ class DatabaseSyncService
         ];
     }
 
-    public function executeSync(int $profileId): array
-    {
+
+    public function executeSync(int $profileId): array{
         $profile = $this->findProfileModel($profileId)->load('tableMappings');
         $executionToken = $this->acquireExecutionLock($profileId);
         $mappings = $profile->tableMappings->sortBy([
@@ -345,7 +346,9 @@ class DatabaseSyncService
 
             Schema::connection($destinationConnectionName)->enableForeignKeyConstraints();
             $destinationConnection->commit();
+
         } catch (\Throwable $throwable) {
+
             Schema::connection($destinationConnectionName)->enableForeignKeyConstraints();
             if ($destinationConnection->transactionLevel() > 0) {
                 $destinationConnection->rollBack();
@@ -359,8 +362,11 @@ class DatabaseSyncService
             ]);
 
             throw new HttpException(422, 'Falha ao sincronizar os bancos: ' . $throwable->getMessage(), $throwable);
+      
         } finally {
+
             $this->releaseExecutionLock($profileId, $executionToken);
+
         }
 
         $profile->dt_last_synced_at = now();
@@ -382,6 +388,7 @@ class DatabaseSyncService
             'tables' => $summary,
         ];
     }
+
 
     private function syncTable(
         Connection $sourceConnection,
@@ -509,6 +516,7 @@ class DatabaseSyncService
         return $insertedRows;
     }
 
+
     private function buildRelationLookupCache(
         Connection $destinationConnection,
         DatabaseSyncTableMapping $mapping,
@@ -572,6 +580,7 @@ class DatabaseSyncService
         return $relationLookupCache;
     }
 
+
     private function loadResolvedIdsFromTemporaryStore(
         Connection $destinationConnection,
         string $sourceTable,
@@ -595,8 +604,8 @@ class DatabaseSyncService
         return $resolvedIds;
     }
 
-    private function buildReferenceUsage(array $mappings): array
-    {
+
+    private function buildReferenceUsage(array $mappings): array {
         $referenceUsage = [];
 
         foreach ($mappings as $index => $mapping) {
@@ -621,8 +630,8 @@ class DatabaseSyncService
         return $referenceUsage;
     }
 
-    private function determineExternalRelationTables(Connection $sourceConnection, array $referenceTables): array
-    {
+
+    private function determineExternalRelationTables(Connection $sourceConnection, array $referenceTables): array {
         $externalRelationTables = [];
 
         foreach ($referenceTables as $referenceTable) {
@@ -636,8 +645,8 @@ class DatabaseSyncService
         return $externalRelationTables;
     }
 
-    private function prepareTemporaryResolvedIdsTable(Connection $destinationConnection, array $externalRelationTables): void
-    {
+
+    private function prepareTemporaryResolvedIdsTable(Connection $destinationConnection, array $externalRelationTables): void {
         if ($externalRelationTables === []) {
             return;
         }
@@ -652,6 +661,7 @@ class DatabaseSyncService
             ') ENGINE=InnoDB'
         );
     }
+
 
     private function storeResolvedId(
         Connection $destinationConnection,
@@ -683,6 +693,7 @@ class DatabaseSyncService
         $resolvedIdsBySourceTable[$sourceTable][$sourcePrimaryValue] = $destinationPrimaryValue;
     }
 
+
     private function findResolvedIdInTemporaryStore(
         Connection $destinationConnection,
         string $sourceTable,
@@ -694,6 +705,7 @@ class DatabaseSyncService
             ->where('v_source_primary_value', $sourcePrimaryValue)
             ->value('v_destination_primary_value');
     }
+
 
     private function releaseUnusedResolvedIds(
         array &$resolvedIdsBySourceTable,
@@ -713,6 +725,7 @@ class DatabaseSyncService
             unset($resolvedIdsBySourceTable[$sourceTable]);
         }
     }
+
 
     private function persistDestinationRow(
         Connection $destinationConnection,
@@ -749,6 +762,7 @@ class DatabaseSyncService
         return $this->insertDestinationRow($destinationConnection, $mapping, $payload);
     }
 
+
     private function insertDestinationRow(
         Connection $destinationConnection,
         DatabaseSyncTableMapping $mapping,
@@ -771,8 +785,8 @@ class DatabaseSyncService
         return $payload[$mapping->v_destination_primary_key];
     }
 
-    private function buildConflictLookupAttributes(DatabaseSyncTableMapping $mapping, array $payload): array
-    {
+
+    private function buildConflictLookupAttributes(DatabaseSyncTableMapping $mapping, array $payload): array {
         $conflictTargetColumns = array_values($mapping->j_conflict_target_columns ?? []);
 
         if ($conflictTargetColumns === []) {
@@ -796,13 +810,13 @@ class DatabaseSyncService
         return $lookupAttributes;
     }
 
-    private function clearDestinationTable(Connection $destinationConnection, string $tableName): void
-    {
+
+    private function clearDestinationTable(Connection $destinationConnection, string $tableName): void {
         $destinationConnection->table($tableName)->delete();
     }
 
-    private function putExecutionStatus(DatabaseSyncProfile $profile, array $overrides): void
-    {
+
+    private function putExecutionStatus(DatabaseSyncProfile $profile, array $overrides): void {
         $cacheKey = $this->statusCacheKey($profile->i_id);
         $current = Cache::get($cacheKey, [
             'profile_id' => $profile->i_id,
@@ -827,18 +841,18 @@ class DatabaseSyncService
         Cache::put($cacheKey, $status, now()->addDay());
     }
 
-    private function statusCacheKey(int $profileId): string
-    {
+
+    private function statusCacheKey(int $profileId): string {
         return self::STATUS_CACHE_PREFIX . $profileId;
     }
 
-    private function executionLockKey(int $profileId): string
-    {
+
+    private function executionLockKey(int $profileId): string {
         return self::EXECUTION_LOCK_PREFIX . $profileId;
     }
 
-    private function acquireExecutionLock(int $profileId): string
-    {
+
+    private function acquireExecutionLock(int $profileId): string {
         $lockKey = $this->executionLockKey($profileId);
         $token = (string) Str::uuid();
 
@@ -859,8 +873,8 @@ class DatabaseSyncService
         return $token;
     }
 
-    private function resolvePhpBinary(): string
-    {
+
+    private function resolvePhpBinary(): string {
         $phpBinary = PHP_BINDIR . '/php';
 
         if (is_file($phpBinary) && is_executable($phpBinary)) {
@@ -870,8 +884,8 @@ class DatabaseSyncService
         return 'php';
     }
 
-    private function releaseExecutionLock(int $profileId, string $token): void
-    {
+
+    private function releaseExecutionLock(int $profileId, string $token): void {
         $lockKey = $this->executionLockKey($profileId);
 
         if (Cache::get($lockKey) === $token) {
@@ -879,8 +893,8 @@ class DatabaseSyncService
         }
     }
 
-    private function validateExecutionPlan(array $mappings): void
-    {
+
+    private function validateExecutionPlan(array $mappings): void {
         $mappingBySourceTable = [];
 
         foreach ($mappings as $mapping) {
@@ -911,8 +925,8 @@ class DatabaseSyncService
         }
     }
 
-    private function extractReferencedSourceTables(array $columnMapping): array
-    {
+
+    private function extractReferencedSourceTables(array $columnMapping): array {
         $mode = $columnMapping['mode'] ?? 'direct';
 
         if ($mode === 'relation') {
@@ -937,8 +951,8 @@ class DatabaseSyncService
         return [];
     }
 
-    private function describeTables(string $connectionName): array
-    {
+
+    private function describeTables(string $connectionName): array {
         $connection = DB::connection($connectionName);
         $driver = $connection->getDriverName();
         $tables = [];
@@ -953,8 +967,8 @@ class DatabaseSyncService
         return $tables;
     }
 
-    private function listTableNames(string $connectionName, string $driver): array
-    {
+
+    private function listTableNames(string $connectionName, string $driver): array {
         $connection = DB::connection($connectionName);
 
         return match ($driver) {
@@ -974,8 +988,8 @@ class DatabaseSyncService
         };
     }
 
-    private function describeColumns(string $connectionName, string $driver, string $tableName): array
-    {
+
+    private function describeColumns(string $connectionName, string $driver, string $tableName): array {
         return match ($driver) {
             'mysql' => array_map(function ($row) {
                 return [
@@ -1011,8 +1025,8 @@ class DatabaseSyncService
         };
     }
 
-    private function extractSchemaAndTable(string $tableName, string $defaultSchema): array
-    {
+
+    private function extractSchemaAndTable(string $tableName, string $defaultSchema): array {
         $parts = explode('.', $tableName, 2);
 
         if (count($parts) === 2) {
@@ -1022,8 +1036,8 @@ class DatabaseSyncService
         return [$defaultSchema, $tableName];
     }
 
-    private function quoteIdentifier(string $identifier, string $driver): string
-    {
+
+    private function quoteIdentifier(string $identifier, string $driver): string {
         if (!preg_match('/^[A-Za-z0-9_\.]+$/', $identifier)) {
             throw new HttpException(422, "Identificador inválido: {$identifier}.");
         }
@@ -1038,8 +1052,8 @@ class DatabaseSyncService
         };
     }
 
-    private function assertConnectionWorks(string $connectionName, string $label): void
-    {
+
+    private function assertConnectionWorks(string $connectionName, string $label): void {
         try {
             DB::connection($connectionName)->getPdo();
         } catch (\Throwable $throwable) {
@@ -1047,8 +1061,8 @@ class DatabaseSyncService
         }
     }
 
-    private function configureSourceConnection(DatabaseSyncProfile $profile): string
-    {
+
+    private function configureSourceConnection(DatabaseSyncProfile $profile): string {
         $config = [
             'driver' => $profile->v_source_driver,
             'host' => $profile->v_source_host,
@@ -1063,8 +1077,8 @@ class DatabaseSyncService
         return self::SOURCE_CONNECTION_NAME;
     }
 
-    private function resolveDestinationConnectionName(DatabaseSyncProfile $profile): string
-    {
+
+    private function resolveDestinationConnectionName(DatabaseSyncProfile $profile): string {
         if ($profile->b_use_default_destination) {
             return config('database.default');
         }
@@ -1083,8 +1097,8 @@ class DatabaseSyncService
         return self::DESTINATION_CONNECTION_NAME;
     }
 
-    private function registerRuntimeConnection(string $connectionName, array $runtimeConfig): void
-    {
+
+    private function registerRuntimeConnection(string $connectionName, array $runtimeConfig): void {
         $driver = (string) ($runtimeConfig['driver'] ?? '');
         $baseConfig = config("database.connections.{$driver}");
 
@@ -1105,8 +1119,8 @@ class DatabaseSyncService
         DB::purge($connectionName);
     }
 
-    private function normalizeProfilePayload(array $data, ?int $userId, ?DatabaseSyncProfile $existingProfile = null): array
-    {
+
+    private function normalizeProfilePayload(array $data, ?int $userId, ?DatabaseSyncProfile $existingProfile = null): array {
         $useDefaultDestination = (bool) ($data['b_use_default_destination'] ?? true);
         $source = $data['source'] ?? [];
         $destination = $data['destination'] ?? [];
@@ -1148,8 +1162,8 @@ class DatabaseSyncService
         ];
     }
 
-    private function normalizeTableMappingPayload(array $data): array
-    {
+
+    private function normalizeTableMappingPayload(array $data): array {
         foreach ($data['column_mappings'] as $columnMapping) {
             if (($columnMapping['mode'] ?? 'direct') === 'relation' && empty($columnMapping['reference_source_table'])) {
                 throw new HttpException(422, 'Todo mapeamento relacional precisa informar reference_source_table.');
@@ -1187,8 +1201,8 @@ class DatabaseSyncService
         ];
     }
 
-    private function serializeProfile(DatabaseSyncProfile $profile, bool $includeMappings): array
-    {
+
+    private function serializeProfile(DatabaseSyncProfile $profile, bool $includeMappings): array {
         $profileArray = [
             'i_id' => $profile->i_id,
             'v_name' => $profile->v_name,
@@ -1222,8 +1236,8 @@ class DatabaseSyncService
         return $profileArray;
     }
 
-    private function serializeTableMapping(DatabaseSyncTableMapping $mapping): array
-    {
+
+    private function serializeTableMapping(DatabaseSyncTableMapping $mapping): array {
         return [
             'i_id' => $mapping->i_id,
             'i_database_sync_profile_id' => $mapping->i_database_sync_profile_id,
@@ -1240,13 +1254,13 @@ class DatabaseSyncService
         ];
     }
 
-    private function findProfileModel(int $profileId): DatabaseSyncProfile
-    {
+
+    private function findProfileModel(int $profileId): DatabaseSyncProfile {
         return DatabaseSyncProfile::query()->findOrFail($profileId);
     }
 
-    private function findMappingModel(int $mappingId): DatabaseSyncTableMapping
-    {
+
+    private function findMappingModel(int $mappingId): DatabaseSyncTableMapping {
         return DatabaseSyncTableMapping::query()->findOrFail($mappingId);
     }
 }

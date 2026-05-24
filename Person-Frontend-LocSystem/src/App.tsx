@@ -73,8 +73,8 @@ const App: React.FC = () => {
             <Route path="/users/advisory-users" element={<GuardedRoute path="/users/advisory-users" element={<AdvisoryUsersPage />} />} />
             <Route path="/users/advisory-users/:id" element={<GuardedRoute path="/users/advisory-users" element={<AdvisoryUserDetailPage />} />} />
             <Route path="/users/my-deputies" element={<GuardedRoute path="/users/my-deputies" element={<MyDeputiesPage />} />} />
-            <Route path="/incidences" element={<GuardedRoute path="/incidences" element={<IncidencesRetroactivePage />} />} />
-            <Route path="/incidences-retroactive" element={<GuardedRoute path="/incidences-retroactive" element={<IncidencesPage />} />} />
+            <Route path="/incidences" element={<GuardedRoute path="/incidences" element={<IncidencesPage />} />} />
+            <Route path="/incidences-retroactive" element={<GuardedRoute path="/incidences-retroactive" element={<IncidencesRetroactivePage />} />} />
             <Route path="/legal-advisories" element={<GuardedRoute path="/legal-advisories" element={<LegalAdvisoriesPage />} />} />
             <Route path="/legal-advisories/:id" element={<GuardedRoute path="/legal-advisories" element={<LegalAdvisoryDetailPage />} />} />
             <Route path="/counties" element={<GuardedRoute path="/counties" element={<CountiesPage />} />} />

@@ -9,6 +9,7 @@ use App\Models\LegalAdvisoryAccess\LegalAdvisoryAccess;
 use App\Models\Vehicle\Vehicle;
 use App\Models\VehicleImport\VehicleImport;
 use App\Support\ApiCacheKey;
+use App\Support\PlateFormatter;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -561,25 +562,14 @@ class VehicleImportService
 
     // Método para validar a formatação da placa do veículo, verificando se ela segue os padrões de placas antigas ou Mercosul e retornando as versões normalizadas para ambos os formatos.
     protected function validatePlate(string $rawValue): array {
-        $normalized = strtoupper(preg_replace('/[^A-Z0-9]/', '', $rawValue));
+        $platePair = PlateFormatter::resolveStoragePair($rawValue);
 
-        if (preg_match('/^[A-Z]{3}[0-9][A-Z][0-9]{2}$/', $normalized)) {
+        if ($platePair) {
             return [
                 'ok' => true,
                 'data' => [
-                    'plate' => '-',
-                    'plateMercosul' => $normalized,
-                ],
-                'message' => null,
-            ];
-        }
-
-        if (preg_match('/^[A-Z]{3}[0-9]{4}$/', $normalized)) {
-            return [
-                'ok' => true,
-                'data' => [
-                    'plate' => substr($normalized, 0, 3) . '-' . substr($normalized, 3, 4),
-                    'plateMercosul' => '-',
+                    'plate' => $platePair['v_plate'],
+                    'plateMercosul' => $platePair['v_plate_mercosul'],
                 ],
                 'message' => null,
             ];

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 
 class LogsService {
+    protected const MAX_LIST_LIMIT = 500;
 
     protected $modelLog;
 
@@ -21,7 +22,13 @@ class LogsService {
     // Método para visualizar todos os logs cadastrados
     public function viewLogs(): Collection {
         return Cache::store('redis')->remember(ApiCacheKey::forUser('logs_list'), 30, function () {
-            return $this->modelLog->whereNull('deleted_at')->get();
+            return $this->modelLog->query()
+                ->select(['i_id', 'i_user_id', 'v_action', 'j_details', 'v_description', 'created_at'])
+                ->whereNull('deleted_at')
+                ->orderByDesc('created_at')
+                ->orderByDesc('i_id')
+                ->limit(self::MAX_LIST_LIMIT)
+                ->get();
         });
     }
 

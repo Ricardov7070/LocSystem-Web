@@ -10,13 +10,16 @@ use App\Models\Vehicle\Vehicle;
 use App\Models\VehicleAnnouncement\VehicleAnnouncement;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class IncidenceService
 {
+    protected const DEFAULT_LIST_DAYS = 30;
+    protected const MAX_LIST_LIMIT = 500;
+
     protected $incidenceModel;
     protected $retroactiveModel;
     protected $vehicleModel;
@@ -24,6 +27,7 @@ class IncidenceService
     protected $vehicleAnnouncementModel;
     protected $logsService;
 
+    // Método construtor
     public function __construct(
         LicensePlateIncidence $incidenceModel,
         RetroactiveIncidenty $retroactiveModel,
@@ -40,11 +44,13 @@ class IncidenceService
         $this->logsService = $logsService;
     }
 
-    public function listHistory($request, User $user): array
-    {
+    
+    // Métodos públicos para gerenciamento de incidências e retroativas
+    public function listHistory($request, User $user): array {
         $incidences = $this->buildHistoryQuery($request, $user)
             ->orderByDesc('created_at')
             ->orderByDesc('i_id')
+            ->limit($this->resolveListLimit($request))
             ->get();
 
         return $incidences
@@ -53,13 +59,15 @@ class IncidenceService
             ->all();
     }
 
-    public function countHistory($request, User $user): int
-    {
+
+    // Método para contar o total de incidências na consulta de histórico, sem aplicar paginação
+    public function countHistory($request, User $user): int {
         return (int) $this->buildHistoryQuery($request, $user)->count();
     }
 
-    public function showHistory(int $incidenceId, User $user): array
-    {
+
+    // Método para exibir os detalhes de uma incidência específica, verificando permissões de acesso
+    public function showHistory(int $incidenceId, User $user): array {
         $incidence = $this->findHistoryIncidenceOrFail($incidenceId);
 
         if (!$this->canAccessHistoryIncidence($user, $incidence)) {
@@ -69,8 +77,9 @@ class IncidenceService
         return $this->formatHistoryIncidence($incidence, $user->e_role);
     }
 
-    public function deleteHistory(int $incidenceId, User $user): array
-    {
+
+    // Método para excluir uma incidência do histórico, verificando permissões e removendo arquivos relacionados
+    public function deleteHistory(int $incidenceId, User $user): array {
         $incidence = $this->findHistoryIncidenceOrFail($incidenceId);
 
         if (!$this->canDeleteHistoryIncidence($user, $incidence)) {
@@ -108,32 +117,46 @@ class IncidenceService
         return $payload;
     }
 
-    public function listRetroactive($request, User $user): array
-    {
-        return $this->queryDistinctRetroactiveIncidences($request, $user)
-            ->map(fn (RetroactiveIncidenty $item) => $this->formatRetroactiveIncidence($item, $user->e_role))
+
+    // Normaliza a placa do veículo removendo caracteres não alfanuméricos e convertendo para maiúsculas, para garantir consistência na comparação e armazenamento das placas, independentemente do formato de entrada fornecido pelos usuários ou sistemas externos
+    public function listRetroactive($request, User $user): array {
+        $retroactives = $this->queryDistinctRetroactiveIncidences($request, $user)
+            ->take($this->resolveListLimit($request))
+            ->values();
+
+        $vehiclesByPlate = $this->loadVehiclesByPlate($retroactives);
+
+        return $retroactives
+            ->map(fn (RetroactiveIncidenty $item) => $this->formatRetroactiveIncidence($item, $user->e_role, $vehiclesByPlate))
             ->values()
             ->all();
     }
 
-    public function countRetroactive($request, User $user): int
-    {
+
+    // Método para contar o total de incidências retroativas na consulta, sem aplicar paginação
+    public function countRetroactive($request, User $user): int {
         return $this->queryDistinctRetroactiveIncidences($request, $user)->count();
     }
 
-    public function showRetroactive(int $retroactiveId, User $user): array
-    {
+
+    // Método para exibir os detalhes de uma incidência retroativa específica, verificando permissões de acesso e carregando informações do veículo relacionado, mesmo quando a incidência não tem um relacionamento direto com um veículo
+    public function showRetroactive(int $retroactiveId, User $user): array {
         $retroactive = $this->findRetroactiveOrFail($retroactiveId);
 
         if (!$this->canAccessRetroactive($user, $retroactive)) {
             throw new HttpException(403, 'Você não tem permissão para acessar esta incidência retroativa.');
         }
 
-        return $this->formatRetroactiveIncidence($retroactive, $user->e_role);
+        return $this->formatRetroactiveIncidence(
+            $retroactive,
+            $user->e_role,
+            $this->loadVehiclesByPlate(new Collection([$retroactive]))
+        );
     }
 
-    public function markRetroactiveAsRead(int $retroactiveId, User $user): array
-    {
+
+    // Método para marcar uma incidência retroativa como lida, verificando permissões de acesso e atualizando o status de leitura, para que os usuários possam gerenciar melhor as incidências retroativas que já foram visualizadas
+    public function markRetroactiveAsRead(int $retroactiveId, User $user): array {
         $retroactive = $this->findRetroactiveOrFail($retroactiveId);
 
         if (!$this->canAccessRetroactive($user, $retroactive)) {
@@ -150,8 +173,9 @@ class IncidenceService
         return $this->formatRetroactiveMeta($retroactive->refresh());
     }
 
-    public function deleteRetroactive(int $retroactiveId, User $user): array
-    {
+
+    // Método para remover uma incidência retroativa, verificando permissões de acesso e garantindo que apenas usuários autorizados possam excluir a incidência, além de registrar a ação nos logs para auditoria
+    public function deleteRetroactive(int $retroactiveId, User $user): array {
         $retroactive = $this->findRetroactiveOrFail($retroactiveId);
 
         if (!$this->canAccessRetroactive($user, $retroactive)) {
@@ -174,8 +198,9 @@ class IncidenceService
         return $payload;
     }
 
-    public function generateRetroactiveIncidencesForVehicle(int $vehicleId, ?string $source = null, bool $deleteExisting = false): void
-    {
+
+    // Método para gerar incidências retroativas para um veículo específico, buscando todas as incidências relacionadas às placas do veículo e criando registros retroativos para cada uma delas, garantindo que as informações do veículo sejam associadas corretamente mesmo quando os dados de origem forem incompletos ou inconsistentes
+    public function generateRetroactiveIncidencesForVehicle(int $vehicleId, ?string $source = null, bool $deleteExisting = false): void {
         $vehicle = $this->vehicleModel::query()
             ->with('legalAdvisoryAccess')
             ->where('i_id', $vehicleId)
@@ -328,8 +353,9 @@ class IncidenceService
         }
     }
 
-    protected function buildHistoryQuery($request, User $user): Builder
-    {
+
+    // Método auxiliar para criar um registro retroativo se não existir, garantindo que as informações sejam associadas corretamente e evitando duplicações
+    protected function buildHistoryQuery($request, User $user): Builder {
         $role = $this->normalizeRole($user->e_role);
         $search = trim((string) $request->query('search', ''));
         $positive = $this->parseBooleanFilter($request->query('positive'));
@@ -407,8 +433,9 @@ class IncidenceService
             });
     }
 
-    protected function queryDistinctRetroactiveIncidences($request, User $user): Collection
-    {
+
+    // Método auxiliar para construir a consulta de incidências retroativas, aplicando filtros de pesquisa, métodos de captura, intervalos de datas e verificações de acesso com base no papel do usuário, garantindo que os resultados sejam relevantes e que os usuários só vejam as incidências retroativas às quais têm permissão de acesso
+    protected function queryDistinctRetroactiveIncidences($request, User $user): Collection {
         $role = $this->normalizeRole($user->e_role);
         $search = trim((string) $request->query('search', ''));
         $captureMethod = $this->parseCaptureMethod($request->query('captureMethod'));
@@ -426,6 +453,9 @@ class IncidenceService
                 'incident.user.operator',
                 'incident.vehicle.legalAdvisoryAccess.legalAdvisory',
                 'incident.vehicle.legalAdvisoryAccess.wallet',
+                'vehicle.legalAdvisoryAccess.legalAdvisory',
+                'vehicle.legalAdvisoryAccess.wallet',
+                'legalAdvisoryOwner.wallet',
             ])
             ->whereNull('retroactive_incidenties.deleted_at')
             ->where($this->buildRetroactiveOwnerFilter($role, (int) $user->i_id, $accessibleAdvisoryIds, $deputyIds))
@@ -488,8 +518,9 @@ class IncidenceService
         return collect(array_values($distinct));
     }
 
-    protected function buildRetroactiveOwnerFilter(string $role, int $userId, array $accessibleAdvisoryIds, array $deputyIds): \Closure
-    {
+
+    // Método auxiliar para construir o filtro de proprietário para a consulta de incidências retroativas, aplicando regras específicas com base no papel do usuário, para garantir que os usuários vejam apenas as incidências retroativas relacionadas a eles ou às entidades que eles têm permissão de acessar
+    protected function buildRetroactiveOwnerFilter(string $role, int $userId, array $accessibleAdvisoryIds, array $deputyIds): \Closure {
         return function ($query) use ($role, $userId, $accessibleAdvisoryIds, $deputyIds) {
             if ($role === 'ADMIN') {
                 $query->where(function ($adminQuery) use ($userId) {
@@ -520,8 +551,9 @@ class IncidenceService
         };
     }
 
-    protected function findHistoryIncidenceOrFail(int $incidenceId): LicensePlateIncidence
-    {
+
+    // Método auxiliar para encontrar uma incidência de histórico por ID, carregando relacionamentos necessários e lançando uma exceção se a incidência não for encontrada, garantindo que as operações subsequentes tenham acesso a um objeto de incidência válido e completo
+    protected function findHistoryIncidenceOrFail(int $incidenceId): LicensePlateIncidence {
         $incidence = $this->incidenceModel::query()
             ->with([
                 'user.operator',
@@ -539,13 +571,17 @@ class IncidenceService
         return $incidence;
     }
 
-    protected function findRetroactiveOrFail(int $retroactiveId): RetroactiveIncidenty
-    {
+
+    // Método auxiliar para encontrar uma incidência retroativa por ID, carregando relacionamentos necessários e lançando uma exceção se a incidência retroativa não for encontrada, garantindo que as operações subsequentes tenham acesso a um objeto de incidência retroativa válido e completo
+    protected function findRetroactiveOrFail(int $retroactiveId): RetroactiveIncidenty {
         $retroactive = $this->retroactiveModel::query()
             ->with([
                 'incident.user.operator',
                 'incident.vehicle.legalAdvisoryAccess.legalAdvisory',
                 'incident.vehicle.legalAdvisoryAccess.wallet',
+                'vehicle.legalAdvisoryAccess.legalAdvisory',
+                'vehicle.legalAdvisoryAccess.wallet',
+                'legalAdvisoryOwner.wallet',
             ])
             ->where('i_id', $retroactiveId)
             ->whereNull('deleted_at')
@@ -558,8 +594,9 @@ class IncidenceService
         return $retroactive;
     }
 
-    protected function canAccessHistoryIncidence(User $user, LicensePlateIncidence $incidence): bool
-    {
+
+    // Método auxiliar para verificar se um usuário tem permissão para acessar os detalhes de uma incidência de histórico, aplicando regras específicas com base no papel do usuário e nas relações entre o usuário, a incidência e o veículo relacionado, garantindo que as informações sensíveis sejam protegidas e que os usuários só acessem as incidências às quais têm direito
+    protected function canAccessHistoryIncidence(User $user, LicensePlateIncidence $incidence): bool {
         $role = $this->normalizeRole($user->e_role);
 
         if ($role === 'ADMIN') {
@@ -585,8 +622,9 @@ class IncidenceService
         return false;
     }
 
-    protected function canDeleteHistoryIncidence(User $user, LicensePlateIncidence $incidence): bool
-    {
+
+    // Método auxiliar para verificar se um usuário tem permissão para excluir uma incidência de histórico, garantindo que apenas os usuários que criaram a incidência ou os administradores possam excluí-la, protegendo a integridade dos dados e evitando exclusões não autorizadas
+    protected function canDeleteHistoryIncidence(User $user, LicensePlateIncidence $incidence): bool {
         if ($this->normalizeRole($user->e_role) === 'ADMIN') {
             return true;
         }
@@ -594,8 +632,9 @@ class IncidenceService
         return (int) $incidence->i_user_id === (int) $user->i_id;
     }
 
-    protected function canAccessRetroactive(User $user, RetroactiveIncidenty $retroactive): bool
-    {
+
+    // Método auxiliar para verificar se um usuário tem permissão para acessar os detalhes de uma incidência retroativa, aplicando regras específicas com base no papel do usuário, no tipo de proprietário da incidência retroativa e nas relações entre o usuário, a incidência retroativa e o veículo relacionado, garantindo que as informações sensíveis sejam protegidas e que os usuários só acessem as incidências retroativas às quais têm direito
+    protected function canAccessRetroactive(User $user, RetroactiveIncidenty $retroactive): bool {
         $role = $this->normalizeRole($user->e_role);
 
         if ($role === 'ADMIN') {
@@ -624,15 +663,13 @@ class IncidenceService
             && (int) $retroactive->v_owner_id === (int) $user->i_id;
     }
 
-    protected function formatHistoryIncidence(LicensePlateIncidence $incidence, ?string $role): array
-    {
+
+    // Método auxiliar para formatar os dados de uma incidência de histórico, aplicando regras específicas com base no papel do usuário e garantindo que as informações sensíveis sejam protegidas
+    protected function formatHistoryIncidence(LicensePlateIncidence $incidence, ?string $role): array {
         $normalizedRole = $this->normalizeRole($role);
         $hideLocation = $normalizedRole === 'AUDITOR';
         $user = $incidence->user;
         $vehicle = $incidence->vehicle;
-        $access = $vehicle?->legalAdvisoryAccess;
-        $legalAdvisory = $access?->legalAdvisory;
-        $wallet = $access?->wallet;
 
         return [
             'id' => (string) $incidence->i_id,
@@ -643,7 +680,7 @@ class IncidenceService
             'location' => $hideLocation ? null : $incidence->v_location,
             'latitude' => $hideLocation ? null : $incidence->f_latitude,
             'longitude' => $hideLocation ? null : $incidence->f_longitude,
-            'image' => $incidence->v_image ? asset('storage/' . ltrim($incidence->v_image, '/')) : null,
+            'image' => $this->resolveIncidenceImageUrl($incidence->v_image),
             'confidence' => $incidence->f_confidence,
             'createdAt' => optional($incidence->created_at)?->toISOString(),
             'positive' => (bool) $incidence->b_positive,
@@ -659,39 +696,121 @@ class IncidenceService
                     'phone' => $user->operator->v_phone,
                 ] : null,
             ] : null,
-            'vehicle' => $vehicle ? [
-                'id' => (string) $vehicle->i_id,
-                'plate' => $vehicle->v_plate,
-                'plateMercosul' => $vehicle->v_plate_mercosul,
-                'model' => $vehicle->v_model,
-                'phone' => $vehicle->v_phone,
-                'managedBy' => [
-                    'legalAdvisory' => $legalAdvisory ? [
-                        'id' => (string) $legalAdvisory->i_id,
-                        'name' => $legalAdvisory->v_name,
-                        'phone' => $legalAdvisory->v_phone,
-                        'document' => $legalAdvisory->v_document,
-                    ] : null,
-                    'wallet' => $wallet ? [
-                        'id' => (string) $wallet->i_id,
-                        'name' => $wallet->v_name,
-                    ] : null,
-                ],
-            ] : null,
+            'vehicle' => $this->formatVehiclePayload($vehicle),
         ];
     }
 
-    protected function formatRetroactiveIncidence(RetroactiveIncidenty $item, ?string $role): array
-    {
+
+    // Método auxiliar para formatar os dados de uma incidência retroativa, garantindo que as informações do veículo sejam incluídas sempre que possível, mesmo quando a incidência retroativa não tem um relacionamento direto com um veículo, e aplicando regras específicas com base no papel do usuário para proteger informações sensíveis
+    protected function formatRetroactiveIncidence(RetroactiveIncidenty $item, ?string $role, array $vehiclesByPlate = []): array {
         $incidentPayload = $this->formatHistoryIncidence($item->incident, $role);
+
+        $fallbackVehicle = $item->vehicle ?? $this->resolveVehicleForRetroactive($item, $vehiclesByPlate);
+
+        if (
+            $fallbackVehicle
+            && (
+                empty(data_get($incidentPayload, 'vehicle.managedBy.legalAdvisory'))
+                || empty(data_get($incidentPayload, 'vehicle.managedBy.wallet'))
+            )
+        ) {
+            $incidentPayload['vehicle'] = $this->formatVehiclePayload($fallbackVehicle);
+        }
+
+        if (
+            $item->e_owner_type === 'LEGAL_ADVISORY'
+            && $item->legalAdvisoryOwner
+            && (
+                empty(data_get($incidentPayload, 'vehicle.managedBy.legalAdvisory'))
+                || empty(data_get($incidentPayload, 'vehicle.managedBy.wallet'))
+            )
+        ) {
+            $incidentPayload['vehicle'] = $this->mergeVehicleManagedByPayload(
+                $incidentPayload['vehicle'] ?? null,
+                $item->legalAdvisoryOwner,
+                $incidentPayload['plate'] ?? null,
+                $incidentPayload['plateMercosul'] ?? null
+            );
+        }
 
         $incidentPayload['retroactive'] = $this->formatRetroactiveMeta($item);
 
         return $incidentPayload;
     }
 
-    protected function formatRetroactiveMeta(RetroactiveIncidenty $item): array
-    {
+
+    // Método auxiliar para formatar os dados de um veículo, incluindo informações sobre o assessor jurídico e a carteira associada, garantindo que as informações do veículo sejam apresentadas de forma consistente e completa, mesmo quando os dados de origem forem incompletos ou inconsistentes
+    protected function formatVehiclePayload(?Vehicle $vehicle): ?array {
+        if (!$vehicle) {
+            return null;
+        }
+
+        $access = $vehicle->legalAdvisoryAccess;
+        $legalAdvisory = $access?->legalAdvisory;
+        $wallet = $access?->wallet;
+
+        return [
+            'id' => (string) $vehicle->i_id,
+            'plate' => $vehicle->v_plate,
+            'plateMercosul' => $vehicle->v_plate_mercosul,
+            'model' => $vehicle->v_model,
+            'phone' => $vehicle->v_phone,
+            'managedBy' => [
+                'legalAdvisory' => $legalAdvisory ? [
+                    'id' => (string) $legalAdvisory->i_id,
+                    'name' => $legalAdvisory->v_name,
+                    'phone' => $legalAdvisory->v_phone,
+                    'document' => $legalAdvisory->v_document,
+                ] : null,
+                'wallet' => $wallet ? [
+                    'id' => (string) $wallet->i_id,
+                    'name' => $wallet->v_name,
+                ] : null,
+            ],
+        ];
+    }
+
+
+    // Método auxiliar para mesclar os dados de um veículo com informações adicionais sobre o assessor jurídico e a carteira associada, garantindo que as informações sejam apresentadas de forma consistente e completa
+    protected function mergeVehicleManagedByPayload(?array $vehiclePayload, $legalAdvisory, ?string $plate, ?string $plateMercosul): array {
+        return [
+            'id' => $vehiclePayload['id'] ?? null,
+            'plate' => $vehiclePayload['plate'] ?? $plate,
+            'plateMercosul' => $vehiclePayload['plateMercosul'] ?? $plateMercosul,
+            'model' => $vehiclePayload['model'] ?? null,
+            'phone' => $vehiclePayload['phone'] ?? null,
+            'managedBy' => [
+                'legalAdvisory' => [
+                    'id' => (string) $legalAdvisory->i_id,
+                    'name' => $legalAdvisory->v_name,
+                    'phone' => $legalAdvisory->v_phone,
+                    'document' => $legalAdvisory->v_document,
+                ],
+                'wallet' => $legalAdvisory->wallet ? [
+                    'id' => (string) $legalAdvisory->wallet->i_id,
+                    'name' => $legalAdvisory->wallet->v_name,
+                ] : null,
+            ],
+        ];
+    }
+
+
+    // Método auxiliar para resolver a URL completa de uma imagem de incidência, verificando se o caminho da imagem é uma URL absoluta ou um caminho relativo, e garantindo que a URL seja acessível corretamente, mesmo quando os dados de origem forem inconsistentes
+    protected function resolveIncidenceImageUrl(?string $imagePath): ?string {
+        if (!$imagePath) {
+            return null;
+        }
+
+        if (preg_match('/^https?:\/\//i', $imagePath)) {
+            return $imagePath;
+        }
+
+        return asset('storage/' . ltrim($imagePath, '/'));
+    }
+
+
+    // Para casos em que a incidência retroativa não tem um relacionamento direto com um veículo, tentamos resolver o veículo usando as placas associadas à incidência, para garantir que possamos fornecer informações do veículo sempre que possível, mesmo quando os dados de origem forem incompletos ou inconsistentes
+    protected function formatRetroactiveMeta(RetroactiveIncidenty $item): array {
         return [
             'id' => (string) $item->i_id,
             'ownerType' => $item->e_owner_type,
@@ -703,10 +822,16 @@ class IncidenceService
         ];
     }
 
-    protected function parseDateRange($request): array
-    {
+
+    // Analisa os parâmetros de data de início e fim da requisição, aplicando valores padrão quando ambos estiverem ausentes, e garantindo que as datas sejam interpretadas corretamente para filtrar as incidências dentro do intervalo especificado
+    protected function parseDateRange($request): array {
         $from = $request->query('data_inicial') ?? $request->query('from');
         $to = $request->query('data_final') ?? $request->query('to');
+
+        if (!$from && !$to) {
+            $from = Carbon::now()->subDays(self::DEFAULT_LIST_DAYS)->toDateString();
+            $to = Carbon::now()->toDateString();
+        }
 
         return [
             $from ? Carbon::parse($from)->startOfDay() : null,
@@ -714,8 +839,21 @@ class IncidenceService
         ];
     }
 
-    protected function parseBooleanFilter($value): ?bool
-    {
+
+    // Resolve o limite de itens para listagem, garantindo que o valor seja um inteiro positivo e não exceda o limite máximo definido, para evitar sobrecarga no sistema e garantir respostas eficientes
+    protected function resolveListLimit($request): int {
+        $incomingLimit = (int) ($request->query('limit') ?? 0);
+
+        if ($incomingLimit > 0) {
+            return min($incomingLimit, self::MAX_LIST_LIMIT);
+        }
+
+        return self::MAX_LIST_LIMIT;
+    }
+
+
+    // Converte valores para booleano verdadeiro, falso ou nulo, permitindo que filtros booleanos sejam aplicados de forma flexível, interpretando corretamente diferentes representações de verdade e falsidade
+    protected function parseBooleanFilter($value): ?bool {
         if ($value === 'true' || $value === true || $value === '1' || $value === 1) {
             return true;
         }
@@ -727,30 +865,35 @@ class IncidenceService
         return null;
     }
 
-    protected function parseTruthy($value): bool
-    {
+
+    // Converte valores para booleano verdadeiro ou falso, garantindo consistência na interpretação de diferentes representações de verdade
+    protected function parseTruthy($value): bool {
         return in_array($value, [true, 1, '1', 'true', 'on', 'yes'], true);
     }
 
-    protected function parseCaptureMethod($value): ?string
-    {
+
+    // Valida o método de captura para garantir que seja um dos valores permitidos, evitando que filtros inválidos sejam aplicados na consulta, o que poderia resultar em erros ou comportamentos inesperados
+    protected function parseCaptureMethod($value): ?string {
         return in_array($value, ['MANUAL', 'CAMERA', 'EXTERNAL_CAMERA'], true)
             ? $value
             : null;
     }
 
-    protected function normalizePlate(?string $plate): string
-    {
+
+    // Normaliza a placa removendo caracteres não alfanuméricos e convertendo para maiúsculas, para garantir comparações consistentes, especialmente quando os dados podem vir de fontes externas ou ter variações de formatação
+    protected function normalizePlate(?string $plate): string {
         return strtoupper((string) preg_replace('/[^A-Z0-9]/i', '', $plate ?? ''));
     }
 
-    protected function normalizeRole(?string $role): string
-    {
+
+    // Normaliza o papel do usuário para garantir comparações consistentes, especialmente quando os dados podem vir de fontes externas ou ter variações de formatação
+    protected function normalizeRole(?string $role): string {
         return strtoupper(trim((string) $role));
     }
 
-    protected function getAccessibleLegalAdvisoryIds(int $userId): array
-    {
+
+    // Para auditores e usuários vinculados, buscamos os IDs dos advisory legais aos quais eles têm acesso, para garantir que possam visualizar as incidências retroativas relacionadas a veículos gerenciados por esses advisory legais
+    protected function getAccessibleLegalAdvisoryIds(int $userId): array {
         return $this->userModel::query()
             ->where('i_id', $userId)
             ->with('legalAdvisoryAccesses')
@@ -763,8 +906,9 @@ class IncidenceService
             ->all() ?? [];
     }
 
-    protected function getDeputyIds(int $userId): array
-    {
+
+    // Para operadores, além de suas próprias incidências, também consideramos as incidências dos seus deputados (caso existam), garantindo que possam acessar as incidências relacionadas a veículos privados que operam
+    protected function getDeputyIds(int $userId): array {
         return $this->userModel::query()
             ->where('i_operator_id', $userId)
             ->whereNull('deleted_at')
@@ -774,8 +918,69 @@ class IncidenceService
             ->all();
     }
 
-    protected function firstOrCreateRetroactive(array $attributes, array $extra = []): void
-    {
+
+    // Carrega os veículos relacionados às incidências retroativas usando as placas dos incidentes, para otimizar o acesso aos dados dos veículos durante a formatação das respostas, especialmente quando o relacionamento direto entre retroativa e veículo não existe
+    protected function loadVehiclesByPlate(Collection $retroactives): array {
+        $normalizedPlates = $retroactives
+            ->flatMap(function (RetroactiveIncidenty $item) {
+                return [
+                    $this->normalizePlate($item->incident?->v_plate),
+                    $this->normalizePlate($item->incident?->v_plate_mercosul),
+                ];
+            })
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($normalizedPlates->isEmpty()) {
+            return [];
+        }
+
+        $vehicles = $this->vehicleModel::query()
+            ->with([
+                'legalAdvisoryAccess.legalAdvisory',
+                'legalAdvisoryAccess.wallet',
+            ])
+            ->whereNull('deleted_at')
+            ->where(function ($query) use ($normalizedPlates) {
+                $query->whereIn('v_plate', $normalizedPlates->all())
+                    ->orWhereIn('v_plate_mercosul', $normalizedPlates->all());
+            })
+            ->orderByDesc('i_id')
+            ->get();
+
+        $vehiclesByPlate = [];
+
+        foreach ($vehicles as $vehicle) {
+            foreach ([$vehicle->v_plate, $vehicle->v_plate_mercosul] as $plate) {
+                $normalizedPlate = $this->normalizePlate($plate);
+
+                if ($normalizedPlate !== '' && !isset($vehiclesByPlate[$normalizedPlate])) {
+                    $vehiclesByPlate[$normalizedPlate] = $vehicle;
+                }
+            }
+        }
+
+        return $vehiclesByPlate;
+    }
+
+
+    // Tenta resolver o veículo para uma incidência retroativa usando as placas do incidente, caso o relacionamento direto não exista
+    protected function resolveVehicleForRetroactive(RetroactiveIncidenty $item, array $vehiclesByPlate): ?Vehicle {
+        foreach ([$item->incident?->v_plate, $item->incident?->v_plate_mercosul] as $plate) {
+            $normalizedPlate = $this->normalizePlate($plate);
+
+            if ($normalizedPlate !== '' && isset($vehiclesByPlate[$normalizedPlate])) {
+                return $vehiclesByPlate[$normalizedPlate];
+            }
+        }
+
+        return null;
+    }
+
+
+    // Cria uma incidência retroativa apenas se não existir uma com os mesmos atributos, garantindo que seja marcada como não lida
+    protected function firstOrCreateRetroactive(array $attributes, array $extra = []): void {
         $this->retroactiveModel::query()->firstOrCreate(
             $attributes,
             array_merge($extra, [

@@ -7,6 +7,7 @@ use App\Models\CameraConfig\CameraConfig;
 use App\Models\LicensePlateIncidence\LicensePlateIncidence;
 use App\Models\Vehicle\Vehicle;
 use App\Http\Services\LogsService\LogsService;
+use App\Support\PlateFormatter;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -130,13 +131,15 @@ class CameraMonitoringService
 
     // Método para obter a configuração da câmera do usuário autenticado.
     public function saveIncidence(array $data, int $userId): array {
-        $plate = $this->normalizePlate($data['plate'] ?? '');
+        $platePair = PlateFormatter::resolveStoragePair((string) ($data['plate'] ?? ''));
 
-        if (empty($plate)) {
+        if (!$platePair) {
             throw new HttpException(401, 'Placa inválida.');
         }
 
-        return DB::transaction(function () use ($data, $plate, $userId) {
+        $plate = PlateFormatter::normalize((string) ($data['plate'] ?? ''));
+
+        return DB::transaction(function () use ($data, $plate, $platePair, $userId) {
 
                         $vehicle = $this->baseVehiclePlateQuery($plate, $userId)->first();
 
@@ -149,8 +152,8 @@ class CameraMonitoringService
             }
 
             $incidence = $this->modelIncidence->create([
-                'v_plate'          => $plate,
-                'v_plate_mercosul' => $vehicle?->v_plate_mercosul && $vehicle->v_plate_mercosul !== '-' ? $vehicle->v_plate_mercosul : null,
+                'v_plate'          => $platePair['v_plate'],
+                'v_plate_mercosul' => $platePair['v_plate_mercosul'],
                 'i_vehicle_id'     => $vehicle?->i_id,
                 'i_user_id'        => $userId,
                 'f_latitude'       => $data['latitude']  ?? null,
@@ -232,7 +235,7 @@ class CameraMonitoringService
 
     protected function normalizePlate(?string $plate): string
     {
-        return strtoupper((string) preg_replace('/[^A-Z0-9]/i', '', $plate ?? ''));
+        return PlateFormatter::normalize($plate);
     }
 
     protected function baseVehiclePlateQuery(string $normalizedPlate, int $userId)

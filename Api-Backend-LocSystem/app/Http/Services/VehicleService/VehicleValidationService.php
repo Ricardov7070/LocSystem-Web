@@ -3,6 +3,7 @@
 namespace App\Http\Services\VehicleService;
 
 use App\Models\Vehicle\Vehicle;
+use App\Support\PlateFormatter;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 
@@ -18,8 +19,24 @@ class VehicleValidationService {
 
     // Método para verificar se o veículo já possui cadastro na base através de sua placa
     public function verificationRegisterVehicles($request, $idVehicle = null): void {
-        $query = $this->modelVehicle::where('v_plate', $request->input('v_plate'))
-                                    ->whereNull('deleted_at');
+        $platePair = PlateFormatter::resolveStoragePair((string) $request->input('v_plate'));
+
+        if (!$platePair) {
+            throw new HttpException(422, 'Placa inválida. Use o formato ABC-1234 ou ABC1D23.');
+        }
+
+        $plateValues = array_values(array_unique([
+            $platePair['v_plate'],
+            $platePair['v_plate_mercosul'],
+        ]));
+
+        $query = $this->modelVehicle::whereNull('deleted_at')
+                                    ->where(function ($nested) use ($plateValues) {
+                                        foreach ($plateValues as $plateValue) {
+                                            $nested->orWhere('v_plate', $plateValue)
+                                                ->orWhere('v_plate_mercosul', $plateValue);
+                                        }
+                                    });
 
         if ($idVehicle) {
             $query->where('i_id', '!=', $idVehicle);

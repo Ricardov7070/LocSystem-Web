@@ -20,7 +20,12 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado, tente novamente!"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/singleBanned/{id}": {
@@ -40,7 +45,23 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado, tente novamente!"
                     }
-                }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/camera-monitoring/config": {
@@ -57,7 +78,12 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado, tente novamente!"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             },
             "post": {
                 "tags": [
@@ -75,7 +101,49 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado, tente novamente!"
                     }
-                }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "v_host": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "v_username": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "v_password": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "i_channel": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 16
+                                    },
+                                    "b_enabled": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "v_host",
+                                    "v_username",
+                                    "v_password"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/camera-monitoring/search/{plate}": {
@@ -92,7 +160,23 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado, tente novamente!"
                     }
-                }
+                },
+                "parameters": [
+                    {
+                        "name": "plate",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota plate.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/camera-monitoring/incidence": {
@@ -115,7 +199,48 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado, tente novamente!"
                     }
-                }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "plate": {
+                                        "type": "string",
+                                        "maxLength": 20
+                                    },
+                                    "latitude": {
+                                        "type": "number"
+                                    },
+                                    "longitude": {
+                                        "type": "number"
+                                    },
+                                    "confidence": {
+                                        "type": "number",
+                                        "minimum": 0,
+                                        "maximum": 1
+                                    },
+                                    "image": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "description": "Tipos aceitos: jpg,jpeg,png.",
+                                        "maxLength": 5120
+                                    }
+                                },
+                                "required": [
+                                    "plate"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/camera-monitoring/history": {
@@ -132,7 +257,30 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado, tente novamente!"
                     }
-                }
+                },
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/legalAdvisories": {
@@ -152,7 +300,12 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado ao consultar as assessorias."
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/legalAdvisories/options": {
@@ -172,7 +325,12 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado ao consultar as opções de assessorias."
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/singleLegalAdvisory/{id}": {
@@ -192,7 +350,23 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado ao consultar a assessoria."
                     }
-                }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/registerLegalAdvisory": {
@@ -218,7 +392,48 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado ao registrar a assessoria."
                     }
-                }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "v_name": {
+                                        "type": "string",
+                                        "minLength": 4,
+                                        "maxLength": 100
+                                    },
+                                    "v_document": {
+                                        "type": "string",
+                                        "minLength": 11,
+                                        "maxLength": 20
+                                    },
+                                    "v_phone": {
+                                        "type": "string",
+                                        "minLength": 10,
+                                        "maxLength": 20
+                                    },
+                                    "i_wallet_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "required": [
+                                    "v_name",
+                                    "v_document",
+                                    "v_phone",
+                                    "i_wallet_id"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/updateLegalAdvisory/{id}": {
@@ -244,7 +459,59 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado ao atualizar a assessoria."
                     }
-                }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "v_name": {
+                                        "type": "string",
+                                        "minLength": 4,
+                                        "maxLength": 100
+                                    },
+                                    "v_document": {
+                                        "type": "string",
+                                        "minLength": 11,
+                                        "maxLength": 20
+                                    },
+                                    "v_phone": {
+                                        "type": "string",
+                                        "minLength": 10,
+                                        "maxLength": 20
+                                    },
+                                    "i_wallet_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "required": [
+                                    "v_name",
+                                    "v_document",
+                                    "v_phone",
+                                    "i_wallet_id"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/deleteLegalAdvisory/{id}": {
@@ -267,7 +534,23 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado ao excluir a assessoria."
                     }
-                }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/logs": {
@@ -301,7 +584,12 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado, tente novamente!"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/singlePricingPlan/{id}": {
@@ -321,7 +609,23 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado, tente novamente!"
                     }
-                }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/registerPricingPlan": {
@@ -344,7 +648,47 @@
                     "422": {
                         "description": "Erro de validação!"
                     }
-                }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "v_name": {
+                                        "type": "string",
+                                        "maxLength": 20
+                                    },
+                                    "f_operator_price": {
+                                        "type": "number",
+                                        "minimum": 0,
+                                        "maximum": 99999
+                                    },
+                                    "f_preposto_price": {
+                                        "type": "number",
+                                        "minimum": 0,
+                                        "maximum": 99999
+                                    },
+                                    "b_is_active": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "v_name",
+                                    "f_operator_price",
+                                    "f_preposto_price",
+                                    "b_is_active"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/updatePricingPlan/{id}": {
@@ -370,7 +714,58 @@
                     "422": {
                         "description": "Erro de validação!"
                     }
-                }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "v_name": {
+                                        "type": "string",
+                                        "maxLength": 20
+                                    },
+                                    "f_operator_price": {
+                                        "type": "number",
+                                        "minimum": 0,
+                                        "maximum": 99999
+                                    },
+                                    "f_preposto_price": {
+                                        "type": "number",
+                                        "minimum": 0,
+                                        "maximum": 99999
+                                    },
+                                    "b_is_active": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "v_name",
+                                    "f_operator_price",
+                                    "f_preposto_price",
+                                    "b_is_active"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/deletePricingPlan/{id}": {
@@ -390,7 +785,23 @@
                     "500": {
                         "description": "Ocorreu um erro, tente novamente!"
                     }
-                }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/activateDeactivatePricingPlans/{id}": {
@@ -410,7 +821,23 @@
                     "500": {
                         "description": "Ocorreu um erro, tente novamente!"
                     }
-                }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/sessions": {
@@ -427,7 +854,12 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado, tente novamente!"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/singleSession/{id}": {
@@ -444,7 +876,23 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado, tente novamente!"
                     }
-                }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/auth/signin": {
@@ -473,6 +921,31 @@
                     "422": {
                         "description": "Erro de validação!"
                     }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "v_email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "v_password": {
+                                        "type": "string",
+                                        "minLength": 8,
+                                        "maxLength": 16
+                                    }
+                                },
+                                "required": [
+                                    "v_email",
+                                    "v_password"
+                                ]
+                            }
+                        }
+                    }
                 }
             }
         },
@@ -493,7 +966,12 @@
                     "401": {
                         "description": "Usuário Indefinido!"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/auth/forgotPassword": {
@@ -516,6 +994,31 @@
                     "422": {
                         "description": "Erro de validação!"
                     }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "v_email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "v_name": {
+                                        "type": "string",
+                                        "minLength": 3,
+                                        "maxLength": 255
+                                    }
+                                },
+                                "required": [
+                                    "v_email",
+                                    "v_name"
+                                ]
+                            }
+                        }
+                    }
                 }
             }
         },
@@ -535,6 +1038,31 @@
                     },
                     "422": {
                         "description": "Erro de validação!"
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "v_email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "v_password": {
+                                        "type": "string",
+                                        "minLength": 8,
+                                        "maxLength": 16
+                                    }
+                                },
+                                "required": [
+                                    "v_email",
+                                    "v_password"
+                                ]
+                            }
+                        }
                     }
                 }
             }
@@ -556,6 +1084,21 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado, tente novamente!"
                     }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "v_email": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         },
@@ -576,7 +1119,27 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado, tente novamente!"
                     }
-                }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "password": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/change-password": {
@@ -596,7 +1159,38 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado, tente novamente!"
                     }
-                }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "current_password": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 16
+                                    },
+                                    "new_password": {
+                                        "type": "string",
+                                        "minLength": 8,
+                                        "maxLength": 16
+                                    }
+                                },
+                                "required": [
+                                    "current_password",
+                                    "new_password"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/auth/signup": {
@@ -618,6 +1212,58 @@
                     },
                     "422": {
                         "description": "Erro de validação!"
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "v_email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "v_name": {
+                                        "type": "string",
+                                        "minLength": 3,
+                                        "maxLength": 255
+                                    },
+                                    "v_password": {
+                                        "type": "string",
+                                        "minLength": 8,
+                                        "maxLength": 16
+                                    },
+                                    "v_document": {
+                                        "type": "string",
+                                        "maxLength": 14
+                                    },
+                                    "v_phone": {
+                                        "type": "string",
+                                        "maxLength": 11
+                                    },
+                                    "e_role": {
+                                        "type": "string",
+                                        "enum": [
+                                            "ADMIN",
+                                            "OPERATOR",
+                                            "AUDITOR",
+                                            "OLHEIRO",
+                                            "LINKED_USER"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "v_email",
+                                    "v_name",
+                                    "v_password",
+                                    "v_document",
+                                    "v_phone",
+                                    "e_role"
+                                ]
+                            }
+                        }
                     }
                 }
             }
@@ -645,7 +1291,58 @@
                     "422": {
                         "description": "Erro de validação!"
                     }
-                }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "v_email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "v_name": {
+                                        "type": "string",
+                                        "minLength": 3,
+                                        "maxLength": 255
+                                    },
+                                    "v_password": {
+                                        "type": "string",
+                                        "minLength": 8,
+                                        "maxLength": 16
+                                    },
+                                    "v_phone": {
+                                        "type": "string",
+                                        "maxLength": 11
+                                    }
+                                },
+                                "required": [
+                                    "v_email",
+                                    "v_name",
+                                    "v_phone"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/deleteRecord/{id}": {
@@ -668,7 +1365,23 @@
                     "403": {
                         "description": "Não é permitido excluir o usuário Administrador principal!"
                     }
-                }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/uploadProfileImage": {
@@ -685,7 +1398,12 @@
                     "500": {
                         "description": "Ocorreu um erro, tente novamente!"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/vehicles": {
@@ -702,7 +1420,12 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado, tente novamente!"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/singleVehicle/{id}": {
@@ -722,7 +1445,23 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado, tente novamente!"
                     }
-                }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/registerVehicle": {
@@ -745,7 +1484,51 @@
                     "422": {
                         "description": "Erro de validação!"
                     }
-                }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "v_plate": {
+                                        "type": "string",
+                                        "maxLength": 20
+                                    },
+                                    "v_plate_mercosul": {
+                                        "type": "string",
+                                        "maxLength": 20
+                                    },
+                                    "v_model": {
+                                        "type": "string",
+                                        "maxLength": 20
+                                    },
+                                    "v_phone": {
+                                        "type": "string",
+                                        "maxLength": 11
+                                    },
+                                    "i_legal_advisory_access_id": {
+                                        "type": "string",
+                                        "maxLength": 14
+                                    }
+                                },
+                                "required": [
+                                    "v_plate",
+                                    "v_plate_mercosul",
+                                    "v_model",
+                                    "v_phone",
+                                    "i_legal_advisory_access_id"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/updateVehicle/{id}": {
@@ -771,7 +1554,62 @@
                     "422": {
                         "description": "Erro de validação!"
                     }
-                }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "v_plate": {
+                                        "type": "string",
+                                        "maxLength": 20
+                                    },
+                                    "v_plate_mercosul": {
+                                        "type": "string",
+                                        "maxLength": 20
+                                    },
+                                    "v_model": {
+                                        "type": "string",
+                                        "maxLength": 20
+                                    },
+                                    "v_phone": {
+                                        "type": "string",
+                                        "maxLength": 11
+                                    },
+                                    "i_legal_advisory_access_id": {
+                                        "type": "string",
+                                        "maxLength": 14
+                                    }
+                                },
+                                "required": [
+                                    "v_plate",
+                                    "v_plate_mercosul",
+                                    "v_model",
+                                    "v_phone",
+                                    "i_legal_advisory_access_id"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/deleteVehicle/{id}": {
@@ -791,7 +1629,23 @@
                     "500": {
                         "description": "Ocorreu um erro, tente novamente!"
                     }
-                }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/vehicle-announcements": {
@@ -811,7 +1665,12 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado ao consultar os comunicados de veículos."
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/vehicle-announcements/{id}/type": {
@@ -834,7 +1693,50 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado ao atualizar o tipo do comunicado."
                     }
-                }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "JA_LOCALIZADO",
+                                            "CONTRATO_QUITADO",
+                                            "CONTRATO_SUBSTABELECIDO",
+                                            "VEICULO_NAO_APTO",
+                                            "VEICULO_APREENDIDO",
+                                            "BA_ANDAMENTO_POR_MIM",
+                                            "BA_ANDAMENTO_POR_TERCEIRO"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "type"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/vehicle-announcements/{id}": {
@@ -854,7 +1756,23 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado ao remover o comunicado."
                     }
-                }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/legalAdvisories/{id}/vehicle-imports": {
@@ -874,7 +1792,23 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado ao consultar as importações."
                     }
-                }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/vehicle-imports/preview": {
@@ -897,7 +1831,32 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado ao gerar a pré-visualização."
                     }
-                }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "description": "Tipos aceitos: xlsx,xls,csv."
+                                    }
+                                },
+                                "required": [
+                                    "file"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/vehicle-imports/validate": {
@@ -920,7 +1879,40 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado ao validar a importação."
                     }
-                }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "description": "Tipos aceitos: xlsx,xls,csv."
+                                    },
+                                    "columnMapping": {
+                                        "type": "string"
+                                    },
+                                    "legalAdvisoryId": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "required": [
+                                    "file",
+                                    "columnMapping",
+                                    "legalAdvisoryId"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/vehicle-imports/execute": {
@@ -943,7 +1935,43 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado ao executar a importação."
                     }
-                }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "description": "Tipos aceitos: xlsx,xls,csv."
+                                    },
+                                    "columnMapping": {
+                                        "type": "string"
+                                    },
+                                    "legalAdvisoryId": {
+                                        "type": "integer"
+                                    },
+                                    "continueWithErrors": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "file",
+                                    "columnMapping",
+                                    "legalAdvisoryId"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/vehicle-imports/{id}": {
@@ -966,7 +1994,23 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado ao remover a importação."
                     }
-                }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/wallets": {
@@ -983,7 +2027,12 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado, tente novamente!"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/wallet/{id}": {
@@ -1003,7 +2052,23 @@
                     "500": {
                         "description": "Ocorreu um erro inesperado, tente novamente!"
                     }
-                }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/registerWallet": {
@@ -1026,7 +2091,31 @@
                     "422": {
                         "description": "Erro de validação!"
                     }
-                }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "v_name": {
+                                        "type": "string",
+                                        "maxLength": 20
+                                    }
+                                },
+                                "required": [
+                                    "v_name"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/updateWallet/{id}": {
@@ -1052,7 +2141,42 @@
                     "422": {
                         "description": "Erro de validação!"
                     }
-                }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "v_name": {
+                                        "type": "string",
+                                        "maxLength": 20
+                                    }
+                                },
+                                "required": [
+                                    "v_name"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/deleteWallet/{id}": {
@@ -1072,7 +2196,23 @@
                     "500": {
                         "description": "Ocorreu um erro, tente novamente!"
                     }
-                }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         }
     },

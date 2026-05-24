@@ -14,6 +14,9 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class VehicleAnnouncementService
 {
+    protected const INITIAL_LIST_LIMIT = 30;
+    protected const MAX_LIST_LIMIT = 200;
+
     public const TYPES = [
         'JA_LOCALIZADO',
         'CONTRATO_QUITADO',
@@ -49,14 +52,16 @@ class VehicleAnnouncementService
         $search = trim((string) $request->input('search', ''));
         $normalizedSearch = $this->normalizePlate($search);
         $announcementType = $request->input('announcement_type');
+        $limit = $this->resolveListLimit($request);
         $cacheKey = ApiCacheKey::forUser('vehicle_announcements_list', [
             'search' => $search,
             'announcement_type' => $announcementType,
             'data_inicial' => $request->input('data_inicial'),
             'data_final' => $request->input('data_final'),
+            'limit' => $limit,
         ]);
 
-        return Cache::store('redis')->remember($cacheKey, 30, function () use ($request, $search, $normalizedSearch, $announcementType) {
+        return Cache::store('redis')->remember($cacheKey, 30, function () use ($request, $search, $normalizedSearch, $announcementType, $limit) {
             $announcements = $this->model::query()
                 ->with([
                     'user:i_id,v_name,e_role,i_operator_id',
@@ -91,6 +96,9 @@ class VehicleAnnouncementService
                 })
                 ->orderByDesc('created_at')
                 ->orderByDesc('i_id')
+                ->when($limit !== null, function ($query) use ($limit) {
+                    $query->limit($limit);
+                })
                 ->get();
 
             $vehiclesByPlate = $this->loadVehiclesByPlate($announcements);
@@ -121,7 +129,7 @@ class VehicleAnnouncementService
                     'wallet_name' => $wallet?->v_name,
                     'incidence' => $announcement->incidence ? [
                         'i_id' => (string) $announcement->incidence->i_id,
-                        'v_image' => $announcement->incidence->v_image ? asset('storage/' . $announcement->incidence->v_image) : null,
+                        'v_image' => $this->resolveIncidenceImageUrl($announcement->incidence->v_image),
                         'f_latitude' => $announcement->incidence->f_latitude,
                         'f_longitude' => $announcement->incidence->f_longitude,
                         'e_capture_method' => $announcement->incidence->e_capture_method,
@@ -130,6 +138,34 @@ class VehicleAnnouncementService
                 ];
             });
         });
+    }
+
+    protected function resolveIncidenceImageUrl(?string $imagePath): ?string
+    {
+        if (!$imagePath) {
+            return null;
+        }
+
+        if (preg_match('/^https?:\/\//i', $imagePath)) {
+            return $imagePath;
+        }
+
+        return asset('storage/' . ltrim($imagePath, '/'));
+    }
+
+    protected function resolveListLimit(Request $request): ?int
+    {
+        $incomingLimit = (int) $request->input('limit', 0);
+
+        if ($incomingLimit > 0) {
+            return min($incomingLimit, self::MAX_LIST_LIMIT);
+        }
+
+        if ($request->filled('data_inicial') || $request->filled('data_final')) {
+            return null;
+        }
+
+        return self::INITIAL_LIST_LIMIT;
     }
 
 

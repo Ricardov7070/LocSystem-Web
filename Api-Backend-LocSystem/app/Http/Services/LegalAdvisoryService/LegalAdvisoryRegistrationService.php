@@ -8,12 +8,15 @@ use App\Models\LegalAdvisoryAccess\LegalAdvisoryAccess;
 use App\Models\VehicleImport\VehicleImport;
 use App\Support\ApiCacheKey;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class LegalAdvisoryRegistrationService
 {
+    protected const DEFAULT_LIST_DAYS = 30;
+
     protected $modelLegalAdvisory;
     protected $modelLegalAdvisoryAccess;
     protected $modelVehicleImport;
@@ -35,12 +38,14 @@ class LegalAdvisoryRegistrationService
 
     // Método para obter a lista de assessorias jurídicas do usuário autenticado, com contagem de veículos associados e data da última atividade.
     public function viewLegalAdvisories($request): Collection {
+        $filters = $this->resolveListFilters($request->only(['data_inicial', 'data_final']));
+
         $cacheKey = ApiCacheKey::forUser('legal_advisories_list', [
-            'data_inicial' => $request->input('data_inicial'),
-            'data_final' => $request->input('data_final'),
+            'data_inicial' => $filters['data_inicial'] ?? null,
+            'data_final' => $filters['data_final'] ?? null,
         ]);
 
-        return Cache::store('redis')->remember($cacheKey, 30, function () use ($request) {
+        return Cache::store('redis')->remember($cacheKey, 30, function () use ($filters) {
             $query = $this->modelLegalAdvisory::query()
                 ->with(['wallet:i_id,v_name'])
                 ->withCount(['accesses as vehicles_count' => function ($q) {
@@ -48,10 +53,10 @@ class LegalAdvisoryRegistrationService
                         ->whereNull('vehicles.deleted_at');
                 }])
                 ->whereNull('legal_advisories.deleted_at')
-                ->when($request->input('data_inicial'), function ($q, $value) {
+                ->when($filters['data_inicial'] ?? null, function ($q, $value) {
                     $q->whereDate('legal_advisories.created_at', '>=', $value);
                 })
-                ->when($request->input('data_final'), function ($q, $value) {
+                ->when($filters['data_final'] ?? null, function ($q, $value) {
                     $q->whereDate('legal_advisories.created_at', '<=', $value);
                 })
                 ->orderBy('legal_advisories.v_name');
@@ -82,6 +87,16 @@ class LegalAdvisoryRegistrationService
                 ];
             });
         });
+    }
+
+    protected function resolveListFilters(array $filters): array
+    {
+        if (empty($filters['data_inicial']) && empty($filters['data_final'])) {
+            $filters['data_inicial'] = Carbon::now()->subDays(self::DEFAULT_LIST_DAYS)->toDateString();
+            $filters['data_final'] = Carbon::now()->toDateString();
+        }
+
+        return $filters;
     }
 
 

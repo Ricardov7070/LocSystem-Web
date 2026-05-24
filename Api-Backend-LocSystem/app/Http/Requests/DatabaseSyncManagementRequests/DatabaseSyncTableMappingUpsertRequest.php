@@ -9,13 +9,15 @@ use Illuminate\Validation\Rule;
 
 class DatabaseSyncTableMappingUpsertRequest extends FormRequest
 {
-    public function authorize(): bool
-    {
+    public function authorize(): bool {
+
         return true;
+
     }
 
-    public function rules(): array
-    {
+
+    public function rules(): array {
+
         return [
             'i_sync_order' => ['nullable', 'integer'],
             'v_source_table' => ['required', 'string', 'max:255'],
@@ -35,10 +37,12 @@ class DatabaseSyncTableMappingUpsertRequest extends FormRequest
             'column_mappings.*.source_type_column' => ['nullable', 'string', 'max:255'],
             'column_mappings.*.reference_source_table_by_type' => ['nullable', 'array'],
         ];
+
     }
 
-    public function messages(): array
-    {
+
+    public function messages(): array {
+
         return [
             'v_source_table.required' => 'A tabela de origem é obrigatória.',
             'v_destination_table.required' => 'A tabela de destino é obrigatória.',
@@ -48,12 +52,15 @@ class DatabaseSyncTableMappingUpsertRequest extends FormRequest
             'column_mappings.*.source_column.required' => 'Toda linha do mapeamento precisa informar a coluna de origem.',
             'column_mappings.*.destination_column.required' => 'Toda linha do mapeamento precisa informar a coluna de destino.',
         ];
+
     }
 
-    protected function failedValidation(Validator $validator): never
-    {
+
+    protected function failedValidation(Validator $validator): never {
+
         throw new HttpResponseException(response()->json([
             'errors' => $validator->errors(),
         ], 422));
+        
     }
 }
