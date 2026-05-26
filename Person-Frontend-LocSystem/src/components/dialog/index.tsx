@@ -64,6 +64,7 @@ interface DialogFormProps<
   schema: Schema;
   defaultValues?: DefaultValues<any>;
   submitText?: string;
+  submitIcon?: ReactNode;
   cancelText?: string;
   form(form: UseFormReturn<any>): ReactNode;
   handler?(ctx: {
@@ -356,7 +357,7 @@ export function Dialoger() {
                             {isLoading ? (
                               <Loader2 className="ml-2 size-4 animate-spin" />
                             ) : (
-                              <Save className="ml-2 size-4" />
+                              props.submitIcon ?? <Save className="ml-2 size-4" />
                             )}
                           </Button>
                         </DialogFooter>

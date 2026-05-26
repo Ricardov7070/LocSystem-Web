@@ -69,7 +69,7 @@ const App: React.FC = () => {
             <Route path="/profile" element={<GuardedRoute path="/profile" element={<ProfilePage />} />} />
             <Route path="/vehicles" element={<GuardedRoute path="/vehicles" element={<VehiclesPage />} />} />
             <Route path="/users/operators" element={<GuardedRoute path="/users/operators" element={<OperatorsPage />} />} />
-            <Route path="/users/operators" element={<GuardedRoute path="/users/operators" element={<OperatorDetailPage />} />} />
+            <Route path="/users/operators/:id" element={<GuardedRoute path="/users/operators" element={<OperatorDetailPage />} />} />
             <Route path="/users/advisory-users" element={<GuardedRoute path="/users/advisory-users" element={<AdvisoryUsersPage />} />} />
             <Route path="/users/advisory-users/:id" element={<GuardedRoute path="/users/advisory-users" element={<AdvisoryUserDetailPage />} />} />
             <Route path="/users/my-deputies" element={<GuardedRoute path="/users/my-deputies" element={<MyDeputiesPage />} />} />

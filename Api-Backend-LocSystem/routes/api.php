@@ -4,6 +4,8 @@ use App\Http\Controllers\User\UserAuthenticationController;
 use App\Http\Controllers\User\UserRegistrationController;
 use App\Http\Controllers\User\TwoFactorController;
 use App\Http\Controllers\User\AdvisoryUserController;
+use App\Http\Controllers\User\OperatorController;
+use App\Http\Controllers\County\CountyController;
 use App\Http\Controllers\Vehicle\VehicleController;
 use App\Http\Controllers\Wallet\WalletController;
 use App\Http\Controllers\PricingPlan\PricingPlanController;
@@ -66,6 +68,24 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/advisory-users/{id}/password', [AdvisoryUserController::class, 'changePassword']);
     Route::post('/advisory-users/{id}/reset-2fa', [AdvisoryUserController::class, 'resetTwoFactor']);
     Route::delete('/advisory-users/{id}', [AdvisoryUserController::class, 'delete']);
+
+    // Rotas "Localizadores"
+    Route::get('/operators', [OperatorController::class, 'list']);
+    Route::get('/operators/{id}', [OperatorController::class, 'findOne']);
+    Route::post('/operators', [OperatorController::class, 'create']);
+    Route::put('/operators/{id}', [OperatorController::class, 'update']);
+    Route::patch('/operators/{id}/status', [OperatorController::class, 'toggleStatus']);
+    Route::patch('/operators/{id}/subscription', [OperatorController::class, 'renewSubscription']);
+    Route::patch('/operators/{id}/password', [OperatorController::class, 'changePassword']);
+    Route::post('/operators/{id}/reset-2fa', [OperatorController::class, 'resetTwoFactor']);
+    Route::delete('/operators/{id}', [OperatorController::class, 'delete']);
+
+    // Rotas "Comarcas"
+    Route::get('/counties/my', [CountyController::class, 'myCounties']);
+    Route::post('/counties/attach', [CountyController::class, 'attach']);
+    Route::delete('/counties/my/{countyId}', [CountyController::class, 'remove']);
+    Route::patch('/counties/my/{countyId}/primary', [CountyController::class, 'setPrimary']);
+    Route::get('/counties/search/operators', [CountyController::class, 'searchOperators']);
 
     // Rotas "2FA"
     Route::get('/auth/2fa/status', [TwoFactorController::class, 'status']);

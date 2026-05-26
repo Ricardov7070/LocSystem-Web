@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
+use App\Models\County\County;
+use App\Models\User\User;
 
 class UserCounty extends Model
 {
@@ -23,4 +25,14 @@ class UserCounty extends Model
     protected $casts = [
         'b_is_primary' => 'boolean',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'i_user_id', 'i_id');
+    }
+
+    public function county()
+    {
+        return $this->belongsTo(County::class, 'i_county_id', 'i_id');
+    }
 }

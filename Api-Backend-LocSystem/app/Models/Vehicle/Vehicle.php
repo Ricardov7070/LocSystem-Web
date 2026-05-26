@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
 use App\Models\LegalAdvisoryAccess\LegalAdvisoryAccess;
+use App\Models\User\User;
 
 class Vehicle extends Model
 {
@@ -40,6 +41,11 @@ class Vehicle extends Model
     public function legalAdvisoryAccess()
     {
         return $this->belongsTo(LegalAdvisoryAccess::class, 'i_legal_advisory_access_id', 'i_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'i_user_id', 'i_id');
     }
 
     public function getLegalAdvisoryNameAttribute(): ?string

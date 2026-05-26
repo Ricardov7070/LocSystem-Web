@@ -43,11 +43,44 @@ type AdvisoryUser = {
   isActive: boolean;
 };
 
+const PHONE_MAX_DIGITS = 11;
+const PHONE_MAX_LENGTH = 15;
+const NAME_MAX_LENGTH = 100;
+const EMAIL_MAX_LENGTH = 50;
+
+function limitName(value: string) {
+  return value.slice(0, NAME_MAX_LENGTH);
+}
+
+function limitEmail(value: string) {
+  return value.slice(0, EMAIL_MAX_LENGTH);
+}
+
+function normalizePhoneDigits(value: string) {
+  return value.replace(/\D/g, '').slice(0, PHONE_MAX_DIGITS);
+}
+
+function formatPhoneValue(value: string) {
+  const digits = normalizePhoneDigits(value);
+
+  if (!digits) return '';
+  if (digits.length <= 2) return `(${digits}`;
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
 const advisoryUserFormSchema = z
   .object({
-    v_name: z.string().min(1, 'Nome e obrigatorio'),
-    v_email: z.string().email('Email invalido'),
-    v_phone: z.string().min(10, 'Telefone invalido'),
+    v_name: z.string().trim().min(1, 'Nome e obrigatorio').max(NAME_MAX_LENGTH, 'Nome deve ter no maximo 100 caracteres'),
+    v_email: z.string().trim().min(1, 'Email e obrigatorio').max(EMAIL_MAX_LENGTH, 'Email deve ter no maximo 50 caracteres').email('Email invalido'),
+    v_phone: z
+      .string()
+      .max(PHONE_MAX_LENGTH, 'Telefone invalido')
+      .refine((value) => {
+        const digits = normalizePhoneDigits(value);
+        return digits.length >= 10 && digits.length <= PHONE_MAX_DIGITS;
+      }, 'Telefone invalido'),
     v_password: z.string().min(8, 'Minimo 8 caracteres'),
     confirmPassword: z.string().min(1, 'Confirmacao obrigatoria'),
     legalAdvisoryIds: z.array(z.string()).min(1, 'Selecione ao menos uma assessoria'),
@@ -60,37 +93,89 @@ const advisoryUserFormSchema = z
 type AdvisoryUserFormSchema = z.infer<typeof advisoryUserFormSchema>;
 
 const advisoryUserEditSchema = z.object({
-  v_name: z.string().min(1, 'Nome e obrigatorio'),
-  v_email: z.string().email('Email invalido'),
-  v_phone: z.string().min(10, 'Telefone invalido'),
+  v_name: z.string().trim().min(1, 'Nome e obrigatorio').max(NAME_MAX_LENGTH, 'Nome deve ter no maximo 100 caracteres'),
+  v_email: z.string().trim().min(1, 'Email e obrigatorio').max(EMAIL_MAX_LENGTH, 'Email deve ter no maximo 50 caracteres').email('Email invalido'),
+  v_phone: z
+    .string()
+    .max(PHONE_MAX_LENGTH, 'Telefone invalido')
+    .refine((value) => {
+      const digits = normalizePhoneDigits(value);
+      return digits.length >= 10 && digits.length <= PHONE_MAX_DIGITS;
+    }, 'Telefone invalido'),
   legalAdvisoryIds: z.array(z.string()).min(1, 'Selecione ao menos uma assessoria'),
 });
 
 type AdvisoryUserEditSchema = z.infer<typeof advisoryUserEditSchema>;
+
+function RequiredLabel({ children }: { children: string }) {
+  return (
+    <>
+      {children}
+      <span className="ml-1 text-red-500">*</span>
+    </>
+  );
+}
 
 function AdvisoryUserForm({ form }: { form: UseFormReturn<AdvisoryUserFormSchema> }) {
   return (
     <>
       <FormField control={form.control} name="v_name" render={({ field }) => (
         <FormItem>
-          <FormLabel>Nome</FormLabel>
-          <FormControl><Input placeholder="Nome completo" {...field} /></FormControl>
+          <FormLabel><RequiredLabel>Nome</RequiredLabel></FormLabel>
+          <FormControl>
+            <Input
+              placeholder="Nome completo"
+              maxLength={NAME_MAX_LENGTH}
+              {...field}
+              value={typeof field.value === 'string' ? limitName(field.value) : ''}
+              onChange={(event) => {
+                const nextValue = limitName(event.target.value);
+                event.target.value = nextValue;
+                field.onChange(nextValue);
+              }}
+            />
+          </FormControl>
           <FormMessage />
         </FormItem>
       )} />
 
       <FormField control={form.control} name="v_email" render={({ field }) => (
         <FormItem>
-          <FormLabel>E-mail</FormLabel>
-          <FormControl><Input type="email" placeholder="email@exemplo.com" {...field} /></FormControl>
+          <FormLabel><RequiredLabel>E-mail</RequiredLabel></FormLabel>
+          <FormControl>
+            <Input
+              type="email"
+              placeholder="email@exemplo.com"
+              maxLength={EMAIL_MAX_LENGTH}
+              {...field}
+              value={typeof field.value === 'string' ? limitEmail(field.value) : ''}
+              onChange={(event) => {
+                const nextValue = limitEmail(event.target.value);
+                event.target.value = nextValue;
+                field.onChange(nextValue);
+              }}
+            />
+          </FormControl>
           <FormMessage />
         </FormItem>
       )} />
 
       <FormField control={form.control} name="v_phone" render={({ field }) => (
         <FormItem>
-          <FormLabel>Telefone</FormLabel>
-          <FormControl><Input placeholder="(00) 00000-0000" {...field} /></FormControl>
+          <FormLabel><RequiredLabel>Telefone</RequiredLabel></FormLabel>
+          <FormControl>
+            <Input
+              placeholder="(00) 00000-0000"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={PHONE_MAX_LENGTH}
+              value={field.value ?? ''}
+              onChange={(event) => field.onChange(formatPhoneValue(event.target.value))}
+              onBlur={field.onBlur}
+              name={field.name}
+              ref={field.ref}
+            />
+          </FormControl>
           <FormMessage />
         </FormItem>
       )} />
@@ -98,14 +183,14 @@ function AdvisoryUserForm({ form }: { form: UseFormReturn<AdvisoryUserFormSchema
       <div className="grid grid-cols-2 gap-4">
         <FormField control={form.control} name="v_password" render={({ field }) => (
           <FormItem>
-            <FormLabel>Senha</FormLabel>
+            <FormLabel><RequiredLabel>Senha</RequiredLabel></FormLabel>
             <FormControl><Input type="password" placeholder="Senha" {...field} /></FormControl>
             <FormMessage />
           </FormItem>
         )} />
         <FormField control={form.control} name="confirmPassword" render={({ field }) => (
           <FormItem>
-            <FormLabel>Confirmar senha</FormLabel>
+            <FormLabel><RequiredLabel>Confirmar senha</RequiredLabel></FormLabel>
             <FormControl><Input type="password" placeholder="Confirmar senha" {...field} /></FormControl>
             <FormMessage />
           </FormItem>
@@ -114,7 +199,7 @@ function AdvisoryUserForm({ form }: { form: UseFormReturn<AdvisoryUserFormSchema
 
       <FormField control={form.control} name="legalAdvisoryIds" render={({ field }) => (
         <FormItem>
-          <FormLabel>Assessorias Juridicas</FormLabel>
+          <FormLabel><RequiredLabel>Assessorias Juridicas</RequiredLabel></FormLabel>
           <FormControl>
             <LegalAdvisoryMultiSelectCombobox
               value={field.value || []}
@@ -134,31 +219,68 @@ function AdvisoryUserEditForm({ form }: { form: UseFormReturn<AdvisoryUserEditSc
     <>
       <FormField control={form.control} name="v_name" render={({ field }) => (
         <FormItem>
-          <FormLabel>Nome</FormLabel>
-          <FormControl><Input placeholder="Nome completo" {...field} /></FormControl>
+          <FormLabel><RequiredLabel>Nome</RequiredLabel></FormLabel>
+          <FormControl>
+            <Input
+              placeholder="Nome completo"
+              maxLength={NAME_MAX_LENGTH}
+              {...field}
+              value={typeof field.value === 'string' ? limitName(field.value) : ''}
+              onChange={(event) => {
+                const nextValue = limitName(event.target.value);
+                event.target.value = nextValue;
+                field.onChange(nextValue);
+              }}
+            />
+          </FormControl>
           <FormMessage />
         </FormItem>
       )} />
 
       <FormField control={form.control} name="v_email" render={({ field }) => (
         <FormItem>
-          <FormLabel>E-mail</FormLabel>
-          <FormControl><Input type="email" placeholder="email@exemplo.com" {...field} /></FormControl>
+          <FormLabel><RequiredLabel>E-mail</RequiredLabel></FormLabel>
+          <FormControl>
+            <Input
+              type="email"
+              placeholder="email@exemplo.com"
+              maxLength={EMAIL_MAX_LENGTH}
+              {...field}
+              value={typeof field.value === 'string' ? limitEmail(field.value) : ''}
+              onChange={(event) => {
+                const nextValue = limitEmail(event.target.value);
+                event.target.value = nextValue;
+                field.onChange(nextValue);
+              }}
+            />
+          </FormControl>
           <FormMessage />
         </FormItem>
       )} />
 
       <FormField control={form.control} name="v_phone" render={({ field }) => (
         <FormItem>
-          <FormLabel>Telefone</FormLabel>
-          <FormControl><Input placeholder="(00) 00000-0000" {...field} /></FormControl>
+          <FormLabel><RequiredLabel>Telefone</RequiredLabel></FormLabel>
+          <FormControl>
+            <Input
+              placeholder="(00) 00000-0000"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={PHONE_MAX_LENGTH}
+              value={field.value ?? ''}
+              onChange={(event) => field.onChange(formatPhoneValue(event.target.value))}
+              onBlur={field.onBlur}
+              name={field.name}
+              ref={field.ref}
+            />
+          </FormControl>
           <FormMessage />
         </FormItem>
       )} />
 
       <FormField control={form.control} name="legalAdvisoryIds" render={({ field }) => (
         <FormItem>
-          <FormLabel>Assessorias Juridicas</FormLabel>
+          <FormLabel><RequiredLabel>Assessorias Juridicas</RequiredLabel></FormLabel>
           <FormControl>
             <LegalAdvisoryMultiSelectCombobox
               value={field.value || []}
@@ -242,7 +364,7 @@ export default function AdvisoryUsersPage() {
     await dialog.form('Adicionar Usuario de Assessoria', {
       description: 'Preencha os dados do usuario',
       schema: advisoryUserFormSchema,
-      submitText: 'Adicionar Usuario',
+      submitText: 'Salvar',
       defaultValues: {
         v_name: '',
         v_email: '',
@@ -257,7 +379,7 @@ export default function AdvisoryUsersPage() {
           const payload = {
             v_name: data.v_name,
             v_email: data.v_email,
-            v_phone: data.v_phone,
+            v_phone: normalizePhoneDigits(data.v_phone),
             v_password: data.v_password,
             legalAdvisoryIds: data.legalAdvisoryIds.map((id) => Number(id)),
           };
@@ -284,11 +406,12 @@ export default function AdvisoryUsersPage() {
     await dialog.form('Editar Usuario de Assessoria', {
       description: 'Atualize os dados do usuario',
       schema: advisoryUserEditSchema,
-      submitText: 'Salvar alteracoes',
+      submitText: 'Atualizar',
+      submitIcon: <Pencil className="ml-2 size-4" />,
       defaultValues: {
         v_name: item.v_name,
         v_email: item.v_email,
-        v_phone: item.v_phone ?? '',
+        v_phone: formatPhoneValue(item.v_phone ?? ''),
         legalAdvisoryIds: item.legalAdvisoryIds ?? [],
       },
       form: (form) => <AdvisoryUserEditForm form={form} />,
@@ -297,7 +420,7 @@ export default function AdvisoryUsersPage() {
           const payload = {
             v_name: data.v_name,
             v_email: data.v_email,
-            v_phone: data.v_phone,
+            v_phone: normalizePhoneDigits(data.v_phone),
             legalAdvisoryIds: data.legalAdvisoryIds.map((id) => Number(id)),
           };
           const response = await updateMutation.mutateAsync({ id: item.i_id, payload });
@@ -424,7 +547,7 @@ export default function AdvisoryUsersPage() {
                 <button className="flex items-center justify-center gap-1" onClick={() => handleSort('created_at')}>
                   Cadastrado em <SortIcon colKey="created_at" sortKey={sortKey} sortDir={sortDir} />
                 </button>
-                <div className="text-center">Acoes</div>
+                <div className="text-center">Ações</div>
               </div>
             </div>
 
@@ -456,7 +579,7 @@ export default function AdvisoryUsersPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => onEdit(user)}>
                             <Pencil className="mr-2 size-4" />
-                            Editar
+                            Atualizar
                           </DropdownMenuItem>
                           <DropdownMenuItem className="text-red-500 focus:text-red-500" onClick={() => onDelete(user)}>
                             <Trash2 className="mr-2 size-4" />

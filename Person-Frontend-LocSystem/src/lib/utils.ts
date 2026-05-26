@@ -36,7 +36,7 @@ export function formatPhone(value: string) {
   const digits = stripNonDigits(value).slice(0, 11);
 
   if (!digits.length) {
-    return value.trim();
+    return '';
   }
 
   if (digits.length <= 2) return digits.length ? `(${digits}` : '';

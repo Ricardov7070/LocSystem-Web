@@ -7,7 +7,12 @@ use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
+use App\Models\County\County;
 use App\Models\LegalAdvisoryAccess\LegalAdvisoryAccess;
+use App\Models\PricingPlan\PricingPlan;
+use App\Models\Session\Session;
+use App\Models\UserCounty\UserCounty;
+use App\Models\Vehicle\Vehicle;
 
 class User extends Authenticatable
 {
@@ -61,8 +66,45 @@ class User extends Authenticatable
         return $this->hasMany(LegalAdvisoryAccess::class, 'i_user_id', 'i_id');
     }
 
+    public function pricingPlan()
+    {
+        return $this->belongsTo(PricingPlan::class, 'i_pricing_plan_id', 'i_id');
+    }
+
     public function operator()
     {
         return $this->belongsTo(self::class, 'i_operator_id', 'i_id');
+    }
+
+    public function prepostos()
+    {
+        return $this->hasMany(self::class, 'i_operator_id', 'i_id');
+    }
+
+    public function userCounties()
+    {
+        return $this->hasMany(UserCounty::class, 'i_user_id', 'i_id');
+    }
+
+    public function counties()
+    {
+        return $this->belongsToMany(County::class, 'user_counties', 'i_user_id', 'i_county_id')
+            ->withPivot('i_id', 'b_is_primary', 'created_at', 'updated_at', 'deleted_at')
+            ->wherePivotNull('deleted_at');
+    }
+
+    public function ownedCounties()
+    {
+        return $this->hasMany(County::class, 'i_user_id', 'i_id');
+    }
+
+    public function vehicles()
+    {
+        return $this->hasMany(Vehicle::class, 'i_user_id', 'i_id');
+    }
+
+    public function sessions()
+    {
+        return $this->hasMany(Session::class, 'i_user_id', 'i_id');
     }
 }

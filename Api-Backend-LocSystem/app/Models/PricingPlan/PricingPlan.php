@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
+use App\Models\User\User;
 
 class PricingPlan extends Model
 {
@@ -24,4 +25,9 @@ class PricingPlan extends Model
     protected $casts = [
         'b_is_active' => 'boolean',
     ];
+
+    public function users()
+    {
+        return $this->hasMany(User::class, 'i_pricing_plan_id', 'i_id');
+    }
 }
