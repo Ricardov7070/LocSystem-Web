@@ -5,7 +5,6 @@ import { useCallback, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   CarFront,
-  Camera,
   Wallet,
   Scale,
   Users,
