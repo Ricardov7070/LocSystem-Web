@@ -371,7 +371,7 @@ export default function MyDeputiesPage() {
             </div>
             {isLoading ? (
               <div className="p-4">
-                <DataTableSkeleton rows={5} columns={6} />
+                <DataTableSkeleton columnCount={6} rowCount={6} />
               </div>
             ) : deputies.length === 0 ? (
               <DataTableEmptyState
