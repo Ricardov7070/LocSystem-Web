@@ -87,7 +87,7 @@ class UserServiceAuthentication {
             throw new HttpException(401, 'Credenciais inválidas!');
         }
 
-        if ($user->v_banned) {
+        if ($user->b_banned) {
             throw new HttpException(401, 'Usuário Banido, entre em contato com o administrador do sistema!');
         }
         

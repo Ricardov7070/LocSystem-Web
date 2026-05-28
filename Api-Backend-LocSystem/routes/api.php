@@ -3,7 +3,9 @@
 use App\Http\Controllers\User\UserAuthenticationController;
 use App\Http\Controllers\User\UserRegistrationController;
 use App\Http\Controllers\User\TwoFactorController;
+use App\Http\Controllers\User\AdminUserController;
 use App\Http\Controllers\User\AdvisoryUserController;
+use App\Http\Controllers\User\MyDeputyController;
 use App\Http\Controllers\User\OperatorController;
 use App\Http\Controllers\County\CountyController;
 use App\Http\Controllers\Vehicle\VehicleController;
@@ -64,21 +66,42 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/advisory-users/{id}', [AdvisoryUserController::class, 'findOne']);
     Route::post('/advisory-users', [AdvisoryUserController::class, 'create']);
     Route::put('/advisory-users/{id}', [AdvisoryUserController::class, 'update']);
+    Route::patch('/advisory-users/{id}/approval', [AdvisoryUserController::class, 'approve']);
     Route::patch('/advisory-users/{id}/status', [AdvisoryUserController::class, 'toggleStatus']);
+    Route::patch('/advisory-users/{id}/subscription', [AdvisoryUserController::class, 'renewSubscription']);
     Route::patch('/advisory-users/{id}/password', [AdvisoryUserController::class, 'changePassword']);
     Route::post('/advisory-users/{id}/reset-2fa', [AdvisoryUserController::class, 'resetTwoFactor']);
     Route::delete('/advisory-users/{id}', [AdvisoryUserController::class, 'delete']);
+
+    // Rotas "Administradores"
+    Route::get('/admin-users', [AdminUserController::class, 'list']);
+    Route::get('/admin-users/{id}', [AdminUserController::class, 'findOne']);
+    Route::post('/admin-users', [AdminUserController::class, 'create']);
+    Route::put('/admin-users/{id}', [AdminUserController::class, 'update']);
+    Route::patch('/admin-users/{id}/approval', [AdminUserController::class, 'approve']);
+    Route::patch('/admin-users/{id}/status', [AdminUserController::class, 'toggleStatus']);
+    Route::patch('/admin-users/{id}/password', [AdminUserController::class, 'changePassword']);
+    Route::post('/admin-users/{id}/reset-2fa', [AdminUserController::class, 'resetTwoFactor']);
+    Route::delete('/admin-users/{id}', [AdminUserController::class, 'delete']);
 
     // Rotas "Localizadores"
     Route::get('/operators', [OperatorController::class, 'list']);
     Route::get('/operators/{id}', [OperatorController::class, 'findOne']);
     Route::post('/operators', [OperatorController::class, 'create']);
     Route::put('/operators/{id}', [OperatorController::class, 'update']);
+    Route::patch('/operators/{id}/approval', [OperatorController::class, 'approve']);
     Route::patch('/operators/{id}/status', [OperatorController::class, 'toggleStatus']);
     Route::patch('/operators/{id}/subscription', [OperatorController::class, 'renewSubscription']);
     Route::patch('/operators/{id}/password', [OperatorController::class, 'changePassword']);
     Route::post('/operators/{id}/reset-2fa', [OperatorController::class, 'resetTwoFactor']);
     Route::delete('/operators/{id}', [OperatorController::class, 'delete']);
+
+    // Rotas "Meus Prepostos"
+    Route::get('/my-deputies', [MyDeputyController::class, 'list']);
+    Route::post('/my-deputies', [MyDeputyController::class, 'create']);
+    Route::patch('/my-deputies/{id}/approval', [MyDeputyController::class, 'approve']);
+    Route::patch('/my-deputies/{id}/status', [MyDeputyController::class, 'toggleStatus']);
+    Route::post('/my-deputies/{id}/reset-2fa', [MyDeputyController::class, 'resetTwoFactor']);
 
     // Rotas "Comarcas"
     Route::get('/counties/my', [CountyController::class, 'myCounties']);

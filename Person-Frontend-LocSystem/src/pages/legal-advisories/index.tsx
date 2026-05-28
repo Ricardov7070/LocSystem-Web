@@ -578,7 +578,7 @@ function LegalAdvisoriesTable() {
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleEdit(item)}>
                             <Pencil className="mr-2 size-4" />
-                            Editar
+                            Atualizar
                           </DropdownMenuItem>
                           <DropdownMenuItem className="text-red-500 focus:text-red-500" onClick={() => handleDelete(item)}>
                             <Trash2 className="mr-2 size-4" />

@@ -283,6 +283,480 @@
                 ]
             }
         },
+        "/api/counties/my": {
+            "get": {
+                "tags": [
+                    "Comarcas"
+                ],
+                "summary": "Retorna as comarcas vinculadas ao localizador autenticado.",
+                "operationId": "5e9ce4cd30ff8ff6eb1f817ae737c0ab",
+                "responses": {
+                    "200": {
+                        "description": "Comarcas retornadas com sucesso no campo userCounties. A lista prioriza a comarca principal."
+                    },
+                    "401": {
+                        "description": "Acesso negado. Apenas localizadores autenticados podem consultar suas comarcas."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao consultar as comarcas do usuário."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/counties/attach": {
+            "post": {
+                "tags": [
+                    "Comarcas"
+                ],
+                "summary": "Vincula uma comarca ao localizador autenticado, criando ou reativando o vínculo quando necessário.",
+                "operationId": "813be6b695c1562abefa7b16bdf993d3",
+                "responses": {
+                    "201": {
+                        "description": "Comarca vinculada com sucesso e vínculo retornado no campo userCounty."
+                    },
+                    "401": {
+                        "description": "Acesso negado. Apenas localizadores autenticados podem vincular comarcas."
+                    },
+                    "409": {
+                        "description": "O usuário já está vinculado à comarca informada."
+                    },
+                    "422": {
+                        "description": "Erro de validação nos dados enviados para vínculo da comarca."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao vincular a comarca ao usuário."
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "v_name": {
+                                        "type": "string",
+                                        "minLength": 2,
+                                        "maxLength": 255
+                                    },
+                                    "v_state": {
+                                        "type": "string"
+                                    },
+                                    "b_is_primary": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "v_name",
+                                    "v_state"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/counties/my/{countyId}": {
+            "delete": {
+                "tags": [
+                    "Comarcas"
+                ],
+                "summary": "Remove o vínculo entre o localizador autenticado e uma comarca específica.",
+                "operationId": "b9e39188c202f00231f0aaa5fee602b3",
+                "responses": {
+                    "200": {
+                        "description": "Comarca removida com sucesso e confirmação retornada no campo result."
+                    },
+                    "401": {
+                        "description": "Acesso negado ou vínculo inexistente para a comarca informada."
+                    },
+                    "409": {
+                        "description": "A remoção não pode ser concluída porque o usuário deve permanecer vinculado a pelo menos uma comarca."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao remover o vínculo da comarca."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "countyId",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota countyId.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/counties/my/{countyId}/primary": {
+            "patch": {
+                "tags": [
+                    "Comarcas"
+                ],
+                "summary": "Define uma das comarcas do localizador autenticado como comarca principal.",
+                "operationId": "f8eb549ecb6f354b3e33402d72b66b25",
+                "responses": {
+                    "200": {
+                        "description": "Comarca principal atualizada com sucesso e vínculo atualizado retornado no campo userCounty."
+                    },
+                    "401": {
+                        "description": "Acesso negado ou vínculo inexistente para a comarca informada."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao definir a comarca principal."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "countyId",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota countyId.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/counties/search/operators": {
+            "get": {
+                "tags": [
+                    "Comarcas"
+                ],
+                "summary": "Busca localizadores vinculados a comarcas com filtros por usuário e comarca.",
+                "operationId": "7edaf3cf25142c06baa671f4da85b8b6",
+                "responses": {
+                    "200": {
+                        "description": "Operadores retornados com sucesso no campo operators, incluindo dados do usuário, comarca e indicação de vínculo principal."
+                    },
+                    "401": {
+                        "description": "Acesso negado. Apenas administradores e auditores podem consultar operadores por comarca."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao buscar operadores por comarca."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/incidences-history": {
+            "get": {
+                "tags": [
+                    "Incidências"
+                ],
+                "summary": "Retorna o histórico de incidências acessíveis ao usuário autenticado.",
+                "operationId": "8b079fd5091f44523a1878b0827bb9dd",
+                "responses": {
+                    "200": {
+                        "description": "Incidências retornadas com sucesso, incluindo a lista no campo incidences."
+                    },
+                    "403": {
+                        "description": "O usuário não possui permissão para consultar o histórico solicitado."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao listar o histórico de incidências."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/incidences-history/count": {
+            "get": {
+                "tags": [
+                    "Incidências"
+                ],
+                "summary": "Retorna a quantidade total de incidências do histórico conforme os filtros informados.",
+                "operationId": "dfc52c9a635e035a8d8397268538930f",
+                "responses": {
+                    "200": {
+                        "description": "Contagem retornada com sucesso no campo count."
+                    },
+                    "403": {
+                        "description": "O usuário não possui permissão para consultar a contagem solicitada."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao contar as incidências do histórico."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/incidences-history/{id}": {
+            "get": {
+                "tags": [
+                    "Incidências"
+                ],
+                "summary": "Retorna os detalhes de uma incidência específica do histórico.",
+                "operationId": "ed4a6ec8004208cf4d69e200ee99181a",
+                "responses": {
+                    "200": {
+                        "description": "Incidência retornada com sucesso no campo incidence."
+                    },
+                    "403": {
+                        "description": "O usuário não possui permissão para acessar a incidência informada."
+                    },
+                    "404": {
+                        "description": "Incidência não encontrada."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao consultar a incidência."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Incidências"
+                ],
+                "summary": "Remove uma incidência do histórico quando o usuário possui permissão sobre o registro.",
+                "operationId": "981e660477e16cf4a84e1a9a24a21d7e",
+                "responses": {
+                    "200": {
+                        "description": "Incidência removida com sucesso e dados do registro removido retornados no campo incidence."
+                    },
+                    "403": {
+                        "description": "O usuário não possui permissão para remover a incidência informada."
+                    },
+                    "404": {
+                        "description": "Incidência não encontrada."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao remover a incidência."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/retroactive-incidences": {
+            "get": {
+                "tags": [
+                    "Incidências"
+                ],
+                "summary": "Retorna a lista de incidências retroativas acessíveis ao usuário autenticado.",
+                "operationId": "ee453e60680a90d351b2718128bacd81",
+                "responses": {
+                    "200": {
+                        "description": "Incidências retroativas retornadas com sucesso no campo incidences."
+                    },
+                    "403": {
+                        "description": "O usuário não possui permissão para consultar as incidências retroativas."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao listar as incidências retroativas."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/retroactive-incidences/count": {
+            "get": {
+                "tags": [
+                    "Incidências"
+                ],
+                "summary": "Retorna a quantidade total de incidências retroativas conforme os filtros aplicados.",
+                "operationId": "397142acabb466aad77f8ab60a3661af",
+                "responses": {
+                    "200": {
+                        "description": "Contagem de incidências retroativas retornada com sucesso no campo count."
+                    },
+                    "403": {
+                        "description": "O usuário não possui permissão para consultar a contagem de incidências retroativas."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao contar as incidências retroativas."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/retroactive-incidences/{id}": {
+            "get": {
+                "tags": [
+                    "Incidências"
+                ],
+                "summary": "Retorna os detalhes de uma incidência retroativa específica.",
+                "operationId": "97313704dd2380977322cd5c8e9e675b",
+                "responses": {
+                    "200": {
+                        "description": "Incidência retroativa retornada com sucesso no campo incidence."
+                    },
+                    "403": {
+                        "description": "O usuário não possui permissão para acessar a incidência retroativa informada."
+                    },
+                    "404": {
+                        "description": "Incidência retroativa não encontrada."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao consultar a incidência retroativa."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Incidências"
+                ],
+                "summary": "Remove uma incidência retroativa e retorna os metadados do registro excluído.",
+                "operationId": "370975a10bc6834a90533225a976d04d",
+                "responses": {
+                    "200": {
+                        "description": "Incidência retroativa removida com sucesso e dados retornados no campo retroactive."
+                    },
+                    "403": {
+                        "description": "O usuário não possui permissão para remover a incidência retroativa informada."
+                    },
+                    "404": {
+                        "description": "Incidência retroativa não encontrada."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao remover a incidência retroativa."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/retroactive-incidences/{id}/read": {
+            "post": {
+                "tags": [
+                    "Incidências"
+                ],
+                "summary": "Marca uma incidência retroativa como lida e retorna os metadados atualizados.",
+                "operationId": "16c1710674ed0cd174c42889d307daa2",
+                "responses": {
+                    "200": {
+                        "description": "Incidência retroativa marcada como lida com sucesso e retorno no campo retroactive."
+                    },
+                    "403": {
+                        "description": "O usuário não possui permissão para alterar a incidência retroativa informada."
+                    },
+                    "404": {
+                        "description": "Incidência retroativa não encontrada."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao marcar a incidência retroativa como lida."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/legalAdvisories": {
             "post": {
                 "tags": [
@@ -895,6 +1369,1716 @@
                 ]
             }
         },
+        "/api/admin-users": {
+            "get": {
+                "tags": [
+                    "Administradores"
+                ],
+                "summary": "Lista os administradores cadastrados com filtros por busca e periodo.",
+                "operationId": "577ee0bbbdcbbe057fb59b9ce782eb64",
+                "responses": {
+                    "200": {
+                        "description": "Administradores retornados com sucesso no campo adminUsers."
+                    },
+                    "401": {
+                        "description": "Acesso negado. Apenas administradores podem consultar administradores."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao listar os administradores."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Administradores"
+                ],
+                "summary": "Cadastra um novo administrador com acesso inicial ao sistema.",
+                "operationId": "2797df51dc649387ebccfcb22fd0d31e",
+                "responses": {
+                    "201": {
+                        "description": "Administrador cadastrado com sucesso e retornado no campo adminUser."
+                    },
+                    "401": {
+                        "description": "Acesso negado. Apenas administradores podem cadastrar novos administradores."
+                    },
+                    "409": {
+                        "description": "O e-mail informado ja esta em uso por outro usuario."
+                    },
+                    "422": {
+                        "description": "Erro de validacao nos dados enviados para cadastro do administrador."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao cadastrar o administrador."
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "v_name": {
+                                        "type": "string",
+                                        "minLength": 3,
+                                        "maxLength": 255
+                                    },
+                                    "v_email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "v_phone": {
+                                        "type": "string",
+                                        "minLength": 10,
+                                        "maxLength": 20
+                                    },
+                                    "v_password": {
+                                        "type": "string",
+                                        "minLength": 8,
+                                        "maxLength": 32
+                                    }
+                                },
+                                "required": [
+                                    "v_name",
+                                    "v_email",
+                                    "v_phone",
+                                    "v_password"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin-users/{id}": {
+            "get": {
+                "tags": [
+                    "Administradores"
+                ],
+                "summary": "Retorna os detalhes de um administrador especifico.",
+                "operationId": "7348205e3a6f34152b5b04746d49477b",
+                "responses": {
+                    "200": {
+                        "description": "Administrador retornado com sucesso no campo adminUser."
+                    },
+                    "401": {
+                        "description": "Acesso negado ou administrador nao encontrado."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao consultar o administrador."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Administradores"
+                ],
+                "summary": "Atualiza os dados cadastrais de um administrador.",
+                "operationId": "364a4cd8e3c19bfea38ea286efb10bc2",
+                "responses": {
+                    "200": {
+                        "description": "Administrador atualizado com sucesso e retornado no campo adminUser."
+                    },
+                    "401": {
+                        "description": "Acesso negado ou administrador nao encontrado."
+                    },
+                    "409": {
+                        "description": "Conflito de e-mail ou tentativa de gerenciar o administrador principal."
+                    },
+                    "422": {
+                        "description": "Erro de validacao nos dados enviados para atualizacao do administrador."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao atualizar o administrador."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "v_name": {
+                                        "type": "string",
+                                        "minLength": 3,
+                                        "maxLength": 255
+                                    },
+                                    "v_email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "v_phone": {
+                                        "type": "string",
+                                        "minLength": 10,
+                                        "maxLength": 20
+                                    }
+                                },
+                                "required": [
+                                    "v_name",
+                                    "v_email",
+                                    "v_phone"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Administradores"
+                ],
+                "summary": "Remove um administrador e seus vinculos de autenticacao relacionados.",
+                "operationId": "5cc62e6a7bcaef915bf7146939a5f730",
+                "responses": {
+                    "200": {
+                        "description": "Administrador removido com sucesso e confirmacao retornada no campo adminUser."
+                    },
+                    "401": {
+                        "description": "Acesso negado ou administrador nao encontrado."
+                    },
+                    "409": {
+                        "description": "Nao e permitido excluir o proprio administrador autenticado nem gerenciar o administrador principal nesta acao."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao remover o administrador."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin-users/{id}/approval": {
+            "patch": {
+                "tags": [
+                    "Administradores"
+                ],
+                "summary": "Aprova um administrador pendente para acesso ao sistema.",
+                "operationId": "8e1e03216b248437460e12b19969c3ce",
+                "responses": {
+                    "200": {
+                        "description": "Administrador aprovado com sucesso e retornado no campo adminUser."
+                    },
+                    "401": {
+                        "description": "Acesso negado ou administrador nao encontrado."
+                    },
+                    "409": {
+                        "description": "Nao e permitido aprovar o administrador principal nesta acao."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao aprovar o administrador."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin-users/{id}/status": {
+            "patch": {
+                "tags": [
+                    "Administradores"
+                ],
+                "summary": "Bloqueia ou desbloqueia um administrador conforme o status informado.",
+                "operationId": "a51bddf0c51f1bbc582a8369bfc4dce4",
+                "responses": {
+                    "200": {
+                        "description": "Status do administrador atualizado com sucesso e dados retornados no campo adminUser."
+                    },
+                    "401": {
+                        "description": "Acesso negado ou administrador nao encontrado."
+                    },
+                    "409": {
+                        "description": "Nao e permitido bloquear o proprio administrador autenticado nem gerenciar o administrador principal nesta acao."
+                    },
+                    "422": {
+                        "description": "Erro de validacao no payload de alteracao de status do administrador."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao atualizar o status do administrador."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "isActive": {
+                                        "type": "boolean"
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "maxLength": 1000
+                                    }
+                                },
+                                "required": [
+                                    "isActive"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin-users/{id}/password": {
+            "patch": {
+                "tags": [
+                    "Administradores"
+                ],
+                "summary": "Define uma nova senha para o administrador informado.",
+                "operationId": "8cc728fc8c3dd7550d624c3d33c25d7b",
+                "responses": {
+                    "200": {
+                        "description": "Senha alterada com sucesso e confirmacao retornada no campo adminUser."
+                    },
+                    "401": {
+                        "description": "Acesso negado, administrador nao encontrado ou conta de autenticacao inexistente."
+                    },
+                    "422": {
+                        "description": "Erro de validacao da nova senha informada."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao alterar a senha do administrador."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "v_password": {
+                                        "type": "string",
+                                        "minLength": 8,
+                                        "maxLength": 32
+                                    }
+                                },
+                                "required": [
+                                    "v_password"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin-users/{id}/reset-2fa": {
+            "post": {
+                "tags": [
+                    "Administradores"
+                ],
+                "summary": "Reseta a configuracao de autenticacao em dois fatores de um administrador.",
+                "operationId": "51a65762ae9bdc42c3a116baa1dd69be",
+                "responses": {
+                    "200": {
+                        "description": "2FA resetado com sucesso e confirmacao retornada no campo adminUser."
+                    },
+                    "401": {
+                        "description": "Acesso negado ou administrador nao encontrado."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao resetar o 2FA do administrador."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/advisory-users": {
+            "get": {
+                "tags": [
+                    "Usuários de Assessoria"
+                ],
+                "summary": "Lista os usuários de assessoria com suporte a filtros administrativos.",
+                "operationId": "1c84b99ea44eaddb4c2713a77e202f4f",
+                "responses": {
+                    "200": {
+                        "description": "Usuários de assessoria retornados com sucesso no campo advisoryUsers."
+                    },
+                    "401": {
+                        "description": "Acesso negado. Apenas administradores podem consultar usuários de assessoria."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao listar os usuários de assessoria."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Usuários de Assessoria"
+                ],
+                "summary": "Cadastra um novo usuário de assessoria e vincula as assessorias informadas.",
+                "operationId": "0d94d2bb567c3a56379fab18db383a57",
+                "responses": {
+                    "201": {
+                        "description": "Usuário de assessoria cadastrado com sucesso e retornado no campo advisoryUser."
+                    },
+                    "401": {
+                        "description": "Acesso negado. Apenas administradores podem cadastrar usuários de assessoria."
+                    },
+                    "409": {
+                        "description": "O e-mail informado já está em uso por outro usuário."
+                    },
+                    "422": {
+                        "description": "Erro de validação nos dados enviados ou assessoria informada inválida."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao cadastrar o usuário de assessoria."
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "v_name": {
+                                        "type": "string",
+                                        "minLength": 3,
+                                        "maxLength": 255
+                                    },
+                                    "v_email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "v_phone": {
+                                        "type": "string",
+                                        "minLength": 10,
+                                        "maxLength": 20
+                                    },
+                                    "v_password": {
+                                        "type": "string",
+                                        "minLength": 8,
+                                        "maxLength": 32
+                                    },
+                                    "legalAdvisoryIds": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "properties": []
+                                        },
+                                        "minItems": 1
+                                    }
+                                },
+                                "required": [
+                                    "v_name",
+                                    "v_email",
+                                    "v_phone",
+                                    "v_password",
+                                    "legalAdvisoryIds"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/advisory-users/{id}": {
+            "get": {
+                "tags": [
+                    "Usuários de Assessoria"
+                ],
+                "summary": "Retorna os detalhes de um usuário de assessoria específico.",
+                "operationId": "60e5864fb2e2ce01cd59867875f8b807",
+                "responses": {
+                    "200": {
+                        "description": "Usuário de assessoria retornado com sucesso no campo advisoryUser."
+                    },
+                    "401": {
+                        "description": "Acesso negado ou usuário de assessoria não encontrado."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao consultar o usuário de assessoria."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Usuários de Assessoria"
+                ],
+                "summary": "Atualiza os dados e os vínculos de assessorias de um usuário de assessoria.",
+                "operationId": "4340cecbd4e02ce8e961311e3251c268",
+                "responses": {
+                    "200": {
+                        "description": "Usuário de assessoria atualizado com sucesso e retornado no campo advisoryUser."
+                    },
+                    "401": {
+                        "description": "Acesso negado ou usuário de assessoria não encontrado."
+                    },
+                    "409": {
+                        "description": "O e-mail informado já está em uso por outro usuário."
+                    },
+                    "422": {
+                        "description": "Erro de validação nos dados enviados ou assessoria informada inválida."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao atualizar o usuário de assessoria."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "v_name": {
+                                        "type": "string",
+                                        "minLength": 3,
+                                        "maxLength": 255
+                                    },
+                                    "v_email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "v_phone": {
+                                        "type": "string",
+                                        "minLength": 10,
+                                        "maxLength": 20
+                                    },
+                                    "legalAdvisoryIds": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "properties": []
+                                        },
+                                        "minItems": 1
+                                    }
+                                },
+                                "required": [
+                                    "v_name",
+                                    "v_email",
+                                    "v_phone",
+                                    "legalAdvisoryIds"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Usuários de Assessoria"
+                ],
+                "summary": "Remove um usuário de assessoria quando não houver veículos vinculados aos seus acessos.",
+                "operationId": "7f130bf02b1179f3d5ee3e34d8457c9c",
+                "responses": {
+                    "200": {
+                        "description": "Usuário de assessoria removido com sucesso e confirmação retornada no campo advisoryUser."
+                    },
+                    "401": {
+                        "description": "Acesso negado ou usuário de assessoria não encontrado."
+                    },
+                    "409": {
+                        "description": "O usuário não pode ser removido porque possui veículos vinculados às assessorias acessíveis."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao remover o usuário de assessoria."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/advisory-users/{id}/approval": {
+            "patch": {
+                "tags": [
+                    "Usuários de Assessoria"
+                ],
+                "summary": "Aprova um usuário de assessoria para acesso ao sistema.",
+                "operationId": "e9cb828146754f5f8be51829690e7d8c",
+                "responses": {
+                    "200": {
+                        "description": "Usuário de assessoria aprovado com sucesso e retornado no campo advisoryUser."
+                    },
+                    "401": {
+                        "description": "Acesso negado ou usuário de assessoria não encontrado."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao aprovar o usuário de assessoria."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/advisory-users/{id}/status": {
+            "patch": {
+                "tags": [
+                    "Usuários de Assessoria"
+                ],
+                "summary": "Ativa ou bloqueia um usuário de assessoria.",
+                "operationId": "dacfa6fce2bb0c4cc47cab42a3b8b5a7",
+                "responses": {
+                    "200": {
+                        "description": "Status do usuário atualizado com sucesso e dados retornados no campo advisoryUser."
+                    },
+                    "401": {
+                        "description": "Acesso negado ou usuário de assessoria não encontrado."
+                    },
+                    "422": {
+                        "description": "Erro de validação no payload de alteração de status."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao atualizar o status do usuário de assessoria."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "isActive": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "isActive"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/advisory-users/{id}/subscription": {
+            "patch": {
+                "tags": [
+                    "Usuários de Assessoria"
+                ],
+                "summary": "Renova a assinatura de um usuário de assessoria.",
+                "operationId": "9835009267b3d9ca0acb8f664ddfa125",
+                "responses": {
+                    "200": {
+                        "description": "Assinatura renovada com sucesso e dados atualizados retornados no campo advisoryUser."
+                    },
+                    "401": {
+                        "description": "Acesso negado ou usuário de assessoria não encontrado."
+                    },
+                    "422": {
+                        "description": "Erro de validação nos dados de renovação da assinatura."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao renovar a assinatura do usuário de assessoria."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "d_subscription_expires_at": {
+                                        "type": "string",
+                                        "format": "date"
+                                    }
+                                },
+                                "required": [
+                                    "d_subscription_expires_at"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/advisory-users/{id}/password": {
+            "patch": {
+                "tags": [
+                    "Usuários de Assessoria"
+                ],
+                "summary": "Define uma nova senha para o usuário de assessoria informado.",
+                "operationId": "76eb54bc8449aff131d09ac0033e8d40",
+                "responses": {
+                    "200": {
+                        "description": "Senha alterada com sucesso e confirmação retornada no campo advisoryUser."
+                    },
+                    "401": {
+                        "description": "Acesso negado, usuário de assessoria não encontrado ou conta de autenticação inexistente."
+                    },
+                    "422": {
+                        "description": "Erro de validação da nova senha informada."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao alterar a senha do usuário de assessoria."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "v_password": {
+                                        "type": "string",
+                                        "minLength": 8,
+                                        "maxLength": 32
+                                    }
+                                },
+                                "required": [
+                                    "v_password"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/advisory-users/{id}/reset-2fa": {
+            "post": {
+                "tags": [
+                    "Usuários de Assessoria"
+                ],
+                "summary": "Reseta a configuração de autenticação em dois fatores de um usuário de assessoria.",
+                "operationId": "553392599f7f2284fef83825db429984",
+                "responses": {
+                    "200": {
+                        "description": "2FA resetado com sucesso e confirmação retornada no campo advisoryUser."
+                    },
+                    "401": {
+                        "description": "Acesso negado ou usuário de assessoria não encontrado."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao resetar o 2FA do usuário de assessoria."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/advisory-users/my-tenants": {
+            "get": {
+                "tags": [
+                    "Usuários de Assessoria"
+                ],
+                "summary": "Retorna as assessorias jurídicas às quais o usuário de assessoria autenticado possui acesso.",
+                "operationId": "7cb3c30fca38b527bdf582ee161711f6",
+                "responses": {
+                    "200": {
+                        "description": "Tenants retornados com sucesso no campo tenants, incluindo dados básicos da assessoria e da carteira associada quando existir."
+                    },
+                    "401": {
+                        "description": "Acesso negado. Apenas usuários de assessoria autenticados podem consultar seus tenants."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao consultar os tenants do usuário autenticado."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/my-deputies": {
+            "get": {
+                "tags": [
+                    "Prepostos"
+                ],
+                "summary": "Lista os prepostos acessiveis ao usuario autenticado com filtros por busca e periodo.",
+                "operationId": "a0aca4d8fa9aa0c7625d7c4581843c65",
+                "responses": {
+                    "200": {
+                        "description": "Prepostos retornados com sucesso no campo deputies."
+                    },
+                    "401": {
+                        "description": "Acesso negado. Apenas administradores e operadores podem consultar prepostos."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao listar os prepostos."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Prepostos"
+                ],
+                "summary": "Cadastra um novo preposto vinculado ao operador autenticado.",
+                "operationId": "e796469c955acd3a0136fddab9112d9b",
+                "responses": {
+                    "201": {
+                        "description": "Preposto cadastrado com sucesso e retornado no campo deputy."
+                    },
+                    "401": {
+                        "description": "Acesso negado. Apenas operadores podem cadastrar prepostos."
+                    },
+                    "409": {
+                        "description": "Operador sem permissao operacional, e-mail ja utilizado ou limite de prepostos atingido."
+                    },
+                    "422": {
+                        "description": "Erro de validacao nos dados enviados para cadastro do preposto."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao cadastrar o preposto."
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "v_name": {
+                                        "type": "string",
+                                        "minLength": 3,
+                                        "maxLength": 255
+                                    },
+                                    "v_email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "maxLength": 255
+                                    },
+                                    "v_phone": {
+                                        "type": "string",
+                                        "maxLength": 11
+                                    },
+                                    "v_password": {
+                                        "type": "string",
+                                        "minLength": 8,
+                                        "maxLength": 16
+                                    }
+                                },
+                                "required": [
+                                    "v_name",
+                                    "v_email",
+                                    "v_phone",
+                                    "v_password"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/my-deputies/{id}/approval": {
+            "patch": {
+                "tags": [
+                    "Prepostos"
+                ],
+                "summary": "Aprova um preposto para acesso ao sistema.",
+                "operationId": "9cc1bd09d965fd6419596cf49aec3850",
+                "responses": {
+                    "200": {
+                        "description": "Preposto aprovado com sucesso e retornado no campo deputy."
+                    },
+                    "401": {
+                        "description": "Acesso negado ou preposto nao encontrado."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao aprovar o preposto."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/my-deputies/{id}/status": {
+            "patch": {
+                "tags": [
+                    "Prepostos"
+                ],
+                "summary": "Bloqueia ou desbloqueia um preposto conforme o status informado.",
+                "operationId": "03642cd6c91778a4354d81e925f8cc62",
+                "responses": {
+                    "200": {
+                        "description": "Status do preposto atualizado com sucesso e dados retornados no campo deputy."
+                    },
+                    "401": {
+                        "description": "Acesso negado ou preposto nao encontrado."
+                    },
+                    "409": {
+                        "description": "O desbloqueio nao pode ser realizado antes da aprovacao, com operador bloqueado ou quando a assinatura nao estiver ativa."
+                    },
+                    "422": {
+                        "description": "Erro de validacao no payload de alteracao de status do preposto."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao atualizar o status do preposto."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "isActive": {
+                                        "type": "boolean"
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "maxLength": 1000
+                                    }
+                                },
+                                "required": [
+                                    "isActive"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/my-deputies/{id}/reset-2fa": {
+            "post": {
+                "tags": [
+                    "Prepostos"
+                ],
+                "summary": "Reseta a configuracao de autenticacao em dois fatores de um preposto.",
+                "operationId": "6b0c62763843b74fa486e0e39ea8fe39",
+                "responses": {
+                    "200": {
+                        "description": "2FA resetado com sucesso e confirmacao retornada no campo deputy."
+                    },
+                    "401": {
+                        "description": "Acesso negado ou preposto nao encontrado."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao resetar o 2FA do preposto."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/operators": {
+            "get": {
+                "tags": [
+                    "Localizadores"
+                ],
+                "summary": "Lista os localizadores cadastrados com suporte a filtros administrativos.",
+                "operationId": "cb3534cd600d6fc1baf21ec79dcd4ae1",
+                "responses": {
+                    "200": {
+                        "description": "Localizadores retornados com sucesso no campo operators."
+                    },
+                    "401": {
+                        "description": "Acesso negado. Apenas administradores podem consultar localizadores."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao listar os localizadores."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Localizadores"
+                ],
+                "summary": "Cadastra um novo localizador com dados de acesso e assinatura.",
+                "operationId": "c507826c26152f3b428b290a867ef869",
+                "responses": {
+                    "201": {
+                        "description": "Localizador cadastrado com sucesso e retornado no campo operator."
+                    },
+                    "401": {
+                        "description": "Acesso negado. Apenas administradores podem cadastrar localizadores."
+                    },
+                    "409": {
+                        "description": "E-mail já utilizado ou plano obrigatório não informado para localizador mensalista."
+                    },
+                    "422": {
+                        "description": "Erro de validação nos dados enviados para cadastro do localizador."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao cadastrar o localizador."
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "v_name": {
+                                        "type": "string",
+                                        "minLength": 3,
+                                        "maxLength": 255
+                                    },
+                                    "v_email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "maxLength": 255
+                                    },
+                                    "v_password": {
+                                        "type": "string",
+                                        "minLength": 8,
+                                        "maxLength": 64
+                                    },
+                                    "v_document": {
+                                        "type": "string"
+                                    },
+                                    "v_phone": {
+                                        "type": "string",
+                                        "minLength": 10,
+                                        "maxLength": 11
+                                    },
+                                    "i_user_limit": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                    },
+                                    "b_is_courtesy": {
+                                        "type": "boolean"
+                                    },
+                                    "i_pricing_plan_id": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    }
+                                },
+                                "required": [
+                                    "v_name",
+                                    "v_email",
+                                    "v_password",
+                                    "v_document",
+                                    "v_phone",
+                                    "i_pricing_plan_id"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/operators/{id}": {
+            "get": {
+                "tags": [
+                    "Localizadores"
+                ],
+                "summary": "Retorna os detalhes de um localizador específico.",
+                "operationId": "8d2a147b41639f46bc4d711710680b9a",
+                "responses": {
+                    "200": {
+                        "description": "Localizador retornado com sucesso no campo operator."
+                    },
+                    "401": {
+                        "description": "Acesso negado ou localizador não encontrado."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao consultar o localizador."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Localizadores"
+                ],
+                "summary": "Atualiza os dados cadastrais e comerciais de um localizador.",
+                "operationId": "ea822e842f49934e88fb914174267b0d",
+                "responses": {
+                    "200": {
+                        "description": "Localizador atualizado com sucesso e retornado no campo operator."
+                    },
+                    "401": {
+                        "description": "Acesso negado ou localizador não encontrado."
+                    },
+                    "409": {
+                        "description": "Conflito de e-mail, limite de prepostos inválido ou plano obrigatório não informado."
+                    },
+                    "422": {
+                        "description": "Erro de validação nos dados enviados para atualização do localizador."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao atualizar o localizador."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "v_name": {
+                                        "type": "string",
+                                        "minLength": 3,
+                                        "maxLength": 255
+                                    },
+                                    "v_email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "maxLength": 255
+                                    },
+                                    "v_document": {
+                                        "type": "string"
+                                    },
+                                    "v_phone": {
+                                        "type": "string",
+                                        "minLength": 10,
+                                        "maxLength": 11
+                                    },
+                                    "i_user_limit": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                    },
+                                    "b_is_courtesy": {
+                                        "type": "boolean"
+                                    },
+                                    "i_pricing_plan_id": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    }
+                                },
+                                "required": [
+                                    "v_name",
+                                    "v_email",
+                                    "v_document",
+                                    "v_phone",
+                                    "i_pricing_plan_id"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Localizadores"
+                ],
+                "summary": "Remove um localizador e seus vínculos administrativos relacionados.",
+                "operationId": "2ff042c830fd9c75d1a29f83073dd650",
+                "responses": {
+                    "200": {
+                        "description": "Localizador removido com sucesso e confirmação retornada no campo operator."
+                    },
+                    "401": {
+                        "description": "Acesso negado ou localizador não encontrado."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao remover o localizador."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/operators/{id}/approval": {
+            "patch": {
+                "tags": [
+                    "Localizadores"
+                ],
+                "summary": "Aprova um localizador para acesso ao sistema.",
+                "operationId": "f03da2fa4d37996a1ed12b79c073b597",
+                "responses": {
+                    "200": {
+                        "description": "Localizador aprovado com sucesso e dados atualizados retornados no campo operator."
+                    },
+                    "401": {
+                        "description": "Acesso negado ou localizador não encontrado."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao aprovar o localizador."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/operators/{id}/status": {
+            "patch": {
+                "tags": [
+                    "Localizadores"
+                ],
+                "summary": "Bloqueia ou desbloqueia um localizador conforme o status informado.",
+                "operationId": "7b9ba40c0b7ece3d0be3ce8d758985d4",
+                "responses": {
+                    "200": {
+                        "description": "Status do localizador atualizado com sucesso e dados retornados no campo operator."
+                    },
+                    "401": {
+                        "description": "Acesso negado ou localizador não encontrado."
+                    },
+                    "409": {
+                        "description": "O desbloqueio não pode ser realizado porque a assinatura do localizador não está ativa."
+                    },
+                    "422": {
+                        "description": "Erro de validação no payload de alteração de status."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao atualizar o status do localizador."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "isActive": {
+                                        "type": "boolean"
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "maxLength": 1000
+                                    }
+                                },
+                                "required": [
+                                    "isActive"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/operators/{id}/subscription": {
+            "patch": {
+                "tags": [
+                    "Localizadores"
+                ],
+                "summary": "Renova a assinatura de um localizador mensalista.",
+                "operationId": "14635a6fc73c9e7fd587e874202427b6",
+                "responses": {
+                    "200": {
+                        "description": "Assinatura renovada com sucesso e dados atualizados retornados no campo operator."
+                    },
+                    "401": {
+                        "description": "Acesso negado ou localizador não encontrado."
+                    },
+                    "409": {
+                        "description": "A renovação não pode ser realizada para localizador cortesia ou sem plano válido."
+                    },
+                    "422": {
+                        "description": "Erro de validação nos dados de renovação da assinatura."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao renovar a assinatura do localizador."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "d_subscription_expires_at": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "i_pricing_plan_id": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    }
+                                },
+                                "required": [
+                                    "d_subscription_expires_at"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/operators/{id}/password": {
+            "patch": {
+                "tags": [
+                    "Localizadores"
+                ],
+                "summary": "Define uma nova senha para o localizador informado.",
+                "operationId": "ea08aa315358c0e76aa1a96c373093b8",
+                "responses": {
+                    "200": {
+                        "description": "Senha alterada com sucesso e confirmação retornada no campo operator."
+                    },
+                    "401": {
+                        "description": "Acesso negado, localizador não encontrado ou conta de autenticação inexistente."
+                    },
+                    "422": {
+                        "description": "Erro de validação da nova senha informada."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao alterar a senha do localizador."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "v_password": {
+                                        "type": "string",
+                                        "minLength": 8,
+                                        "maxLength": 64
+                                    }
+                                },
+                                "required": [
+                                    "v_password"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/operators/{id}/reset-2fa": {
+            "post": {
+                "tags": [
+                    "Localizadores"
+                ],
+                "summary": "Reseta a configuração de autenticação em dois fatores de um localizador.",
+                "operationId": "8bb36abcd1640be4d823c7fbc47460a8",
+                "responses": {
+                    "200": {
+                        "description": "2FA resetado com sucesso e confirmação retornada no campo operator."
+                    },
+                    "401": {
+                        "description": "Acesso negado ou localizador não encontrado."
+                    },
+                    "500": {
+                        "description": "Ocorreu um erro inesperado ao resetar o 2FA do localizador."
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "description": "Parametro de rota id.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/auth/signin": {
             "post": {
                 "tags": [
@@ -1248,9 +3432,7 @@
                                         "enum": [
                                             "ADMIN",
                                             "OPERATOR",
-                                            "AUDITOR",
-                                            "OLHEIRO",
-                                            "LINKED_USER"
+                                            "AUDITOR"
                                         ]
                                     }
                                 },
@@ -1509,13 +3691,12 @@
                                         "maxLength": 11
                                     },
                                     "i_legal_advisory_access_id": {
-                                        "type": "string",
-                                        "maxLength": 14
+                                        "type": "integer",
+                                        "minimum": 1
                                     }
                                 },
                                 "required": [
                                     "v_plate",
-                                    "v_plate_mercosul",
                                     "v_model",
                                     "v_phone",
                                     "i_legal_advisory_access_id"
@@ -1590,13 +3771,12 @@
                                         "maxLength": 11
                                     },
                                     "i_legal_advisory_access_id": {
-                                        "type": "string",
-                                        "maxLength": 14
+                                        "type": "integer",
+                                        "minimum": 1
                                     }
                                 },
                                 "required": [
                                     "v_plate",
-                                    "v_plate_mercosul",
                                     "v_model",
                                     "v_phone",
                                     "i_legal_advisory_access_id"
@@ -2235,6 +4415,14 @@
             "description": "Camera de Monitoramento"
         },
         {
+            "name": "Comarcas",
+            "description": "Comarcas"
+        },
+        {
+            "name": "Incidências",
+            "description": "Incidências"
+        },
+        {
             "name": "Gerenciamento de Assessorias Jurídicas",
             "description": "Gerenciamento de Assessorias Jurídicas"
         },
@@ -2249,6 +4437,22 @@
         {
             "name": "Gerenciamento de Sessões",
             "description": "Gerenciamento de Sessões"
+        },
+        {
+            "name": "Administradores",
+            "description": "Administradores"
+        },
+        {
+            "name": "Usuários de Assessoria",
+            "description": "Usuários de Assessoria"
+        },
+        {
+            "name": "Prepostos",
+            "description": "Prepostos"
+        },
+        {
+            "name": "Localizadores",
+            "description": "Localizadores"
         },
         {
             "name": "Gerenciamento de Usuário",

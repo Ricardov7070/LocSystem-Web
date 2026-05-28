@@ -4,6 +4,7 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AdvisoryUserManagementRequests\AdvisoryUserChangePasswordRequest;
+use App\Http\Requests\AdvisoryUserManagementRequests\AdvisoryUserRenewSubscriptionRequest;
 use App\Http\Requests\AdvisoryUserManagementRequests\AdvisoryUserStoreRequest;
 use App\Http\Requests\AdvisoryUserManagementRequests\AdvisoryUserToggleStatusRequest;
 use App\Http\Requests\AdvisoryUserManagementRequests\AdvisoryUserUpdateRequest;
@@ -27,27 +28,6 @@ class AdvisoryUserController extends Controller
      *     path="/api/advisory-users",
      *     summary="Lista os usuários de assessoria com suporte a filtros administrativos.",
      *     tags={"Usuários de Assessoria"},
-     *     @OA\Parameter(
-     *         name="search",
-     *         in="query",
-     *         required=false,
-     *         description="Texto para busca por nome ou e-mail do usuário de assessoria.",
-     *         @OA\Schema(type="string", example="maria")
-     *     ),
-     *     @OA\Parameter(
-     *         name="data_inicial",
-     *         in="query",
-     *         required=false,
-     *         description="Data inicial de cadastro para filtrar os usuários.",
-     *         @OA\Schema(type="string", format="date", example="2026-01-01")
-     *     ),
-     *     @OA\Parameter(
-     *         name="data_final",
-     *         in="query",
-     *         required=false,
-     *         description="Data final de cadastro para filtrar os usuários.",
-     *         @OA\Schema(type="string", format="date", example="2026-12-31")
-     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Usuários de assessoria retornados com sucesso no campo advisoryUsers."
@@ -90,13 +70,6 @@ class AdvisoryUserController extends Controller
      *     path="/api/advisory-users/{id}",
      *     summary="Retorna os detalhes de um usuário de assessoria específico.",
      *     tags={"Usuários de Assessoria"},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         required=true,
-     *         description="Identificador do usuário de assessoria.",
-     *         @OA\Schema(type="integer", example=8)
-     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Usuário de assessoria retornado com sucesso no campo advisoryUser."
@@ -139,23 +112,6 @@ class AdvisoryUserController extends Controller
      *     path="/api/advisory-users",
      *     summary="Cadastra um novo usuário de assessoria e vincula as assessorias informadas.",
      *     tags={"Usuários de Assessoria"},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         description="Dados necessários para cadastro do usuário de assessoria.",
-     *         @OA\JsonContent(
-     *             required={"v_name","v_email","v_phone","v_password","legalAdvisoryIds"},
-     *             @OA\Property(property="v_name", type="string", maxLength=255, example="Maria Souza", description="Nome completo do usuário de assessoria."),
-     *             @OA\Property(property="v_email", type="string", format="email", example="maria@assessoria.com", description="E-mail de acesso do usuário."),
-     *             @OA\Property(property="v_phone", type="string", maxLength=20, example="11999999999", description="Telefone de contato do usuário."),
-     *             @OA\Property(property="v_password", type="string", minLength=8, maxLength=32, example="Senha123!", description="Senha inicial da conta."),
-     *             @OA\Property(
-     *                 property="legalAdvisoryIds",
-     *                 type="array",
-     *                 description="Lista de assessorias jurídicas às quais o usuário terá acesso.",
-     *                 @OA\Items(type="integer", example=3)
-     *             )
-     *         )
-     *     ),
      *     @OA\Response(
      *         response=201,
      *         description="Usuário de assessoria cadastrado com sucesso e retornado no campo advisoryUser."
@@ -206,29 +162,6 @@ class AdvisoryUserController extends Controller
      *     path="/api/advisory-users/{id}",
      *     summary="Atualiza os dados e os vínculos de assessorias de um usuário de assessoria.",
      *     tags={"Usuários de Assessoria"},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         required=true,
-     *         description="Identificador do usuário de assessoria que será atualizado.",
-     *         @OA\Schema(type="integer", example=8)
-     *     ),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         description="Dados atualizados do usuário de assessoria.",
-     *         @OA\JsonContent(
-     *             required={"v_name","v_email","v_phone","legalAdvisoryIds"},
-     *             @OA\Property(property="v_name", type="string", maxLength=255, example="Maria Souza", description="Nome completo do usuário de assessoria."),
-     *             @OA\Property(property="v_email", type="string", format="email", example="maria@assessoria.com", description="E-mail de acesso do usuário."),
-     *             @OA\Property(property="v_phone", type="string", maxLength=20, example="11999999999", description="Telefone de contato do usuário."),
-     *             @OA\Property(
-     *                 property="legalAdvisoryIds",
-     *                 type="array",
-     *                 description="Lista atualizada de assessorias jurídicas às quais o usuário terá acesso.",
-     *                 @OA\Items(type="integer", example=3)
-     *             )
-     *         )
-     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Usuário de assessoria atualizado com sucesso e retornado no campo advisoryUser."
@@ -275,17 +208,52 @@ class AdvisoryUserController extends Controller
 
 
     /**
+     * @OA\Patch(
+     *     path="/api/advisory-users/{id}/approval",
+     *     summary="Aprova um usuário de assessoria para acesso ao sistema.",
+     *     tags={"Usuários de Assessoria"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Usuário de assessoria aprovado com sucesso e retornado no campo advisoryUser."
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Acesso negado ou usuário de assessoria não encontrado."
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Ocorreu um erro inesperado ao aprovar o usuário de assessoria."
+     *     ),
+     * )
+     */
+    public function approve($id): JsonResponse {
+        try {
+
+            $this->ensureAdmin();
+            $user = $this->service->approve((int) $id, (int) auth()->id());
+
+            return response()->json([
+                'success' => 'Usuário de assessoria aprovado com sucesso!',
+                'advisoryUser' => $user,
+            ], 200);
+
+        } catch (HttpException $e) {
+
+            return $this->httpExceptionResponse($e);
+
+        } catch (\Throwable $th) {
+
+            return response()->json(['error' => 'Ocorreu um erro inesperado, tente novamente!'], 500);
+
+        }
+    }
+
+
+    /**
      * @OA\Delete(
      *     path="/api/advisory-users/{id}",
      *     summary="Remove um usuário de assessoria quando não houver veículos vinculados aos seus acessos.",
      *     tags={"Usuários de Assessoria"},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         required=true,
-     *         description="Identificador do usuário de assessoria que será removido.",
-     *         @OA\Schema(type="integer", example=8)
-     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Usuário de assessoria removido com sucesso e confirmação retornada no campo advisoryUser."
@@ -332,21 +300,6 @@ class AdvisoryUserController extends Controller
      *     path="/api/advisory-users/{id}/status",
      *     summary="Ativa ou bloqueia um usuário de assessoria.",
      *     tags={"Usuários de Assessoria"},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         required=true,
-     *         description="Identificador do usuário de assessoria cujo status será alterado.",
-     *         @OA\Schema(type="integer", example=8)
-     *     ),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         description="Dados para ativar ou bloquear o usuário de assessoria.",
-     *         @OA\JsonContent(
-     *             required={"isActive"},
-     *             @OA\Property(property="isActive", type="boolean", example=false, description="Indica se o usuário deve ficar ativo ou bloqueado.")
-     *         )
-     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Status do usuário atualizado com sucesso e dados retornados no campo advisoryUser."
@@ -390,24 +343,59 @@ class AdvisoryUserController extends Controller
 
     /**
      * @OA\Patch(
+     *     path="/api/advisory-users/{id}/subscription",
+     *     summary="Renova a assinatura de um usuário de assessoria.",
+     *     tags={"Usuários de Assessoria"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Assinatura renovada com sucesso e dados atualizados retornados no campo advisoryUser."
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Acesso negado ou usuário de assessoria não encontrado."
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Erro de validação nos dados de renovação da assinatura."
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Ocorreu um erro inesperado ao renovar a assinatura do usuário de assessoria."
+     *     ),
+     * )
+     */
+    public function renewSubscription(AdvisoryUserRenewSubscriptionRequest $request, $id): JsonResponse {
+        try {
+
+            $this->ensureAdmin();
+            $user = $this->service->renewSubscription(
+                (int) $id,
+                (string) $request->input('d_subscription_expires_at'),
+                (int) auth()->id()
+            );
+
+            return response()->json([
+                'success' => 'Assinatura renovada com sucesso!',
+                'advisoryUser' => $user,
+            ], 200);
+
+        } catch (HttpException $e) {
+
+            return $this->httpExceptionResponse($e);
+
+        } catch (\Throwable $th) {
+
+            return response()->json(['error' => 'Ocorreu um erro inesperado, tente novamente!'], 500);
+
+        }
+    }
+
+
+    /**
+     * @OA\Patch(
      *     path="/api/advisory-users/{id}/password",
      *     summary="Define uma nova senha para o usuário de assessoria informado.",
      *     tags={"Usuários de Assessoria"},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         required=true,
-     *         description="Identificador do usuário de assessoria que terá a senha alterada.",
-     *         @OA\Schema(type="integer", example=8)
-     *     ),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         description="Nova senha do usuário de assessoria.",
-     *         @OA\JsonContent(
-     *             required={"v_password"},
-     *             @OA\Property(property="v_password", type="string", minLength=8, maxLength=32, example="NovaSenha123!", description="Nova senha da conta do usuário.")
-     *         )
-     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Senha alterada com sucesso e confirmação retornada no campo advisoryUser."
@@ -454,13 +442,6 @@ class AdvisoryUserController extends Controller
      *     path="/api/advisory-users/{id}/reset-2fa",
      *     summary="Reseta a configuração de autenticação em dois fatores de um usuário de assessoria.",
      *     tags={"Usuários de Assessoria"},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         required=true,
-     *         description="Identificador do usuário de assessoria que terá o 2FA resetado.",
-     *         @OA\Schema(type="integer", example=8)
-     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="2FA resetado com sucesso e confirmação retornada no campo advisoryUser."

@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, Ban, Ellipsis, KeyRound, Pencil, RefreshCcw, ShieldAlert, ShieldCheck, Trash2 } from 'lucide-react';
+import { AlertTriangle, Ban, CheckCheck, Ellipsis, KeyRound, Pencil, RefreshCcw, ShieldAlert, ShieldCheck, Trash2 } from 'lucide-react';
 
 import api from '../../services/api';
 import { Topbar } from '../../components/layout/app-topbar';
@@ -46,6 +46,9 @@ type OperatorDetail = {
   v_document: string | null;
   v_phone: string | null;
   e_role: string;
+  e_approval_status: 'APPROVED' | 'PENDING' | 'REJECTED' | string;
+  d_approved_at: string | null;
+  v_approved_by: string | null;
   b_banned: boolean;
   t_ban_reason: string | null;
   b_is_courtesy: boolean;
@@ -110,6 +113,22 @@ function getStatusLabel(operator: OperatorDetail) {
   return labels[operator.e_subscriptionStatus] ?? operator.e_subscriptionStatus;
 }
 
+function getApprovalLabel(status: OperatorDetail['e_approval_status']) {
+  if (!status) return 'Pendente';
+  if (status === 'APPROVED') return 'Aprovado';
+  if (status === 'PENDING') return 'Pendente';
+  if (status === 'REJECTED') return 'Reprovado';
+  return status;
+}
+
+function getApprovalBadgeClass(status: OperatorDetail['e_approval_status']) {
+  if (!status) return 'bg-amber-50 text-amber-700 ring-amber-200';
+  if (status === 'APPROVED') return 'bg-emerald-50 text-emerald-700 ring-emerald-200';
+  if (status === 'PENDING') return 'bg-amber-50 text-amber-700 ring-amber-200';
+  if (status === 'REJECTED') return 'bg-red-50 text-red-700 ring-red-200';
+  return 'bg-slate-100 text-slate-700 ring-slate-200';
+}
+
 function getStatusBadgeClass(operator: OperatorDetail) {
   if (operator.b_banned) return 'bg-red-50 text-red-700 ring-red-200';
   if (operator.b_is_courtesy || operator.e_subscriptionStatus === 'ACTIVE') {
@@ -123,7 +142,11 @@ function getStatusBadgeClass(operator: OperatorDetail) {
 }
 
 function needsSubscriptionAlert(operator: OperatorDetail) {
-  return operator.b_banned || (!operator.b_is_courtesy && operator.e_subscriptionStatus !== 'ACTIVE');
+  return (
+    operator.e_approval_status !== 'APPROVED' ||
+    operator.b_banned ||
+    (!operator.b_is_courtesy && operator.e_subscriptionStatus !== 'ACTIVE')
+  );
 }
 
 async function fetchPricingPlans() {
@@ -179,6 +202,13 @@ export default function OperatorDetailPage() {
   const statusMutation = useMutation({
     mutationFn: async ({ operatorId, payload }: { operatorId: number; payload: Record<string, unknown> }) => {
       const response = await api.patch(`/operators/${operatorId}/status`, payload);
+      return response.data;
+    },
+  });
+
+  const approvalMutation = useMutation({
+    mutationFn: async (operatorId: number) => {
+      const response = await api.patch(`/operators/${operatorId}/approval`);
       return response.data;
     },
   });
@@ -541,6 +571,29 @@ export default function OperatorDetailPage() {
     }
   }
 
+  async function handleApprove() {
+    if (!operator || operator.e_approval_status === 'APPROVED') return;
+
+    const confirmed = await dialog.confirm('Aprovar localizador', {
+      description: `Deseja aprovar o localizador ${operator.v_name} para acesso ao sistema?`,
+      actionText: 'Aprovar',
+      cancelText: 'Cancelar',
+    });
+
+    if (!confirmed) return;
+
+    try {
+      const response = await approvalMutation.mutateAsync(operator.i_id);
+      setAlertInfo({ message: response?.success ?? 'Localizador aprovado com sucesso.', type: 'success' });
+      await refreshOperator();
+    } catch (error: any) {
+      setAlertInfo({
+        message: error?.response?.data?.info ?? error?.response?.data?.error ?? 'Erro ao aprovar localizador.',
+        type: 'error',
+      });
+    }
+  }
+
   async function handleDelete() {
     if (!operator) return;
 
@@ -571,7 +624,7 @@ export default function OperatorDetailPage() {
 
   return (
     <>
-      {(updateMutation.isPending || renewMutation.isPending || passwordMutation.isPending || statusMutation.isPending || reset2FAMutation.isPending || deleteMutation.isPending) && <Loading />}
+      {(updateMutation.isPending || renewMutation.isPending || passwordMutation.isPending || statusMutation.isPending || approvalMutation.isPending || reset2FAMutation.isPending || deleteMutation.isPending) && <Loading />}
       {alertInfo ? (
         <div className="fixed right-4 top-4 z-[9999]">
           <CustomAlert message={alertInfo.message} type={alertInfo.type} onClose={() => setAlertInfo(null)} />
@@ -601,6 +654,12 @@ export default function OperatorDetailPage() {
               <Pencil className="size-4" />
               Atualizar
             </DropdownMenuItem>
+            {operator.e_approval_status !== 'APPROVED' ? (
+              <DropdownMenuItem onClick={handleApprove} className={successMenuItemClass}>
+                <CheckCheck className="size-4" />
+                Aprovar usuario
+              </DropdownMenuItem>
+            ) : null}
             {!operator.b_is_courtesy ? (
               <DropdownMenuItem onClick={handleRenew} className={successMenuItemClass}>
                 <RefreshCcw className="size-4" />
@@ -611,10 +670,12 @@ export default function OperatorDetailPage() {
               <KeyRound className="size-4" />
               Alterar senha
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleReset2FA} className={warningMenuItemClass}>
-              <ShieldAlert className="size-4" />
-              Resetar 2FA
-            </DropdownMenuItem>
+            {operator.b_twoFactorEnabled ? (
+              <DropdownMenuItem onClick={handleReset2FA} className={warningMenuItemClass}>
+                <ShieldAlert className="size-4" />
+                Resetar 2FA
+              </DropdownMenuItem>
+            ) : null}
             <DropdownMenuItem
               onClick={handleToggleStatus}
               className={operator.b_banned ? successMenuItemClass : dangerMenuItemClass}
@@ -634,11 +695,19 @@ export default function OperatorDetailPage() {
         {needsSubscriptionAlert(operator) ? (
           <Alert className="border-red-500/40 bg-red-950/20 text-red-100">
             <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>{operator.b_banned ? 'Localizador bloqueado' : 'Assinatura inativa'}</AlertTitle>
+            <AlertTitle>
+              {operator.e_approval_status !== 'APPROVED'
+                ? 'Localizador pendente de aprovacao'
+                : operator.b_banned
+                  ? 'Localizador bloqueado'
+                  : 'Assinatura inativa'}
+            </AlertTitle>
             <AlertDescription>
-              {operator.b_banned
-                ? operator.t_ban_reason || 'Este localizador esta bloqueado no momento.'
-                : 'Este localizador nao possui uma assinatura ativa.'}
+              {operator.e_approval_status !== 'APPROVED'
+                ? 'Este localizador ainda nao foi aprovado para acessar o sistema.'
+                : operator.b_banned
+                  ? operator.t_ban_reason || 'Este localizador esta bloqueado no momento.'
+                  : 'Este localizador nao possui uma assinatura ativa.'}
             </AlertDescription>
           </Alert>
         ) : null}
@@ -654,6 +723,10 @@ export default function OperatorDetailPage() {
                   { label: 'Documento', value: formatCpfCnpj(operator.v_document ?? '') || '-' },
                   { label: 'Telefone', value: formatPhone(operator.v_phone ?? '') || '-' },
                   { label: 'Funcao', value: <Badge variant="secondary">{operator.e_role}</Badge> },
+                  {
+                    label: 'Aprovacao',
+                    value: <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ring-1 ${getApprovalBadgeClass(operator.e_approval_status)}`}>{getApprovalLabel(operator.e_approval_status)}</span>,
+                  },
                   { label: 'Status', value: <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ring-1 ${getStatusBadgeClass(operator)}`}>{getStatusLabel(operator)}</span> },
                   { label: 'Tipo de acesso', value: <Badge>{operator.b_is_courtesy ? 'Cortesia' : 'Mensalista'}</Badge> },
                   { label: 'Limite de prepostos', value: `${operator.active_prepostos_count} ativos de ${operator.i_user_limit}` },

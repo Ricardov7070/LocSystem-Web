@@ -297,6 +297,28 @@ class OperatorService
     }
 
 
+    // Método para aprovar um localizador pendente
+    public function approve(int $id, int $adminId) {
+        $operator = $this->findOperatorModel($id);
+
+        $operator->update([
+            'e_approval_status' => 'APPROVED',
+            't_approval_reason' => null,
+            'd_approved_at' => now(),
+            'v_approved_by' => (string) $adminId,
+        ]);
+
+        $this->logsService->createLog(
+            $adminId,
+            'Aprovação de Localizador',
+            ['i_user_id' => $id],
+            'Localizador aprovado com sucesso'
+        );
+
+        return $this->findOne($id);
+    }
+
+
     // Método para alternar o status de um localizador
     public function toggleStatus(int $id, bool $isActive, ?string $reason, int $adminId) {
         $operator = $this->findOperatorModel($id);
@@ -580,6 +602,9 @@ class OperatorService
             'v_document' => $operator->v_document,
             'v_phone' => $operator->v_phone,
             'e_role' => $operator->e_role,
+            'e_approval_status' => $operator->e_approval_status,
+            'd_approved_at' => $operator->d_approved_at,
+            'v_approved_by' => $operator->v_approved_by,
             'b_banned' => (bool) $operator->b_banned,
             't_ban_reason' => $operator->t_ban_reason,
             'd_ban_when' => $operator->d_ban_when,

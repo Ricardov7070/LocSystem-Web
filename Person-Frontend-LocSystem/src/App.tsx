@@ -14,6 +14,8 @@ const TwoFactorPage = lazy(() => import("./pages/two-factor"));
 const VehiclesPage = lazy(() => import("./pages/vehicles"));
 const OperatorsPage = lazy(() => import("./pages/operators"));
 const OperatorDetailPage = lazy(() => import("./pages/operators/detail"));
+const AdminUsersPage = lazy(() => import("./pages/admin-users"));
+const AdminUserDetailPage = lazy(() => import("./pages/admin-users/detail"));
 const AdvisoryUsersPage = lazy(() => import("./pages/advisory-users"));
 const AdvisoryUserDetailPage = lazy(() => import("./pages/advisory-users/detail"));
 const MyDeputiesPage = lazy(() => import("./pages/my-deputies"));
@@ -29,6 +31,7 @@ const SearchByCountyPage = lazy(() => import("./pages/search-by-county"));
 const SessionsPage = lazy(() => import("./pages/sessions"));
 const BanidosPage = lazy(() => import("./pages/banidos"));
 const LogsPage = lazy(() => import("./pages/logs"));
+const CameraMonitoringPage = lazy(() => import("./pages/camera-monitoring"));
 
 type GuardedRouteProps = {
   path: string;
@@ -70,6 +73,8 @@ const App: React.FC = () => {
             <Route path="/vehicles" element={<GuardedRoute path="/vehicles" element={<VehiclesPage />} />} />
             <Route path="/users/operators" element={<GuardedRoute path="/users/operators" element={<OperatorsPage />} />} />
             <Route path="/users/operators/:id" element={<GuardedRoute path="/users/operators" element={<OperatorDetailPage />} />} />
+            <Route path="/users/admin-users" element={<GuardedRoute path="/users/admin-users" element={<AdminUsersPage />} />} />
+            <Route path="/users/admin-users/:id" element={<GuardedRoute path="/users/admin-users" element={<AdminUserDetailPage />} />} />
             <Route path="/users/advisory-users" element={<GuardedRoute path="/users/advisory-users" element={<AdvisoryUsersPage />} />} />
             <Route path="/users/advisory-users/:id" element={<GuardedRoute path="/users/advisory-users" element={<AdvisoryUserDetailPage />} />} />
             <Route path="/users/my-deputies" element={<GuardedRoute path="/users/my-deputies" element={<MyDeputiesPage />} />} />
@@ -82,6 +87,7 @@ const App: React.FC = () => {
             <Route path="/pricing" element={<GuardedRoute path="/pricing" element={<PricingPage />} />} />
             <Route path="/vehicle-announcements" element={<GuardedRoute path="/vehicle-announcements" element={<VehicleAnnouncementsPage />} />} />
             <Route path="/search-by-county" element={<GuardedRoute path="/search-by-county" element={<SearchByCountyPage />} />} />
+            <Route path="/camera-monitoring" element={<GuardedRoute path="/camera-monitoring" element={<CameraMonitoringPage />} />} />
             <Route path="/sessions" element={<GuardedRoute path="/sessions" element={<SessionsPage />} />} />
             <Route path="/banidos" element={<GuardedRoute path="/banidos" element={<BanidosPage />} />} />
             <Route path="/logs" element={<GuardedRoute path="/logs" element={<LogsPage />} />} />

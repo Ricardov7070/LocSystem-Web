@@ -24,7 +24,7 @@ class UserRegisterRequest extends FormRequest
             'v_password' => 'required|string|min:8|max:16',
             'v_document' => 'required|string|max:14',
             'v_phone' => 'required|string|max:11|regex:/^[0-9]+$/',
-            'e_role' => 'required|string|in:ADMIN,OPERATOR,AUDITOR,OLHEIRO,LINKED_USER',
+            'e_role' => 'required|string|in:ADMIN,OPERATOR,AUDITOR',
         ];
 
     }

@@ -444,7 +444,7 @@ export default function LegalAdvisoryDetailPage() {
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={handleEdit}>
                 <Pencil className="mr-2 size-4" />
-                Editar
+                Atualizar
               </DropdownMenuItem>
               <DropdownMenuItem className="text-red-500 hover:text-red-500 focus:text-red-500" onClick={handleDelete}>
                 <Trash2 className="mr-2 size-4" />

@@ -209,9 +209,35 @@ class AdvisoryUserService
     }
 
 
+    // Método para aprovar um Usuário de Assessoria
+    public function approve(int $id, int $adminId) {
+        $user = $this->findRawAuditor($id);
+
+        $user->update([
+            'e_approval_status' => 'APPROVED',
+            't_approval_reason' => null,
+            'd_approved_at' => now(),
+            'v_approved_by' => (string) $adminId,
+        ]);
+
+        $this->logsService->createLog(
+            $adminId,
+            'Aprovação de Usuário de Assessoria',
+            ['i_user_id' => $id],
+            'Usuário de assessoria aprovado com sucesso'
+        );
+
+        return $this->findOne($id);
+    }
+
+
     // Método de ativação/desativação de um Usuário de Assessoria
     public function toggleStatus(int $id, bool $isActive, int $adminId) {
         $user = $this->findRawAuditor($id);
+
+        if ($isActive && $user->e_subscriptionStatus !== 'ACTIVE') {
+            throw new HttpException(409, 'A assinatura do usuário de assessoria não está ativa. Renove a assinatura antes de ativar.');
+        }
 
         $user->update([
             'b_banned' => !$isActive,
@@ -222,6 +248,32 @@ class AdvisoryUserService
             'Atualização de Status de Usuário de Assessoria',
             ['i_user_id' => $id, 'isActive' => $isActive],
             'Status atualizado com sucesso'
+        );
+
+        return $this->findOne($id);
+    }
+
+
+    // Método para renovar a assinatura de um Usuário de Assessoria
+    public function renewSubscription(int $id, string $expiresAt, int $adminId) {
+        $user = $this->findRawAuditor($id);
+        $expiration = new \DateTime($expiresAt);
+        $expiration->setTime(12, 0, 0);
+
+        $user->update([
+            'e_subscriptionStatus' => 'ACTIVE',
+            'd_subscriptionExpiresAt' => $expiration->format('Y-m-d H:i:s'),
+            'b_banned' => false,
+            't_ban_reason' => null,
+            'd_ban_when' => null,
+            'd_ban_expires' => null,
+        ]);
+
+        $this->logsService->createLog(
+            $adminId,
+            'Renovação de Assinatura de Usuário de Assessoria',
+            ['i_user_id' => $id, 'd_subscriptionExpiresAt' => $expiration->format(DATE_ATOM)],
+            'Assinatura renovada com sucesso'
         );
 
         return $this->findOne($id);
@@ -324,8 +376,15 @@ class AdvisoryUserService
                 'v_email' => $user->v_email,
                 'v_phone' => $user->v_phone,
                 'e_role' => $user->e_role,
+                'e_approval_status' => $user->e_approval_status,
+                'd_approved_at' => $user->d_approved_at,
+                'v_approved_by' => $user->v_approved_by,
                 'b_banned' => (bool) $user->b_banned,
+                't_ban_reason' => $user->t_ban_reason,
+                'e_subscriptionStatus' => $user->e_subscriptionStatus,
+                'd_subscriptionExpiresAt' => $user->d_subscriptionExpiresAt,
                 'b_twoFactorEnabled' => (bool) $user->b_twoFactorEnabled,
+                'b_mustChangePassword' => (bool) $user->b_mustChangePassword,
                 'created_at' => $user->created_at,
                 'updated_at' => $user->updated_at,
                 'legalAdvisoryIds' => $userAccesses->map(fn($a) => (string) $a->i_legal_advisory_id)->values(),

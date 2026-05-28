@@ -36,7 +36,7 @@ const formSchema = z.object({
   email: z.string().email('O e-mail é inválido').max(50, 'O e-mail deve ter no máximo 50 caracteres'),
   document: z.string().min(1, 'O documento é obrigatório').max(18, 'O documento deve ter no máximo 18 caracteres'),
   phone: z.string().min(1, 'O telefone é obrigatório').max(15, 'O telefone deve ter no máximo 15 caracteres'),
-  category: z.enum(['ADMIN', 'OPERATOR', 'AUDITOR', 'OLHEIRO', 'LINKED_USER'] as const, {
+  category: z.enum(['ADMIN', 'OPERATOR', 'AUDITOR'] as const, {
     error: 'O campo precisa ser uma opção válida.',
   }),
   password: z.string().min(8, 'A senha deve ter no mínimo 8 caracteres').max(16, 'A senha deve ter no máximo 16 caracteres'),
@@ -350,8 +350,6 @@ export default function Register() {
                         <SelectItem className="cursor-pointer focus:bg-white/10 focus:text-white" value="ADMIN">ADMINISTRADOR</SelectItem>
                         <SelectItem className="cursor-pointer focus:bg-white/10 focus:text-white" value="OPERATOR">OPERADOR</SelectItem>
                         <SelectItem className="cursor-pointer focus:bg-white/10 focus:text-white" value="AUDITOR">AUDITOR</SelectItem>
-                        <SelectItem className="cursor-pointer focus:bg-white/10 focus:text-white" value="OLHEIRO">OLHEIRO</SelectItem>
-                        <SelectItem className="cursor-pointer focus:bg-white/10 focus:text-white" value="LINKED_USER">USUÁRIO VINCULADO</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage className="text-red-500 font-semibold" />

@@ -5,6 +5,7 @@ import { useCallback, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   CarFront,
+  Camera,
   Wallet,
   Scale,
   Users,
@@ -100,6 +101,10 @@ const allNavItems = [
     isActive: true,
     items: [
       {
+        title: 'Cadastro Administradores',
+        url: '/users/admin-users',
+      },
+      {
         title: 'Cadastro Localizadores',
         url: '/users/operators',
       },
@@ -118,7 +123,7 @@ const allNavItems = [
     title: 'Meus Prepostos',
     url: '/users/my-deputies',
     icon: UserCheck,
-    allowedRoles: ['OPERATOR'],
+    allowedRoles: ['ADMIN', 'OPERATOR'],
   },
   {
     title: 'Incidências',
@@ -244,6 +249,7 @@ export function AppSidebar({ ...props }: AppSidebarProps) {
       if (item.title === 'Usuários') {
         const filteredItems = item.items?.filter((subItem) => {
           if (
+            subItem.title === 'Cadastro Administradores' ||
             subItem.title === 'Cadastro Localizadores' ||
             subItem.title === 'Cadastro Assessorias'
           ) {

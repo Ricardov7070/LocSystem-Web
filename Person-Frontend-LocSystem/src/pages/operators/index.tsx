@@ -53,6 +53,7 @@ type OperatorRecord = {
   v_email: string;
   v_document: string | null;
   v_phone: string | null;
+  e_approval_status: 'APPROVED' | 'PENDING' | 'REJECTED' | string;
   b_banned: boolean;
   b_is_courtesy: boolean;
   e_subscriptionStatus: 'INACTIVE' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED';
@@ -114,6 +115,7 @@ function getAccessTypeLabel(operator: OperatorRecord) {
 }
 
 function getStatusLabel(operator: OperatorRecord) {
+  if (operator.e_approval_status !== 'APPROVED') return 'Pendente de Aprovacao';
   if (operator.b_banned) return 'Bloqueado';
   if (operator.b_is_courtesy) return 'Ativa';
 
@@ -128,6 +130,9 @@ function getStatusLabel(operator: OperatorRecord) {
 }
 
 function getStatusBadgeClass(operator: OperatorRecord) {
+  if (operator.e_approval_status !== 'APPROVED') {
+    return 'bg-emerald-50 text-emerald-700 ring-emerald-200';
+  }
   if (operator.b_banned) return 'bg-red-50 text-red-700 ring-red-200';
   if (operator.b_is_courtesy || operator.e_subscriptionStatus === 'ACTIVE') {
     return 'bg-emerald-50 text-emerald-700 ring-emerald-200';
@@ -631,7 +636,7 @@ export default function OperatorsPage() {
                       </div>
 
                       <div className="flex justify-center">
-                        <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ring-1 ${getStatusBadgeClass(operator)}`}>
+                        <span className={`inline-flex min-w-[116px] items-center justify-center rounded-full px-2 py-0.5 text-center text-[11px] font-medium leading-tight ring-1 ${getStatusBadgeClass(operator)}`}>
                           {getStatusLabel(operator)}
                         </span>
                       </div>
