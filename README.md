@@ -48,7 +48,7 @@ O projeto utiliza **Alta Disponibilidade**. O Nginx atua como um Proxy Reverso d
 
 ### 2. Clonagem e Variáveis de Ambiente
 ```bash
-git clone (https://github.com/locsystemapp-prog/LocSystem-Web-1.git)
+git clone (https://github.com/Ricardov7070/LocSystem-Web.git)
 cd LocSystem-Web
 ```
 
