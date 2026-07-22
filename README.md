@@ -6,7 +6,7 @@
 ![Nginx](https://img.shields.io/badge/Nginx-Load--Balancing-009639?style=for-the-badge&logo=nginx)
 ![Redis](https://img.shields.io/badge/Redis-Cache-DC382D?style=for-the-badge&logo=redis)
 
-O **LocSystem** é uma plataforma robusta de backoffice voltada para escritórios de assessoria jurídica. O sistema centraliza o controle de localização de pessoas, gestão de veículos e operações de campo, oferecendo alta disponibilidade através de balanceamento de carga e auditoria completa.
+O **VehicleSystem** é uma plataforma robusta de backoffice voltada para escritórios de assessoria jurídica. O sistema centraliza o controle de localização de pessoas, gestão de veículos e operações de campo, oferecendo alta disponibilidade através de balanceamento de carga e auditoria completa.
 
 ---
 
@@ -48,20 +48,20 @@ O projeto utiliza **Alta Disponibilidade**. O Nginx atua como um Proxy Reverso d
 
 ### 2. Clonagem e Variáveis de Ambiente
 ```bash
-git clone (https://github.com/Ricardov7070/LocSystem-Web.git)
-cd LocSystem-Web
+git clone (https://github.com/Ricardov7070/VehicleSystem-Web.git)
+cd VehicleSystem-Web
 ```
 
 ### 3. Executando os Containers
 
-Após clonar o projeto, é nescessário renomear ou copiar o arquivo .env.example para .env nos caminhos (".\LocSystem-Web\Api-Backend-LocSystem") e (".\LocSystem-Web\Person-Frontend-LocSystem") no intuido de ajustar as variáveis de ambiente conforme necessário, incluindo as configurações para acesso ao banco de dados, para funcionando do serviço de email e para funcionamento correto do "Redis". Caso esteja em um ambiente linux, basta somente rodar o comando abaixo dentro da pasta do projeto:
+Após clonar o projeto, é nescessário renomear ou copiar o arquivo .env.example para .env nos caminhos (".\VehicleSystem-Web\Api-Backend-LocSystem") e (".\VehicleSystem-Web\Person-Frontend-LocSystem") no intuido de ajustar as variáveis de ambiente conforme necessário, incluindo as configurações para acesso ao banco de dados, para funcionando do serviço de email e para funcionamento correto do "Redis". Caso esteja em um ambiente linux, basta somente rodar o comando abaixo dentro da pasta do projeto:
 ```bash
 cp .env.example .env
 ```
 
 ### 4. Inicialização dos Containers
 
-Dentro da pasta da API (.\LocSystem-Web\Api-Backend-LocSystem), execute:
+Dentro da pasta da API (.\VehicleSystem-Web\Api-Backend-LocSystem), execute:
 ```bash
 docker compose up -d
 ```
